@@ -28,4 +28,9 @@ public class TestController {
   public User createUser(@RequestBody User user) {
     return userRepository.save(user);
   }
+
+  @GetMapping("/protected")
+  public String protectedEndpoint() {
+    return "This is a protected endpoint! 🔒 You are authenticated!";
+  }
 }
