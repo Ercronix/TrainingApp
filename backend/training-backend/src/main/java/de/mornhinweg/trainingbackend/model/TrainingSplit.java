@@ -8,32 +8,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "training_splits")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User {
+public class TrainingSplit {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false, unique = true, length = 50)
-  private String username;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
 
-  @Column(nullable = false, unique = true, length = 100)
-  private String email;
+  @Column(nullable = false, length = 100)
+  private String name;  // Frei wählbar: "PPL split", "Recovery Übungen", etc.
 
-  @Column(nullable = false)
-  private String password;
+  @Column(name = "is_active", nullable = false)
+  @Builder.Default
+  private Boolean isActive = false;
 
-  @Column(length = 20)
-  private String provider; // null, "google", "github"
-
-  @Column(name = "provider_id", length = 100)
-  private String providerId; // OAuth2 User ID
+  @OneToMany(mappedBy = "split", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OrderBy("orderIndex ASC")
+  @Builder.Default
+  private List<Workout> workouts = new ArrayList<>();
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
@@ -51,8 +52,4 @@ public class User {
   protected void onUpdate() {
     updatedAt = LocalDateTime.now();
   }
-
-  @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-  @Builder.Default
-  private List<TrainingSplit> trainingSplits = new ArrayList<>();
 }
