@@ -23,3 +23,17 @@ export interface User {
     username: string;
     email: string;
 }
+
+// Training Split Types
+export interface TrainingSplit {
+    id: number;
+    name: string;
+    isActive: boolean;
+    workoutCount: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateSplitRequest {
+    name: string;
+}

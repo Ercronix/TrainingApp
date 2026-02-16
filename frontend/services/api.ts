@@ -44,4 +44,25 @@ export const authApi = {
     },
 };
 
+export const splitsApi = {
+  getAll: async () => {
+    const response = await api.get('/splits');
+    return response.data;
+  },
+
+  create: async (name: string) => {
+    const response = await api.post('/splits', { name });
+    return response.data;
+  },
+
+  activate: async (id: number) => {
+    const response = await api.put(`/splits/${id}/activate`);
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    await api.delete(`/splits/${id}`);
+  },
+};
+
 export default api;
