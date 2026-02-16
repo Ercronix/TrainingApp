@@ -2,7 +2,7 @@ import { Redirect } from 'expo-router';
 
 export default function Index() {
     // TODO: Später prüfen ob User eingeloggt ist
-    const isAuthenticated = true;
+    const isAuthenticated = false;
 
     if (isAuthenticated) {
         return <Redirect href="/(tabs)" />;

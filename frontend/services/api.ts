@@ -1,8 +1,9 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from './storage';
 import { LoginRequest, RegisterRequest, AuthResponse } from '@/types';
 
-const API_URL = 'http://localhost:8080/api';
+const API_URL = 'http://192.168.2.150:8080/api';
+
 
 const api = axios.create({
     baseURL: API_URL,
@@ -13,23 +14,22 @@ const api = axios.create({
 
 // Request Interceptor - Token automatisch hinzufügen
 api.interceptors.request.use(
-    async (config) => {
-        const token = await SecureStore.getItemAsync('authToken');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
+  async (config) => {
+      const token = await storage.getItem('authToken');
+      if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+  },
+  (error) => Promise.reject(error)
 );
+
 
 export const authApi = {
     login: async (data: LoginRequest): Promise<AuthResponse> => {
         const response = await api.post('/auth/login', data);
         if (response.data.token) {
-            await SecureStore.setItemAsync('authToken', response.data.token);
+            await storage.setItem('authToken', response.data.token);
         }
         return response.data;
     },
@@ -40,7 +40,7 @@ export const authApi = {
     },
 
     logout: async () => {
-        await SecureStore.deleteItemAsync('authToken');
+        await storage.removeItem('authToken');
     },
 };
 
