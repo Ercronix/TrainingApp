@@ -2,56 +2,47 @@ package de.mornhinweg.trainingbackend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.math.BigDecimal;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "workouts")
+@Table(name = "training_logs")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Workout {
+public class TrainingLog {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_id", nullable = false)
+  private User user;
+
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "split_id", nullable = false)
   private TrainingSplit split;
 
-  @Column(nullable = false, length = 100)
-  private String name;
+  @Column(name = "started_at", nullable = false)
+  private LocalDateTime startedAt;
+
+  @Column(name = "completed_at")
+  private LocalDateTime completedAt;
+
+  @Column(name = "duration_seconds")
+  private Integer durationSeconds;
 
   @Column(columnDefinition = "TEXT")
-  private String description;
+  private String notes;
 
-  @Column(name = "video_url", length = 500)
-  private String videoUrl;
-
-  @Column(name = "video_id", length = 50)
-  private String videoId;
-
-  @Column
-  private Integer sets;
-
-  @Column
-  private Integer reps;
-
-  @Column(name = "planned_weight", precision = 5, scale = 2)
-  private BigDecimal plannedWeight;
-
-  @Column(name = "last_used_weight", precision = 5, scale = 2)
-  private BigDecimal lastUsedWeight;
-
-  @Column(name = "last_trained_at")
-  private LocalDateTime lastTrainedAt;
-
-  @Column(name = "order_index")
+  @OneToMany(mappedBy = "trainingLog", cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default
-  private Integer orderIndex = 0;
+  private List<ExerciseLog> exerciseLogs = new ArrayList<>();
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
@@ -68,5 +59,9 @@ public class Workout {
   @PreUpdate
   protected void onUpdate() {
     updatedAt = LocalDateTime.now();
+  }
+
+  public boolean isCompleted() {
+    return completedAt != null;
   }
 }

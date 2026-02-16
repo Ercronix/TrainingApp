@@ -9,6 +9,5 @@ import java.util.List;
 @Repository
 public interface WorkoutRepository extends JpaRepository<Workout, Long> {
 
-  // Alle Workouts eines Splits, sortiert nach Order
   List<Workout> findBySplitIdOrderByOrderIndexAsc(Long splitId);
 }

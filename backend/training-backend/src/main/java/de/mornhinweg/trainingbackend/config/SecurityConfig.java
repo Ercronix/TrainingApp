@@ -57,6 +57,6 @@ public class SecurityConfig {
 
   @Bean
   public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();  // BCrypt für Password Hashing
+    return new BCryptPasswordEncoder();
   }
 }

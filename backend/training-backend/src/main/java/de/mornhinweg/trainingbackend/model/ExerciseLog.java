@@ -3,38 +3,47 @@ package de.mornhinweg.trainingbackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "training_splits")
+@Table(name = "exercise_logs")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TrainingSplit {
+public class ExerciseLog {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_id", nullable = false)
-  private User user;
+  @JoinColumn(name = "training_log_id", nullable = false)
+  private TrainingLog trainingLog;
 
-  @Column(nullable = false, length = 100)
-  private String name;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "workout_id", nullable = false)
+  private Workout workout;
 
-  @Column(name = "is_active", nullable = false)
+  @Column(name = "sets_completed")
   @Builder.Default
-  private Boolean isActive = false;
+  private Integer setsCompleted = 0;
 
-  @OneToMany(mappedBy = "split", cascade = CascadeType.ALL, orphanRemoval = true)
-  @OrderBy("orderIndex ASC")
+  @Column(name = "reps_completed")
   @Builder.Default
-  private List<Workout> workouts = new ArrayList<>();
+  private Integer repsCompleted = 0;
+
+  @Column(name = "weight_used", precision = 5, scale = 2)
+  private BigDecimal weightUsed;
+
+  @Column(nullable = false)
+  @Builder.Default
+  private Boolean completed = false;
+
+  @Column(columnDefinition = "TEXT")
+  private String notes;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
