@@ -42,6 +42,11 @@ export const authApi = {
     logout: async () => {
         await storage.removeItem('authToken');
     },
+
+    me: async (): Promise<AuthResponse> => {
+      const response = await api.get('/auth/me');
+      return response.data;
+    },
 };
 
 export const splitsApi = {
@@ -64,6 +69,8 @@ export const splitsApi = {
     await api.delete(`/splits/${id}`);
   },
 };
+
+
 
 // Workouts API
 export const workoutsApi = {

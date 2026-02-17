@@ -37,12 +37,11 @@ public class AuthService {
     User user = User.builder()
         .username(request.getUsername())
         .email(request.getEmail())
-        .password(passwordEncoder.encode(request.getPassword()))  // ← BCrypt Hash!
+        .password(passwordEncoder.encode(request.getPassword()))
         .build();
 
     User savedUser = userRepository.save(user);
 
-    // 5. JWT Token generieren
     UserDetails userDetails = new org.springframework.security.core.userdetails.User(
         savedUser.getUsername(),
         savedUser.getPassword(),
@@ -50,7 +49,6 @@ public class AuthService {
     );
     String token = jwtUtil.generateToken(userDetails);
 
-    // 6. Response bauen
     return AuthResponse.builder()
         .token(token)
         .type("Bearer")
@@ -61,7 +59,6 @@ public class AuthService {
   }
 
   public AuthResponse login(LoginRequest request) {
-    // 1. Authentication durchführen
     Authentication authentication = authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(
             request.getUsername(),
@@ -72,13 +69,23 @@ public class AuthService {
     User user = userRepository.findByUsername(request.getUsername())
         .orElseThrow(() -> new RuntimeException("User not found"));
 
-    // 3. JWT Token generieren
     UserDetails userDetails = (UserDetails) authentication.getPrincipal();
     String token = jwtUtil.generateToken(userDetails);
 
-    // 4. Response bauen
     return AuthResponse.builder()
         .token(token)
+        .type("Bearer")
+        .userId(user.getId())
+        .username(user.getUsername())
+        .email(user.getEmail())
+        .build();
+  }
+
+  public AuthResponse getMe(String username) {
+    User user = userRepository.findByUsername(username)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+
+    return AuthResponse.builder()
         .type("Bearer")
         .userId(user.getId())
         .username(user.getUsername())
