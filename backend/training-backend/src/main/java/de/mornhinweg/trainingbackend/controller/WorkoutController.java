@@ -36,6 +36,21 @@ public class WorkoutController {
     return ResponseEntity.status(HttpStatus.CREATED).body(workout);
   }
 
+  @GetMapping("/{id}")
+  public ResponseEntity<WorkoutResponse> getWorkout(
+      @PathVariable Long id,
+      Authentication authentication) {
+    try {
+      WorkoutResponse workout = workoutService.getWorkout(id, authentication);
+      return ResponseEntity.ok(workout);
+    } catch (RuntimeException e) {
+      if (e.getMessage().equals("Unauthorized")) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+      }
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+  }
+
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteWorkout(
       @PathVariable Long id,

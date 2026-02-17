@@ -81,6 +81,19 @@ public class WorkoutService {
         .orElseThrow(() -> new RuntimeException("User not found"));
   }
 
+  public WorkoutResponse getWorkout(Long workoutId, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+
+    Workout workout = workoutRepository.findById(workoutId)
+        .orElseThrow(() -> new RuntimeException("Workout not found"));
+
+    if (!workout.getSplit().getUser().getId().equals(user.getId())) {
+      throw new RuntimeException("Unauthorized");
+    }
+
+    return toResponse(workout);
+  }
+
   private WorkoutResponse toResponse(Workout workout) {
     return WorkoutResponse.builder()
         .id(workout.getId())

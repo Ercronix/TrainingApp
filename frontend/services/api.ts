@@ -65,4 +65,54 @@ export const splitsApi = {
   },
 };
 
+// Workouts API
+export const workoutsApi = {
+  getBySplit: async (splitId: number) => {
+    const response = await api.get(`/workouts/split/${splitId}`);
+    return response.data;
+  },
+
+  create: async (splitId: number, data: any) => {
+    const response = await api.post(`/workouts/split/${splitId}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number) => {
+    await api.delete(`/workouts/${id}`);
+  },
+};
+
+// Training Logs API
+export const trainingLogsApi = {
+  start: async (splitId: number) => {
+    const response = await api.post('/training-logs/start', { splitId });
+    return response.data;
+  },
+
+  updateExercise: async (exerciseLogId: number, data: any) => {
+    const response = await api.put(`/training-logs/exercises/${exerciseLogId}`, data);
+    return response.data;
+  },
+
+  complete: async (id: number, notes?: string) => {
+    const response = await api.put(`/training-logs/${id}/complete`, { notes });
+    return response.data;
+  },
+
+  getAll: async () => {
+    const response = await api.get('/training-logs');
+    return response.data;
+  },
+
+  getActive: async () => {
+    const response = await api.get('/training-logs/active');
+    return response.data;
+  },
+
+  getById: async (id: number) => {
+    const response = await api.get(`/training-logs/${id}`);
+    return response.data;
+  },
+};
+
 export default api;
