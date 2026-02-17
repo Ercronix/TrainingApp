@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workoutsApi } from '@/services/api';
 import { Alert } from 'react-native';
+import {getErrorMessage} from "@/utils/errorHandler";
 
 export function useWorkouts(splitId: string) {
   const queryClient = useQueryClient();
@@ -15,11 +16,11 @@ export function useWorkouts(splitId: string) {
   const createWorkout = useMutation({
     mutationFn: (data: any) => workoutsApi.create(Number(splitId), data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workouts', splitId] });
+      void queryClient.invalidateQueries({ queryKey: ['workouts', splitId] });
       Alert.alert('Success', 'Workout created!');
     },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data || 'Failed to create workout');
+    onError: (error: unknown) => {
+      Alert.alert('Error', getErrorMessage(error));
     },
   });
 
@@ -27,11 +28,11 @@ export function useWorkouts(splitId: string) {
   const deleteWorkout = useMutation({
     mutationFn: workoutsApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['workouts', splitId] });
+      void queryClient.invalidateQueries({ queryKey: ['workouts', splitId] });
       Alert.alert('Success', 'Workout deleted!');
     },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data || 'Failed to delete workout');
+    onError: (error: unknown) => {
+      Alert.alert('Error', getErrorMessage(error));
     },
   });
 

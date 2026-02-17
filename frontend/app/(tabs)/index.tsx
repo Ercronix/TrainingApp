@@ -6,11 +6,32 @@ import { useSplits } from '@/hooks/useSplits';
 
 export default function SplitsScreen() {
   const router = useRouter();
+  const { splits, isLoading, isRefetching, refetch, activateSplit, deleteSplit } = useSplits();
 
-  const { splits, isLoading, isRefetching, refetch, activateSplit } = useSplits();
+  const handleActivate = (id: number, name: string) => {
+    Alert.alert(
+      'Activate Split',
+      `Set "${name}" as active split?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Activate', onPress: () => activateSplit.mutate(id) }
+      ]
+    );
+  };
 
-  const handleActivate = (id: number) => {
-    activateSplit.mutate(id);
+  const handleDelete = (id: number, name: string) => {
+    Alert.alert(
+      'Delete Split',
+      `Delete "${name}"? This will also delete all its workouts.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteSplit.mutate(id)
+        }
+      ]
+    );
   };
 
   const renderSplitItem = ({ item }: { item: TrainingSplit }) => (
@@ -26,16 +47,7 @@ export default function SplitsScreen() {
             splitName: item.name
           }
         })}
-        onLongPress={() => {
-          Alert.alert(
-            'Activate Split',
-            `Set "${item.name}" as active split?`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Activate', onPress: () => handleActivate(item.id) }
-            ]
-          );
-        }}
+        onLongPress={() => handleActivate(item.id, item.name)}
       >
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-1">
@@ -43,13 +55,27 @@ export default function SplitsScreen() {
               {item.name}
             </Text>
           </View>
+
           {item.isActive && (
             <View className="bg-blue-500 px-3 py-1 rounded-full mr-2">
               <Text className="text-white text-xs font-bold">ACTIVE</Text>
             </View>
           )}
+
+          {/* Delete Button */}
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              handleDelete(item.id, item.name);
+            }}
+            className="p-1 mr-2"
+          >
+            <Ionicons name="trash-outline" size={20} color="#EF4444" />
+          </TouchableOpacity>
+
           <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
         </View>
+
         <Text className="text-sm text-gray-500">
           {item.workoutCount} {item.workoutCount === 1 ? 'workout' : 'workouts'}
         </Text>
@@ -67,14 +93,10 @@ export default function SplitsScreen() {
 
   return (
     <View className="flex-1 bg-gray-50">
-      {/* Header */}
       <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
-        <Text className="text-2xl font-bold text-gray-800">
-          Training Splits
-        </Text>
+        <Text className="text-2xl font-bold text-gray-800">Training Splits</Text>
       </View>
 
-      {/* Splits List */}
       <FlatList
         data={splits}
         renderItem={renderSplitItem}
@@ -93,11 +115,8 @@ export default function SplitsScreen() {
         }
       />
 
-      {/* FAB */}
       <Link href="/create-split" asChild>
-        <TouchableOpacity
-          className="absolute right-6 bottom-6 w-14 h-14 bg-blue-500 rounded-full justify-center items-center shadow-lg"
-        >
+        <TouchableOpacity className="absolute right-6 bottom-6 w-14 h-14 bg-blue-500 rounded-full justify-center items-center shadow-lg">
           <Text className="text-white text-3xl font-light">+</Text>
         </TouchableOpacity>
       </Link>

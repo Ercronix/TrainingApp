@@ -1,34 +1,12 @@
 import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { splitsApi } from '@/services/api';
+import {useSplits} from "@/hooks/useSplits";
 
 export default function CreateSplitModal() {
   const [name, setName] = useState('');
   const router = useRouter();
-  const queryClient = useQueryClient();
-
-  const createMutation = useMutation({
-    mutationFn: splitsApi.create,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['splits'] });
-      Alert.alert('Success', 'Split created!');
-      router.back();
-    },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data || 'Failed to create split');
-    },
-  });
-
-  const handleCreate = () => {
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a name');
-      return;
-    }
-
-    createMutation.mutate(name);
-  };
+  const {createSplit, isCreating} = useSplits();
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -52,18 +30,26 @@ export default function CreateSplitModal() {
           value={name}
           onChangeText={setName}
           autoFocus
-          editable={!createMutation.isPending}
+          editable={!isCreating}
         />
 
         <TouchableOpacity
           className={`bg-blue-500 rounded-lg py-4 items-center ${
-            createMutation.isPending ? 'opacity-50' : ''
+            isCreating ? 'opacity-50' : ''
           }`}
-          onPress={handleCreate}
-          disabled={createMutation.isPending}
+          onPress={() => {
+            if (!name.trim()) {
+              Alert.alert('Error', 'Please enter a name');
+              return;
+            }
+            createSplit.mutate(name.trim(), {
+              onSuccess: () => router.back(),
+            });
+          }}
+          disabled={isCreating}
         >
           <Text className="text-white text-lg font-semibold">
-            {createMutation.isPending ? 'Creating...' : 'Create Split'}
+            {isCreating ? 'Creating...' : 'Create Split'}
           </Text>
         </TouchableOpacity>
       </View>

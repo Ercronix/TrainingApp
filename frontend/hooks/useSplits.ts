@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { splitsApi } from '@/services/api';
 import { Alert } from 'react-native';
+import { getErrorMessage } from '@/utils/errorHandler';
 
 export function useSplits() {
   const queryClient = useQueryClient();
@@ -15,11 +16,11 @@ export function useSplits() {
   const createSplit = useMutation({
     mutationFn: splitsApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['splits'] });
+      void queryClient.invalidateQueries({ queryKey: ['splits'] });
       Alert.alert('Success', 'Split created!');
     },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data || 'Failed to create split');
+    onError: (error: unknown) => {
+      Alert.alert('Error', getErrorMessage(error));
     },
   });
 
@@ -27,11 +28,11 @@ export function useSplits() {
   const activateSplit = useMutation({
     mutationFn: splitsApi.activate,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['splits'] });
+      void queryClient.invalidateQueries({ queryKey: ['splits'] });
       Alert.alert('Success', 'Split activated!');
     },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data || 'Failed to activate split');
+    onError: (error: unknown) => {
+      Alert.alert('Error', getErrorMessage(error));
     },
   });
 
@@ -39,11 +40,11 @@ export function useSplits() {
   const deleteSplit = useMutation({
     mutationFn: splitsApi.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['splits'] });
+      void queryClient.invalidateQueries({ queryKey: ['splits'] });
       Alert.alert('Success', 'Split deleted!');
     },
-    onError: (error: any) => {
-      Alert.alert('Error', error.response?.data || 'Failed to delete split');
+    onError: (error: unknown) => {
+      Alert.alert('Error', getErrorMessage(error));
     },
   });
 
@@ -52,6 +53,7 @@ export function useSplits() {
     isLoading: splitsQuery.isLoading,
     isRefetching: splitsQuery.isRefetching,
     refetch: splitsQuery.refetch,
+    isCreating: createSplit.isPending,
     createSplit,
     activateSplit,
     deleteSplit,

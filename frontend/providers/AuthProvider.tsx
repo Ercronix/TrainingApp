@@ -33,26 +33,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    loadToken();
+    void loadToken();
   }, []);
 
-  // Navigation basierend auf Auth Status
   useEffect(() => {
     if (!isReady) return;
 
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!isAuthenticated && !inAuthGroup) {
-      // User nicht eingeloggt → zu Login
       router.replace('/login');
     } else if (isAuthenticated && inAuthGroup) {
-      // User eingeloggt aber auf Login Screen → zu Tabs
       router.replace('/(tabs)');
     }
   }, [isAuthenticated, segments, isReady]);
 
   if (!isReady) {
-    // Loading Screen (optional)
     return null;
   }
 
