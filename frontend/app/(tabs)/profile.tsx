@@ -1,28 +1,23 @@
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/services/api';
 import { useRouter } from 'expo-router';
+import { confirm } from '@/utils/confirm';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
-  const handleLogout = async () => {
-    Alert.alert(
+  const handleLogout = () => {
+    confirm(
       'Logout',
       'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await authApi.logout();
-            logout();
-            router.replace('/login');
-          },
-        },
-      ]
+      async () => {
+        await authApi.logout();
+        logout();
+        router.replace('/login');
+      },
+      'Logout'
     );
   };
 

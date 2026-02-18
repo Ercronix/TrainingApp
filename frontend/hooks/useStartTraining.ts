@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
 import { trainingLogsApi } from '@/services/api';
+import { confirm, alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
 
 export function useStartTraining(workoutId: string, workoutName: string) {
@@ -16,22 +16,20 @@ export function useStartTraining(workoutId: string, workoutName: string) {
       });
     },
     onError: (error: unknown) => {
-      Alert.alert('Error', getErrorMessage(error));
+      alert('Error', getErrorMessage(error));
     },
   });
 
   const startTraining = (exerciseCount: number) => {
     if (exerciseCount === 0) {
-      Alert.alert('No Exercises', 'Add at least one exercise before starting training');
+      alert('No Exercises', 'Add at least one exercise before starting training');
       return;
     }
-    Alert.alert(
+    confirm(
       'Start Training',
       `Start training session for "${workoutName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Start', onPress: () => mutation.mutate() },
-      ]
+      () => mutation.mutate(),
+      'Start'
     );
   };
 

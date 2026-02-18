@@ -1,7 +1,8 @@
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl} from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkouts } from '@/hooks/useWorkouts';
+import { confirm } from '@/utils/confirm';
 
 export default function WorkoutsScreen() {
   const { splitId, splitName } = useLocalSearchParams<{ splitId: string; splitName: string }>();
@@ -10,17 +11,12 @@ export default function WorkoutsScreen() {
   const { workouts, isLoading, isRefetching, refetch, deleteWorkout } = useWorkouts(splitId);
 
   const handleDelete = (id: number, name: string) => {
-    Alert.alert(
+    confirm(
       'Delete Workout',
       `Delete "${name}" and all its exercises?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => deleteWorkout.mutate(id),
-        },
-      ]
+      () => deleteWorkout.mutate(id),
+      'Delete',
+      'Cancel'
     );
   };
 

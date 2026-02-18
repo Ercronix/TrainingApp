@@ -1,8 +1,9 @@
-import { View, Text, FlatList, TouchableOpacity, Alert, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useExercises } from '@/hooks/useExercises';
 import { useStartTraining } from '@/hooks/useStartTraining';
+import { confirm } from '@/utils/confirm';
 
 export default function WorkoutDetailScreen() {
   const { workoutId, workoutName } = useLocalSearchParams<{
@@ -15,17 +16,12 @@ export default function WorkoutDetailScreen() {
   const { startTraining, isPending } = useStartTraining(workoutId, workoutName);
 
   const handleDelete = (id: number, name: string) => {
-    Alert.alert(
+    confirm(
       'Delete Exercise',
       `Delete "${name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => deleteExercise.mutate(id),
-        },
-      ]
+      () => deleteExercise.mutate(id),
+      'Delete',
+      'Cancel'
     );
   };
 
@@ -109,7 +105,7 @@ export default function WorkoutDetailScreen() {
             disabled={isPending}
           >
             <Text className="text-white text-base font-semibold">
-              {isPending ? 'Starting...' : '🏋️ Start Training'}
+              {isPending ? 'Starting...' : 'Start Training'}
             </Text>
           </TouchableOpacity>
         </View>

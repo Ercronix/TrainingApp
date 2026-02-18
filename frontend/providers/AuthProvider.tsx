@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
 import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/services/api';
+import { storage } from '@/services/storage';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isReady, setIsReady] = useState(false);
@@ -13,21 +13,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadToken = async () => {
       try {
-        const token = await SecureStore.getItemAsync('authToken');
-
+        const token = await storage.getItem('authToken');
         if (token) {
           const user = await authApi.me();
           setUser({ ...user, token, type: 'Bearer' });
         }
       } catch (error) {
         console.error('Token validation failed:', error);
-        await SecureStore.deleteItemAsync('authToken');
+        await storage.removeItem('authToken');
         logout();
       } finally {
         setIsReady(true);
       }
     };
-
     void loadToken();
   }, []);
 
@@ -42,6 +40,5 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated, segments, isReady]);
 
   if (!isReady) return null;
-
   return <>{children}</>;
 }

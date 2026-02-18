@@ -24,7 +24,7 @@ export default function TrainingScreen() {
     const doComplete = () =>
       completeTraining.mutate(undefined, {
         onSuccess: () => {
-          Alert.alert('Success', 'Training completed! 💪', [
+          Alert.alert('Success', 'Training completed!', [
             { text: 'OK', onPress: () => router.replace('/(tabs)') },
           ]);
         },
@@ -198,7 +198,7 @@ export default function TrainingScreen() {
         <View className="px-4 pt-4">
           <RestTimer
             duration={120}
-            onComplete={() => Alert.alert('Rest Complete!', 'Time for next set! 💪')}
+            onComplete={() => Alert.alert('Rest Complete!', 'Time for next set!')}
           />
         </View>
         <View className="p-4">

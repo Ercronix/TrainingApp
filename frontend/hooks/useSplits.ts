@@ -17,7 +17,6 @@ export function useSplits() {
     mutationFn: splitsApi.create,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['splits'] });
-      Alert.alert('Success', 'Split created!');
     },
     onError: (error: unknown) => {
       Alert.alert('Error', getErrorMessage(error));
@@ -29,7 +28,6 @@ export function useSplits() {
     mutationFn: splitsApi.activate,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['splits'] });
-      Alert.alert('Success', 'Split activated!');
     },
     onError: (error: unknown) => {
       Alert.alert('Error', getErrorMessage(error));
@@ -41,7 +39,6 @@ export function useSplits() {
     mutationFn: splitsApi.delete,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['splits'] });
-      Alert.alert('Success', 'Split deleted!');
     },
     onError: (error: unknown) => {
       Alert.alert('Error', getErrorMessage(error));
