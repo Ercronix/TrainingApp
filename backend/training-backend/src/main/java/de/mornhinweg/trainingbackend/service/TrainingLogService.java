@@ -19,16 +19,24 @@ public class TrainingLogService {
 
   private final TrainingLogRepository trainingLogRepository;
   private final ExerciseLogRepository exerciseLogRepository;
-  private final TrainingSplitRepository trainingSplitRepository;
   private final WorkoutRepository workoutRepository;
+  private final ExerciseRepository exerciseRepository;
   private final UserRepository userRepository;
 
   @Transactional
   public TrainingLogResponse startTraining(StartTrainingRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
 
-    TrainingSplit split = trainingSplitRepository.findByIdAndUserId(request.getSplitId(), user.getId())
-        .orElseThrow(() -> new RuntimeException("Split not found"));
+    // Fetch the specific workout day the user wants to train
+    Workout workout = workoutRepository.findById(request.getWorkoutId())
+        .orElseThrow(() -> new RuntimeException("Workout not found"));
+
+    // Verify the workout belongs to this user
+    if (!workout.getSplit().getUser().getId().equals(user.getId())) {
+      throw new RuntimeException("Unauthorized");
+    }
+
+    TrainingSplit split = workout.getSplit();
 
     TrainingLog trainingLog = TrainingLog.builder()
         .user(user)
@@ -38,18 +46,18 @@ public class TrainingLogService {
 
     trainingLog = trainingLogRepository.save(trainingLog);
 
-    List<Workout> workouts = workoutRepository.findBySplitIdOrderByOrderIndexAsc(split.getId());
+    // Create an exercise log only for exercises in this specific workout day
+    List<Exercise> exercises = exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId());
 
-    for (Workout workout : workouts) {
+    for (Exercise exercise : exercises) {
       ExerciseLog exerciseLog = ExerciseLog.builder()
           .trainingLog(trainingLog)
-          .workout(workout)
+          .exercise(exercise)
           .setsCompleted(0)
           .repsCompleted(0)
-          .weightUsed(workout.getLastUsedWeight())
+          .weightUsed(exercise.getLastUsedWeight())
           .completed(false)
           .build();
-
       exerciseLogRepository.save(exerciseLog);
     }
 
@@ -60,7 +68,7 @@ public class TrainingLogService {
   }
 
   @Transactional
-  public ExerciseLogResponse updateExercise(Long exerciseLogId, UpdateExerciseRequest request, Authentication authentication) {
+  public ExerciseLogResponse updateExerciseLog(Long exerciseLogId, UpdateExerciseLogRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
 
     ExerciseLog exerciseLog = exerciseLogRepository.findById(exerciseLogId)
@@ -70,21 +78,11 @@ public class TrainingLogService {
       throw new RuntimeException("Unauthorized");
     }
 
-    if (request.getSetsCompleted() != null) {
-      exerciseLog.setSetsCompleted(request.getSetsCompleted());
-    }
-    if (request.getRepsCompleted() != null) {
-      exerciseLog.setRepsCompleted(request.getRepsCompleted());
-    }
-    if (request.getWeightUsed() != null) {
-      exerciseLog.setWeightUsed(request.getWeightUsed());
-    }
-    if (request.getCompleted() != null) {
-      exerciseLog.setCompleted(request.getCompleted());
-    }
-    if (request.getNotes() != null) {
-      exerciseLog.setNotes(request.getNotes());
-    }
+    if (request.getSetsCompleted() != null) exerciseLog.setSetsCompleted(request.getSetsCompleted());
+    if (request.getRepsCompleted() != null) exerciseLog.setRepsCompleted(request.getRepsCompleted());
+    if (request.getWeightUsed() != null) exerciseLog.setWeightUsed(request.getWeightUsed());
+    if (request.getCompleted() != null) exerciseLog.setCompleted(request.getCompleted());
+    if (request.getNotes() != null) exerciseLog.setNotes(request.getNotes());
 
     exerciseLog = exerciseLogRepository.save(exerciseLog);
     return toExerciseLogResponse(exerciseLog);
@@ -98,9 +96,9 @@ public class TrainingLogService {
         .orElseThrow(() -> new RuntimeException("Training log not found"));
 
     trainingLog.setCompletedAt(LocalDateTime.now());
-
-    Duration duration = Duration.between(trainingLog.getStartedAt(), trainingLog.getCompletedAt());
-    trainingLog.setDurationSeconds((int) duration.getSeconds());
+    trainingLog.setDurationSeconds(
+        (int) Duration.between(trainingLog.getStartedAt(), trainingLog.getCompletedAt()).getSeconds()
+    );
 
     if (request.getNotes() != null) {
       trainingLog.setNotes(request.getNotes());
@@ -110,10 +108,10 @@ public class TrainingLogService {
 
     for (ExerciseLog exerciseLog : trainingLog.getExerciseLogs()) {
       if (exerciseLog.getCompleted() && exerciseLog.getWeightUsed() != null) {
-        Workout workout = exerciseLog.getWorkout();
-        workout.setLastUsedWeight(exerciseLog.getWeightUsed());
-        workout.setLastTrainedAt(LocalDateTime.now());
-        workoutRepository.save(workout);
+        Exercise exercise = exerciseLog.getExercise();
+        exercise.setLastUsedWeight(exerciseLog.getWeightUsed());
+        exercise.setLastTrainedAt(LocalDateTime.now());
+        exerciseRepository.save(exercise);
       }
     }
 
@@ -123,17 +121,13 @@ public class TrainingLogService {
   public List<TrainingLogResponse> getAllTrainings(Authentication authentication) {
     User user = getCurrentUser(authentication);
     return trainingLogRepository.findByUserIdOrderByStartedAtDesc(user.getId())
-        .stream()
-        .map(this::toResponse)
-        .collect(Collectors.toList());
+        .stream().map(this::toResponse).collect(Collectors.toList());
   }
 
   public List<TrainingLogResponse> getActiveTrainings(Authentication authentication) {
     User user = getCurrentUser(authentication);
     return trainingLogRepository.findByUserIdAndCompletedAtIsNullOrderByStartedAtDesc(user.getId())
-        .stream()
-        .map(this::toResponse)
-        .collect(Collectors.toList());
+        .stream().map(this::toResponse).collect(Collectors.toList());
   }
 
   public TrainingLogResponse getTraining(Long trainingLogId, Authentication authentication) {
@@ -166,14 +160,16 @@ public class TrainingLogService {
   }
 
   private ExerciseLogResponse toExerciseLogResponse(ExerciseLog exerciseLog) {
-    Workout workout = exerciseLog.getWorkout();
+    Exercise exercise = exerciseLog.getExercise();
     return ExerciseLogResponse.builder()
         .id(exerciseLog.getId())
-        .workoutId(workout.getId())
-        .workoutName(workout.getName())
-        .plannedSets(workout.getSets())
-        .plannedReps(workout.getReps())
-        .plannedWeight(workout.getPlannedWeight())
+        .exerciseId(exercise.getId())
+        .exerciseName(exercise.getName())
+        .workoutId(exercise.getWorkout().getId())
+        .workoutName(exercise.getWorkout().getName())
+        .plannedSets(exercise.getSets())
+        .plannedReps(exercise.getReps())
+        .plannedWeight(exercise.getPlannedWeight())
         .setsCompleted(exerciseLog.getSetsCompleted())
         .repsCompleted(exerciseLog.getRepsCompleted())
         .weightUsed(exerciseLog.getWeightUsed())

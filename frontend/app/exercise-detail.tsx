@@ -1,92 +1,200 @@
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useExerciseLog } from '@/hooks/useExerciseLog';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { WebView } from 'react-native-webview';
+import { Ionicons } from '@expo/vector-icons';
+import { useExerciseDetail } from '@/hooks/useExerciseDetail';
 
-export default function ExerciseDetailModal() {
+export default function ExerciseDetailScreen() {
   const {
-    exerciseLogId,
-    workoutName,
-    plannedSets,
-    plannedReps,
-    plannedWeight,
-    trainingLogId,
+    exerciseId,
+    exerciseName,
+    description: initialDescription,
+    videoUrl: initialVideoUrl,
+    sets,
+    reps,
+    weight,
+    workoutId,
   } = useLocalSearchParams<{
-    exerciseLogId: string;
-    workoutName: string;
-    plannedSets: string;
-    plannedReps: string;
-    plannedWeight: string;
-    trainingLogId: string;
+    exerciseId: string;
+    exerciseName: string;
+    description: string;
+    videoUrl: string;
+    sets: string;
+    reps: string;
+    weight: string;
+    workoutId: string;
   }>();
 
-  const [sets, setSets] = useState('');
-  const [reps, setReps] = useState('');
-  const [weight, setWeight] = useState(plannedWeight || '');
-
   const router = useRouter();
-  const { saveExercise, isPending } = useExerciseLog(exerciseLogId, trainingLogId);
+  const { saveVideo, saveDescription, isPending } = useExerciseDetail(workoutId, exerciseId);
+
+  const [videoUrl, setVideoUrl] = useState(initialVideoUrl || '');
+  const [description, setDescription] = useState(initialDescription || '');
+  const [editingVideo, setEditingVideo] = useState(false);
+  const [editingDescription, setEditingDescription] = useState(false);
+
+  const getYouTubeId = (url: string) => {
+    if (!url) return null;
+    if (url.includes('youtube.com/watch?v=')) return url.split('v=')[1].split('&')[0];
+    if (url.includes('youtu.be/')) return url.split('youtu.be/')[1].split('?')[0];
+    return null;
+  };
+
+  const videoId = videoUrl ? getYouTubeId(videoUrl) : null;
 
   return (
     <View className="flex-1 bg-gray-50">
+      {/* Header */}
       <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
-        <View className="flex-row justify-between items-center">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-500 text-base">Cancel</Text>
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-800">Log Exercise</Text>
-          <View className="w-16" />
-        </View>
+        <TouchableOpacity onPress={() => router.back()} className="mb-2">
+          <Text className="text-blue-500 text-base">← Back</Text>
+        </TouchableOpacity>
+        <Text className="text-2xl font-bold text-gray-800">{exerciseName}</Text>
       </View>
 
-      <View className="p-6">
-        <Text className="text-2xl font-bold text-gray-800 mb-6">{workoutName}</Text>
+      <ScrollView className="flex-1">
 
-        {plannedSets && plannedReps && (
-          <View className="bg-blue-50 rounded-lg p-3 mb-6">
-            <Text className="text-sm text-blue-800">
-              Planned: {plannedSets} × {plannedReps} reps @ {plannedWeight || '0'} kg
-            </Text>
+        {/* Video Section */}
+        <View className="mx-4 mt-4 bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <View className="flex-row justify-between items-center px-4 py-3 border-b border-gray-100">
+            <Text className="text-sm font-semibold text-gray-700">Video</Text>
+            <TouchableOpacity onPress={() => setEditingVideo(!editingVideo)}>
+              <Ionicons
+                name={editingVideo ? 'close-outline' : 'pencil-outline'}
+                size={20}
+                color="#3B82F6"
+              />
+            </TouchableOpacity>
+          </View>
+
+          {editingVideo ? (
+            <View className="p-4">
+              <TextInput
+                className="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-base mb-3"
+                placeholder="https://youtube.com/watch?v=..."
+                value={videoUrl}
+                onChangeText={setVideoUrl}
+                keyboardType="url"
+                autoCapitalize="none"
+                autoFocus
+              />
+              <TouchableOpacity
+                className={`bg-blue-500 rounded-lg py-2 items-center ${isPending ? 'opacity-50' : ''}`}
+                onPress={() => saveVideo(videoUrl, () => setEditingVideo(false))}
+                disabled={isPending}
+              >
+                <Text className="text-white font-semibold">
+                  {isPending ? 'Saving...' : 'Save Video'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : videoId ? (
+            <View style={{ height: 220, backgroundColor: 'black' }}>
+              <WebView
+                source={{
+                  html: `
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+                        <style>
+                          * { margin: 0; padding: 0; }
+                          html, body { height: 100%; overflow: hidden; }
+                          iframe { width: 100%; height: 100%; border: none; }
+                        </style>
+                      </head>
+                      <body>
+                        <iframe
+                          src="https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowfullscreen
+                        ></iframe>
+                      </body>
+                    </html>
+                  `,
+                }}
+                allowsFullscreenVideo
+                allowsInlineMediaPlayback
+                mediaPlaybackRequiresUserAction={false}
+                javaScriptEnabled
+                domStorageEnabled
+              />
+            </View>
+          ) : (
+            <TouchableOpacity
+              className="p-4 items-center"
+              onPress={() => setEditingVideo(true)}
+            >
+              <Ionicons name="play-circle-outline" size={36} color="#9CA3AF" />
+              <Text className="text-sm text-gray-400 mt-1">Tap to add a YouTube video</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Planned Info */}
+        {(sets || reps || weight) && (
+          <View className="mx-4 mt-3 bg-white rounded-xl p-4 border border-gray-200">
+            <Text className="text-sm font-semibold text-gray-700 mb-2">Planned</Text>
+            {sets && reps && (
+              <Text className="text-base text-gray-800">• {sets} sets × {reps} reps</Text>
+            )}
+            {weight && (
+              <Text className="text-base text-gray-800">• Weight: {weight} kg</Text>
+            )}
           </View>
         )}
 
-        <Text className="text-base mb-2 text-gray-700">Sets Completed</Text>
-        <TextInput
-          className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
-          placeholder={plannedSets || '5'}
-          value={sets}
-          onChangeText={setSets}
-          keyboardType="numeric"
-        />
+        {/* Description Section */}
+        <View className="mx-4 mt-3 mb-8 bg-white rounded-xl border border-gray-200">
+          <View className="flex-row justify-between items-center px-4 py-3 border-b border-gray-100">
+            <Text className="text-sm font-semibold text-gray-700">Notes / Description</Text>
+            <TouchableOpacity onPress={() => setEditingDescription(!editingDescription)}>
+              <Ionicons
+                name={editingDescription ? 'close-outline' : 'pencil-outline'}
+                size={20}
+                color="#3B82F6"
+              />
+            </TouchableOpacity>
+          </View>
 
-        <Text className="text-base mb-2 text-gray-700">Reps per Set</Text>
-        <TextInput
-          className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
-          placeholder={plannedReps || '10'}
-          value={reps}
-          onChangeText={setReps}
-          keyboardType="numeric"
-        />
+          {editingDescription ? (
+            <View className="p-4">
+              <TextInput
+                className="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-base mb-3"
+                placeholder="e.g., Keep elbows tucked, full range of motion..."
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={4}
+                autoFocus
+              />
+              <TouchableOpacity
+                className={`bg-blue-500 rounded-lg py-2 items-center ${isPending ? 'opacity-50' : ''}`}
+                onPress={() => saveDescription(description, () => setEditingDescription(false))}
+                disabled={isPending}
+              >
+                <Text className="text-white font-semibold">
+                  {isPending ? 'Saving...' : 'Save Notes'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : description ? (
+            <TouchableOpacity className="p-4" onPress={() => setEditingDescription(true)}>
+              <Text className="text-base text-gray-600">{description}</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              className="p-4 items-center"
+              onPress={() => setEditingDescription(true)}
+            >
+              <Ionicons name="document-text-outline" size={36} color="#9CA3AF" />
+              <Text className="text-sm text-gray-400 mt-1">Tap to add notes</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
-        <Text className="text-base mb-2 text-gray-700">Weight Used (kg)</Text>
-        <TextInput
-          className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base mb-6"
-          placeholder={plannedWeight || '0'}
-          value={weight}
-          onChangeText={setWeight}
-          keyboardType="decimal-pad"
-        />
-
-        <TouchableOpacity
-          className={`bg-green-500 rounded-lg py-4 items-center ${isPending ? 'opacity-50' : ''}`}
-          onPress={() => saveExercise(sets, reps, weight)}
-          disabled={isPending}
-        >
-          <Text className="text-white text-lg font-semibold">
-            {isPending ? 'Saving...' : 'Save & Mark Complete ✓'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }

@@ -1,0 +1,127 @@
+package de.mornhinweg.trainingbackend.service;
+
+import de.mornhinweg.trainingbackend.dto.exercise.CreateExerciseRequest;
+import de.mornhinweg.trainingbackend.dto.exercise.ExerciseResponse;
+import de.mornhinweg.trainingbackend.dto.exercise.UpdateExerciseRequest;
+import de.mornhinweg.trainingbackend.model.Exercise;
+import de.mornhinweg.trainingbackend.model.User;
+import de.mornhinweg.trainingbackend.model.Workout;
+import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
+import de.mornhinweg.trainingbackend.repository.UserRepository;
+import de.mornhinweg.trainingbackend.repository.WorkoutRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class ExerciseService {
+
+  private final ExerciseRepository exerciseRepository;
+  private final WorkoutRepository workoutRepository;
+  private final UserRepository userRepository;
+
+  public List<ExerciseResponse> getExercisesByWorkout(Long workoutId, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    Workout workout = getOwnedWorkout(workoutId, user);
+
+    return exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId())
+        .stream()
+        .map(this::toResponse)
+        .collect(Collectors.toList());
+  }
+
+  @Transactional
+  public ExerciseResponse createExercise(Long workoutId, CreateExerciseRequest request, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    Workout workout = getOwnedWorkout(workoutId, user);
+
+    int nextOrderIndex = workout.getExercises().size();
+
+    Exercise exercise = Exercise.builder()
+        .workout(workout)
+        .name(request.getName())
+        .description(request.getDescription())
+        .videoUrl(request.getVideoUrl())
+        .videoId(request.getVideoId())
+        .sets(request.getSets())
+        .reps(request.getReps())
+        .plannedWeight(request.getPlannedWeight())
+        .orderIndex(nextOrderIndex)
+        .build();
+
+    Exercise saved = exerciseRepository.save(exercise);
+    return toResponse(saved);
+  }
+
+  @Transactional
+  public ExerciseResponse updateExercise(Long exerciseId, UpdateExerciseRequest request, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    Exercise exercise = getOwnedExercise(exerciseId, user);
+
+    if (request.getName() != null) exercise.setName(request.getName());
+    if (request.getDescription() != null) exercise.setDescription(request.getDescription());
+    if (request.getVideoUrl() != null) exercise.setVideoUrl(request.getVideoUrl());
+    if (request.getVideoId() != null) exercise.setVideoId(request.getVideoId());
+    if (request.getSets() != null) exercise.setSets(request.getSets());
+    if (request.getReps() != null) exercise.setReps(request.getReps());
+    if (request.getPlannedWeight() != null) exercise.setPlannedWeight(request.getPlannedWeight());
+    if (request.getOrderIndex() != null) exercise.setOrderIndex(request.getOrderIndex());
+
+    return toResponse(exerciseRepository.save(exercise));
+  }
+
+  @Transactional
+  public void deleteExercise(Long exerciseId, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    Exercise exercise = getOwnedExercise(exerciseId, user);
+    exerciseRepository.delete(exercise);
+  }
+
+  private Workout getOwnedWorkout(Long workoutId, User user) {
+    Workout workout = workoutRepository.findById(workoutId)
+        .orElseThrow(() -> new RuntimeException("Workout not found"));
+    if (!workout.getSplit().getUser().getId().equals(user.getId())) {
+      throw new RuntimeException("Unauthorized");
+    }
+    return workout;
+  }
+
+  private Exercise getOwnedExercise(Long exerciseId, User user) {
+    Exercise exercise = exerciseRepository.findById(exerciseId)
+        .orElseThrow(() -> new RuntimeException("Exercise not found"));
+    if (!exercise.getWorkout().getSplit().getUser().getId().equals(user.getId())) {
+      throw new RuntimeException("Unauthorized");
+    }
+    return exercise;
+  }
+
+  private User getCurrentUser(Authentication authentication) {
+    String username = authentication.getName();
+    return userRepository.findByUsername(username)
+        .orElseThrow(() -> new RuntimeException("User not found"));
+  }
+
+  private ExerciseResponse toResponse(Exercise exercise) {
+    return ExerciseResponse.builder()
+        .id(exercise.getId())
+        .workoutId(exercise.getWorkout().getId())
+        .name(exercise.getName())
+        .description(exercise.getDescription())
+        .videoUrl(exercise.getVideoUrl())
+        .videoId(exercise.getVideoId())
+        .sets(exercise.getSets())
+        .reps(exercise.getReps())
+        .plannedWeight(exercise.getPlannedWeight())
+        .lastUsedWeight(exercise.getLastUsedWeight())
+        .lastTrainedAt(exercise.getLastTrainedAt())
+        .orderIndex(exercise.getOrderIndex())
+        .createdAt(exercise.getCreatedAt())
+        .updatedAt(exercise.getUpdatedAt())
+        .build();
+  }
+}

@@ -27,7 +27,7 @@ public class WorkoutService {
   public List<WorkoutResponse> getWorkoutsBySplit(Long splitId, Authentication authentication) {
     User user = getCurrentUser(authentication);
 
-    TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
+    trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
         .orElseThrow(() -> new RuntimeException("Split not found"));
 
     return workoutRepository.findBySplitIdOrderByOrderIndexAsc(splitId)
@@ -48,17 +48,24 @@ public class WorkoutService {
     Workout workout = Workout.builder()
         .split(split)
         .name(request.getName())
-        .description(request.getDescription())
-        .videoUrl(request.getVideoUrl())
-        .videoId(request.getVideoId())
-        .sets(request.getSets())
-        .reps(request.getReps())
-        .plannedWeight(request.getPlannedWeight())
         .orderIndex(nextOrderIndex)
         .build();
 
     Workout savedWorkout = workoutRepository.save(workout);
     return toResponse(savedWorkout);
+  }
+
+  public WorkoutResponse getWorkout(Long workoutId, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+
+    Workout workout = workoutRepository.findById(workoutId)
+        .orElseThrow(() -> new RuntimeException("Workout not found"));
+
+    if (!workout.getSplit().getUser().getId().equals(user.getId())) {
+      throw new RuntimeException("Unauthorized");
+    }
+
+    return toResponse(workout);
   }
 
   @Transactional
@@ -81,32 +88,12 @@ public class WorkoutService {
         .orElseThrow(() -> new RuntimeException("User not found"));
   }
 
-  public WorkoutResponse getWorkout(Long workoutId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
-
-    Workout workout = workoutRepository.findById(workoutId)
-        .orElseThrow(() -> new RuntimeException("Workout not found"));
-
-    if (!workout.getSplit().getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Unauthorized");
-    }
-
-    return toResponse(workout);
-  }
-
   private WorkoutResponse toResponse(Workout workout) {
     return WorkoutResponse.builder()
         .id(workout.getId())
         .splitId(workout.getSplit().getId())
         .name(workout.getName())
-        .description(workout.getDescription())
-        .videoUrl(workout.getVideoUrl())
-        .videoId(workout.getVideoId())
-        .sets(workout.getSets())
-        .reps(workout.getReps())
-        .plannedWeight(workout.getPlannedWeight())
-        .lastUsedWeight(workout.getLastUsedWeight())
-        .lastTrainedAt(workout.getLastTrainedAt())
+        .exerciseCount(workout.getExercises().size())
         .orderIndex(workout.getOrderIndex())
         .createdAt(workout.getCreatedAt())
         .updatedAt(workout.getUpdatedAt())

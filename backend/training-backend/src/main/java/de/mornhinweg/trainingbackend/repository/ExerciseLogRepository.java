@@ -11,5 +11,5 @@ public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> 
 
   List<ExerciseLog> findByTrainingLogIdOrderByIdAsc(Long trainingLogId);
 
-  List<ExerciseLog> findByWorkoutIdOrderByCreatedAtDesc(Long workoutId);
+  List<ExerciseLog> findByExerciseIdOrderByCreatedAtDesc(Long exerciseId);
 }

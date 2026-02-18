@@ -26,12 +26,12 @@ public class TrainingLogController {
     return ResponseEntity.status(HttpStatus.CREATED).body(training);
   }
 
-  @PutMapping("/exercises/{exerciseLogId}")
-  public ResponseEntity<ExerciseLogResponse> updateExercise(
+  @PutMapping("/exercise-logs/{exerciseLogId}")
+  public ResponseEntity<ExerciseLogResponse> updateExerciseLog(
       @PathVariable Long exerciseLogId,
-      @RequestBody UpdateExerciseRequest request,
+      @RequestBody UpdateExerciseLogRequest request,
       Authentication authentication) {
-    ExerciseLogResponse exercise = trainingLogService.updateExercise(exerciseLogId, request, authentication);
+    ExerciseLogResponse exercise = trainingLogService.updateExerciseLog(exerciseLogId, request, authentication);
     return ResponseEntity.ok(exercise);
   }
 

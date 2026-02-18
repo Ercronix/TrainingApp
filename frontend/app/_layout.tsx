@@ -15,6 +15,7 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
+            {/* Modals */}
             <Stack.Screen
               name="create-split"
               options={{ presentation: 'modal', headerShown: false }}
@@ -24,13 +25,19 @@ export default function RootLayout() {
               options={{ presentation: 'modal', headerShown: false }}
             />
             <Stack.Screen
-              name="exercise-detail"
+              name="create-exercise"
+              options={{ presentation: 'modal', headerShown: false }}
+            />
+            <Stack.Screen
+              name="log-exercise"
               options={{ presentation: 'modal', headerShown: false }}
             />
 
+            {/* Screens */}
             <Stack.Screen name="workouts" options={{ headerShown: false }} />
-            <Stack.Screen name="training" options={{ headerShown: false }} />
             <Stack.Screen name="workout-detail" options={{ headerShown: false }} />
+            <Stack.Screen name="exercise-detail" options={{ headerShown: false }} />
+            <Stack.Screen name="training" options={{ headerShown: false }} />
           </Stack>
         </AuthProvider>
       </QueryClientProvider>

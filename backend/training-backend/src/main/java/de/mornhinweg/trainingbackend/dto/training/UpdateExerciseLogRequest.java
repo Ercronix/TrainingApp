@@ -1,16 +1,10 @@
 package de.mornhinweg.trainingbackend.dto.training;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import java.math.BigDecimal;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class UpdateExerciseRequest {
-
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+public class UpdateExerciseLogRequest {
   private Integer setsCompleted;
   private Integer repsCompleted;
   private BigDecimal weightUsed;

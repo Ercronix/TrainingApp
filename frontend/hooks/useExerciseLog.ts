@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 import { trainingLogsApi } from '@/services/api';
 import { QUERY_KEYS } from '@/constants/queryKeys';
-import {getErrorMessage} from "@/utils/errorHandler";
+import { getErrorMessage } from '@/utils/errorHandler';
 
 export interface ExerciseLogDto {
   setsCompleted: number;
@@ -18,7 +18,7 @@ export function useExerciseLog(exerciseLogId: string, trainingLogId: string) {
 
   const mutation = useMutation({
     mutationFn: (data: ExerciseLogDto) =>
-      trainingLogsApi.updateExercise(Number(exerciseLogId), data),
+      trainingLogsApi.updateExerciseLog(Number(exerciseLogId), data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.training(trainingLogId) });
       Alert.alert('Success', 'Exercise updated!');

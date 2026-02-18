@@ -24,8 +24,8 @@ public class ExerciseLog {
   private TrainingLog trainingLog;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "workout_id", nullable = false)
-  private Workout workout;
+  @JoinColumn(name = "exercise_id", nullable = false)
+  private Exercise exercise;
 
   @Column(name = "sets_completed")
   @Builder.Default

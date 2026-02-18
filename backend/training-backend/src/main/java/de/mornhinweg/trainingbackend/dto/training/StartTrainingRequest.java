@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class StartTrainingRequest {
 
-  @NotNull(message = "Split ID is required")
-  private Long splitId;
+  @NotNull(message = "Workout ID is required")
+  private Long workoutId;
 }
