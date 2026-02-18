@@ -1,7 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { WebView } from 'react-native-webview';
+import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons } from '@expo/vector-icons';
 import { useExerciseDetail } from '@/hooks/useExerciseDetail';
 
@@ -90,37 +90,11 @@ export default function ExerciseDetailScreen() {
               </TouchableOpacity>
             </View>
           ) : videoId ? (
-            <View style={{ height: 220, backgroundColor: 'black' }}>
-              <WebView
-                source={{
-                  html: `
-                    <!DOCTYPE html>
-                    <html>
-                      <head>
-                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-                        <style>
-                          * { margin: 0; padding: 0; }
-                          html, body { height: 100%; overflow: hidden; }
-                          iframe { width: 100%; height: 100%; border: none; }
-                        </style>
-                      </head>
-                      <body>
-                        <iframe
-                          src="https://www.youtube.com/embed/${videoId}?playsinline=1&rel=0&modestbranding=1"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowfullscreen
-                        ></iframe>
-                      </body>
-                    </html>
-                  `,
-                }}
-                allowsFullscreenVideo
-                allowsInlineMediaPlayback
-                mediaPlaybackRequiresUserAction={false}
-                javaScriptEnabled
-                domStorageEnabled
-              />
-            </View>
+            <YoutubePlayer
+              height={220}
+              videoId={videoId}
+              play={false}
+            />
           ) : (
             <TouchableOpacity
               className="p-4 items-center"

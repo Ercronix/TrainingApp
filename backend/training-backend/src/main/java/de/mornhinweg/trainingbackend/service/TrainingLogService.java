@@ -142,6 +142,14 @@ public class TrainingLogService {
     return userRepository.findByUsername(username)
         .orElseThrow(() -> new RuntimeException("User not found"));
   }
+  
+  @Transactional
+  public void deleteTraining(Long trainingLogId, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
+        .orElseThrow(() -> new RuntimeException("Training log not found"));
+    trainingLogRepository.delete(trainingLog);
+  }
 
   private TrainingLogResponse toResponse(TrainingLog trainingLog) {
     return TrainingLogResponse.builder()

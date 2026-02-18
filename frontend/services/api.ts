@@ -167,6 +167,10 @@ export const trainingLogsApi = {
     const response = await api.get(`/training-logs/${id}`);
     return response.data;
   },
+
+  delete: async (id: number) => {
+    await api.delete(`/training-logs/${id}`);
+  },
 };
 
 export default api;

@@ -25,12 +25,7 @@ export function useStartTraining(workoutId: string, workoutName: string) {
       alert('No Exercises', 'Add at least one exercise before starting training');
       return;
     }
-    confirm(
-      'Start Training',
-      `Start training session for "${workoutName}"?`,
-      () => mutation.mutate(),
-      'Start'
-    );
+    mutation.mutate();
   };
 
   return { startTraining, isPending: mutation.isPending };

@@ -38,6 +38,7 @@ export default function RootLayout() {
             <Stack.Screen name="workout-detail" options={{ headerShown: false }} />
             <Stack.Screen name="exercise-detail" options={{ headerShown: false }} />
             <Stack.Screen name="training" options={{ headerShown: false }} />
+            <Stack.Screen name="history-detail" options={{ headerShown: false }} />
           </Stack>
         </AuthProvider>
       </QueryClientProvider>

@@ -22,8 +22,8 @@ public class TrainingLogController {
   public ResponseEntity<TrainingLogResponse> startTraining(
       @Valid @RequestBody StartTrainingRequest request,
       Authentication authentication) {
-    TrainingLogResponse training = trainingLogService.startTraining(request, authentication);
-    return ResponseEntity.status(HttpStatus.CREATED).body(training);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(trainingLogService.startTraining(request, authentication));
   }
 
   @PutMapping("/exercise-logs/{exerciseLogId}")
@@ -31,8 +31,7 @@ public class TrainingLogController {
       @PathVariable Long exerciseLogId,
       @RequestBody UpdateExerciseLogRequest request,
       Authentication authentication) {
-    ExerciseLogResponse exercise = trainingLogService.updateExerciseLog(exerciseLogId, request, authentication);
-    return ResponseEntity.ok(exercise);
+    return ResponseEntity.ok(trainingLogService.updateExerciseLog(exerciseLogId, request, authentication));
   }
 
   @PutMapping("/{id}/complete")
@@ -40,27 +39,31 @@ public class TrainingLogController {
       @PathVariable Long id,
       @RequestBody CompleteTrainingRequest request,
       Authentication authentication) {
-    TrainingLogResponse training = trainingLogService.completeTraining(id, request, authentication);
-    return ResponseEntity.ok(training);
+    return ResponseEntity.ok(trainingLogService.completeTraining(id, request, authentication));
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteTraining(
+      @PathVariable Long id,
+      Authentication authentication) {
+    trainingLogService.deleteTraining(id, authentication);
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping
   public ResponseEntity<List<TrainingLogResponse>> getAllTrainings(Authentication authentication) {
-    List<TrainingLogResponse> trainings = trainingLogService.getAllTrainings(authentication);
-    return ResponseEntity.ok(trainings);
+    return ResponseEntity.ok(trainingLogService.getAllTrainings(authentication));
   }
 
   @GetMapping("/active")
   public ResponseEntity<List<TrainingLogResponse>> getActiveTrainings(Authentication authentication) {
-    List<TrainingLogResponse> trainings = trainingLogService.getActiveTrainings(authentication);
-    return ResponseEntity.ok(trainings);
+    return ResponseEntity.ok(trainingLogService.getActiveTrainings(authentication));
   }
 
   @GetMapping("/{id}")
   public ResponseEntity<TrainingLogResponse> getTraining(
       @PathVariable Long id,
       Authentication authentication) {
-    TrainingLogResponse training = trainingLogService.getTraining(id, authentication);
-    return ResponseEntity.ok(training);
+    return ResponseEntity.ok(trainingLogService.getTraining(id, authentication));
   }
 }
