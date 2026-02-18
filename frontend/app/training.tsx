@@ -1,4 +1,5 @@
-import { View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity } from 'react-native';
+import { confirm, alert } from '@/utils/confirm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
@@ -24,20 +25,18 @@ export default function TrainingScreen() {
     const doComplete = () =>
       completeTraining.mutate(undefined, {
         onSuccess: () => {
-          Alert.alert('Success', 'Training completed!', [
-            { text: 'OK', onPress: () => router.replace('/(tabs)') },
-          ]);
+          alert('Success', 'Training completed!');
+          router.replace('/(tabs)');
         },
       });
 
     if (completedCount < totalCount) {
-      Alert.alert(
+      confirm(
         'Incomplete Training',
         `You've only completed ${completedCount}/${totalCount} exercises. Complete anyway?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Complete', onPress: doComplete },
-        ]
+        doComplete,
+        'Complete',
+        'Cancel'
       );
     } else {
       doComplete();
@@ -198,7 +197,7 @@ export default function TrainingScreen() {
         <View className="px-4 pt-4">
           <RestTimer
             duration={120}
-            onComplete={() => Alert.alert('Rest Complete!', 'Time for next set!')}
+            onComplete={() => alert('Rest Complete!', 'Time for next set!')}
           />
         </View>
         <View className="p-4">
