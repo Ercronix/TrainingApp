@@ -2,6 +2,7 @@ package de.mornhinweg.trainingbackend.service;
 
 import de.mornhinweg.trainingbackend.dto.exercise.CreateExerciseRequest;
 import de.mornhinweg.trainingbackend.dto.exercise.ExerciseResponse;
+import de.mornhinweg.trainingbackend.dto.exercise.ReorderExercisesRequest;
 import de.mornhinweg.trainingbackend.dto.exercise.UpdateExerciseRequest;
 import de.mornhinweg.trainingbackend.model.Exercise;
 import de.mornhinweg.trainingbackend.model.User;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,20 +30,15 @@ public class ExerciseService {
   public List<ExerciseResponse> getExercisesByWorkout(Long workoutId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Workout workout = getOwnedWorkout(workoutId, user);
-
     return exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId())
-        .stream()
-        .map(this::toResponse)
-        .collect(Collectors.toList());
+        .stream().map(this::toResponse).collect(Collectors.toList());
   }
 
   @Transactional
   public ExerciseResponse createExercise(Long workoutId, CreateExerciseRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Workout workout = getOwnedWorkout(workoutId, user);
-
     int nextOrderIndex = workout.getExercises().size();
-
     Exercise exercise = Exercise.builder()
         .workout(workout)
         .name(request.getName())
@@ -53,16 +50,13 @@ public class ExerciseService {
         .plannedWeight(request.getPlannedWeight())
         .orderIndex(nextOrderIndex)
         .build();
-
-    Exercise saved = exerciseRepository.save(exercise);
-    return toResponse(saved);
+    return toResponse(exerciseRepository.save(exercise));
   }
 
   @Transactional
   public ExerciseResponse updateExercise(Long exerciseId, UpdateExerciseRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Exercise exercise = getOwnedExercise(exerciseId, user);
-
     if (request.getName() != null) exercise.setName(request.getName());
     if (request.getDescription() != null) exercise.setDescription(request.getDescription());
     if (request.getVideoUrl() != null) exercise.setVideoUrl(request.getVideoUrl());
@@ -71,8 +65,28 @@ public class ExerciseService {
     if (request.getReps() != null) exercise.setReps(request.getReps());
     if (request.getPlannedWeight() != null) exercise.setPlannedWeight(request.getPlannedWeight());
     if (request.getOrderIndex() != null) exercise.setOrderIndex(request.getOrderIndex());
-
     return toResponse(exerciseRepository.save(exercise));
+  }
+
+  @Transactional
+  public void reorderExercises(Long workoutId, ReorderExercisesRequest request, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    getOwnedWorkout(workoutId, user);
+
+    Map<Long, Integer> orderMap = request.getExercises().stream()
+        .collect(Collectors.toMap(
+            ReorderExercisesRequest.ExerciseOrderItem::getId,
+            ReorderExercisesRequest.ExerciseOrderItem::getOrderIndex
+        ));
+
+    List<Exercise> exercises = exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workoutId);
+    for (Exercise exercise : exercises) {
+      Integer newIndex = orderMap.get(exercise.getId());
+      if (newIndex != null) {
+        exercise.setOrderIndex(newIndex);
+      }
+    }
+    exerciseRepository.saveAll(exercises);
   }
 
   @Transactional

@@ -134,6 +134,10 @@ export const exercisesApi = {
     return response.data;
   },
 
+  reorder: async (workoutId: number, exercises: { id: number; orderIndex: number }[]) => {
+    await api.patch(`/workouts/${workoutId}/exercises/reorder`, { exercises });
+  },
+
   delete: async (workoutId: number, exerciseId: number) => {
     await api.delete(`/workouts/${workoutId}/exercises/${exerciseId}`);
   },

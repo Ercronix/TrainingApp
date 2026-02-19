@@ -12,10 +12,21 @@ export default function TrainingScreen() {
   const { training, isLoading, updateExerciseLog, completeTraining } = useTraining(trainingLogId);
 
   const toggleExercise = (exerciseLog: any) => {
-    updateExerciseLog.mutate({
-      exerciseLogId: exerciseLog.id,
-      data: { completed: !exerciseLog.completed },
-    });
+    const completing = !exerciseLog.completed;
+    const data: any = { completed: completing };
+
+    if (completing) {
+      if (!exerciseLog.setsCompleted || exerciseLog.setsCompleted === 0) {
+        data.setsCompleted = exerciseLog.plannedSets ?? 0;
+      }
+      if (!exerciseLog.repsCompleted || exerciseLog.repsCompleted === 0) {
+        data.repsCompleted = exerciseLog.plannedReps ?? 0;
+      }
+      if (!exerciseLog.weightUsed && exerciseLog.plannedWeight) {
+        data.weightUsed = exerciseLog.plannedWeight;
+      }
+    }
+    updateExerciseLog.mutate({ exerciseLogId: exerciseLog.id, data });
   };
 
   const handleComplete = () => {
@@ -64,17 +75,16 @@ export default function TrainingScreen() {
                 sets: item.plannedSets?.toString() || '',
                 reps: item.plannedReps?.toString() || '',
                 weight: item.plannedWeight?.toString() || '',
+                workoutId: item.workoutId?.toString() ?? '',
               },
             })
           }
         >
           <View className="flex-row items-start">
             <View className="flex-1">
-              {/* Workout day label */}
               {item.workoutName && (
                 <Text className="text-xs text-gray-400 mb-0.5">{item.workoutName}</Text>
               )}
-
               <Text
                 className={`text-base font-semibold ${
                   item.completed ? 'text-green-700' : 'text-gray-800'
@@ -83,21 +93,19 @@ export default function TrainingScreen() {
                 {item.exerciseName}
                 {item.completed && ' ✓'}
               </Text>
-
               {item.plannedSets && item.plannedReps && (
                 <Text className="text-sm text-gray-600 mt-1">
                   {item.plannedSets} × {item.plannedReps} reps
                   {item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
                 </Text>
               )}
-
-              {item.completed && item.weightUsed != null && (
+              {item.completed && (
                 <Text className="text-xs text-green-600 font-medium mt-1">
-                  ✓ Logged: {item.setsCompleted}×{item.repsCompleted} @ {item.weightUsed} kg
+                  ✓ Logged: {item.setsCompleted}×{item.repsCompleted}
+                  {item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
                 </Text>
               )}
             </View>
-
             <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
           </View>
         </TouchableOpacity>
@@ -138,11 +146,7 @@ export default function TrainingScreen() {
             size={24}
             color={item.completed ? '#10B981' : '#3B82F6'}
           />
-          <Text
-            className={`text-xs mt-1 ${
-              item.completed ? 'text-green-600' : 'text-blue-600'
-            }`}
-          >
+          <Text className={`text-xs mt-1 ${item.completed ? 'text-green-600' : 'text-blue-600'}`}>
             Log
           </Text>
         </TouchableOpacity>

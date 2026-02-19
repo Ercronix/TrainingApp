@@ -1,55 +1,70 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { exercisesApi } from '@/services/api';
-import { Alert } from 'react-native';
-import { getErrorMessage } from '@/utils/errorHandler';
 import { QUERY_KEYS } from '@/constants/queryKeys';
+import { alert } from '@/utils/confirm';
+import { getErrorMessage } from '@/utils/errorHandler';
 
 export function useExercises(workoutId: string) {
   const queryClient = useQueryClient();
+  const queryKey = QUERY_KEYS.exercises(workoutId);
 
-  const exercisesQuery = useQuery({
-    queryKey: QUERY_KEYS.exercises(workoutId),
+  const query = useQuery({
+    queryKey,
     queryFn: () => exercisesApi.getByWorkout(Number(workoutId)),
     enabled: !!workoutId,
   });
 
   const createExercise = useMutation({
-    mutationFn: (data: {
-      name: string;
-      description?: string | null;
-      videoUrl?: string | null;
-      videoId?: string | null;
-      sets?: number | null;
-      reps?: number | null;
-      plannedWeight?: number | null;
-    }) => exercisesApi.create(Number(workoutId), data),
+    mutationFn: (data: any) => exercisesApi.create(Number(workoutId), data),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exercises(workoutId) });
-      Alert.alert('Success', 'Exercise created!');
+      void queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: unknown) => {
-      Alert.alert('Error', getErrorMessage(error));
+      alert('Error', getErrorMessage(error));
     },
   });
 
   const deleteExercise = useMutation({
-    mutationFn: (exerciseId: number) =>
-      exercisesApi.delete(Number(workoutId), exerciseId),
+    mutationFn: (exerciseId: number) => exercisesApi.delete(Number(workoutId), exerciseId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exercises(workoutId) });
-      Alert.alert('Success', 'Exercise deleted!');
+      void queryClient.invalidateQueries({ queryKey });
     },
     onError: (error: unknown) => {
-      Alert.alert('Error', getErrorMessage(error));
+      alert('Error', getErrorMessage(error));
+    },
+  });
+
+  const reorderExercises = useMutation({
+    mutationFn: (exercises: { id: number; orderIndex: number }[]) =>
+      exercisesApi.reorder(Number(workoutId), exercises),
+    onMutate: async (newOrder) => {
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData(queryKey);
+      queryClient.setQueryData(queryKey, (old: any[]) => {
+        if (!old) return old;
+        const indexMap = new Map(newOrder.map((e) => [e.id, e.orderIndex]));
+        return [...old]
+          .map((e) => ({ ...e, orderIndex: indexMap.get(e.id) ?? e.orderIndex }))
+          .sort((a, b) => a.orderIndex - b.orderIndex);
+      });
+      return { previous };
+    },
+    onError: (error: unknown, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(queryKey, context.previous);
+      alert('Error', getErrorMessage(error));
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 
   return {
-    exercises: exercisesQuery.data,
-    isLoading: exercisesQuery.isLoading,
-    isRefetching: exercisesQuery.isRefetching,
-    refetch: exercisesQuery.refetch,
+    exercises: query.data ?? [],
+    isLoading: query.isLoading,
+    isRefetching: query.isRefetching,
+    refetch: query.refetch,
     createExercise,
     deleteExercise,
+    reorderExercises,
   };
 }

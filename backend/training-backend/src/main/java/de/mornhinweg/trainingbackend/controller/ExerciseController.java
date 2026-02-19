@@ -2,6 +2,7 @@ package de.mornhinweg.trainingbackend.controller;
 
 import de.mornhinweg.trainingbackend.dto.exercise.CreateExerciseRequest;
 import de.mornhinweg.trainingbackend.dto.exercise.ExerciseResponse;
+import de.mornhinweg.trainingbackend.dto.exercise.ReorderExercisesRequest;
 import de.mornhinweg.trainingbackend.dto.exercise.UpdateExerciseRequest;
 import de.mornhinweg.trainingbackend.service.ExerciseService;
 import jakarta.validation.Valid;
@@ -32,8 +33,8 @@ public class ExerciseController {
       @PathVariable Long workoutId,
       @Valid @RequestBody CreateExerciseRequest request,
       Authentication authentication) {
-    ExerciseResponse exercise = exerciseService.createExercise(workoutId, request, authentication);
-    return ResponseEntity.status(HttpStatus.CREATED).body(exercise);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(exerciseService.createExercise(workoutId, request, authentication));
   }
 
   @PutMapping("/{exerciseId}")
@@ -42,8 +43,16 @@ public class ExerciseController {
       @PathVariable Long exerciseId,
       @Valid @RequestBody UpdateExerciseRequest request,
       Authentication authentication) {
-    ExerciseResponse exercise = exerciseService.updateExercise(exerciseId, request, authentication);
-    return ResponseEntity.ok(exercise);
+    return ResponseEntity.ok(exerciseService.updateExercise(exerciseId, request, authentication));
+  }
+
+  @PatchMapping("/reorder")
+  public ResponseEntity<Void> reorderExercises(
+      @PathVariable Long workoutId,
+      @RequestBody ReorderExercisesRequest request,
+      Authentication authentication) {
+    exerciseService.reorderExercises(workoutId, request, authentication);
+    return ResponseEntity.noContent().build();
   }
 
   @DeleteMapping("/{exerciseId}")
