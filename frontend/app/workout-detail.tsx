@@ -6,9 +6,10 @@ import { useStartTraining } from '@/hooks/useStartTraining';
 import { confirm } from '@/utils/confirm';
 
 export default function WorkoutDetailScreen() {
-  const { workoutId, workoutName } = useLocalSearchParams<{
+  const { workoutId, workoutName, splitId } = useLocalSearchParams<{
     workoutId: string;
     workoutName: string;
+    splitId: string;
   }>();
 
   const router = useRouter();
@@ -20,8 +21,7 @@ export default function WorkoutDetailScreen() {
       'Delete Exercise',
       `Delete "${name}"?`,
       () => deleteExercise.mutate(id),
-      'Delete',
-      'Cancel'
+      'Delete'
     );
   };
 
@@ -48,14 +48,12 @@ export default function WorkoutDetailScreen() {
         <View className="flex-row justify-between items-start">
           <View className="flex-1">
             <Text className="text-lg font-semibold text-gray-800 mb-1">{item.name}</Text>
-
             {item.sets && item.reps && (
               <Text className="text-sm text-gray-600">
                 {item.sets} × {item.reps} reps
                 {item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
               </Text>
             )}
-
             {item.lastUsedWeight && (
               <Text className="text-xs text-green-600 font-medium mt-1">
                 Last: {item.lastUsedWeight} kg
@@ -63,17 +61,35 @@ export default function WorkoutDetailScreen() {
             )}
           </View>
 
-          <View className="flex-row gap-2 items-center ml-2">
-            {item.videoUrl && (
-              <Ionicons name="play-circle" size={22} color="#3B82F6" />
-            )}
+          <View className="flex-row gap-3 items-center ml-2">
+            {item.videoUrl && <Ionicons name="play-circle" size={20} color="#3B82F6" />}
+            {/* Edit */}
+            <TouchableOpacity
+              onPress={(e) => {
+                e.stopPropagation();
+                router.push({
+                  pathname: '/edit-exercise' as any,
+                  params: {
+                    workoutId,
+                    exerciseId: item.id.toString(),
+                    currentName: item.name,
+                    currentSets: item.sets?.toString() || '',
+                    currentReps: item.reps?.toString() || '',
+                    currentWeight: item.plannedWeight?.toString() || '',
+                  },
+                });
+              }}
+            >
+              <Ionicons name="pencil-outline" size={20} color="#3B82F6" />
+            </TouchableOpacity>
+            {/* Delete */}
             <TouchableOpacity
               onPress={(e) => {
                 e.stopPropagation();
                 handleDelete(item.id, item.name);
               }}
             >
-              <Ionicons name="trash-outline" size={22} color="#EF4444" />
+              <Ionicons name="trash-outline" size={20} color="#EF4444" />
             </TouchableOpacity>
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
           </View>
@@ -86,9 +102,22 @@ export default function WorkoutDetailScreen() {
     <View className="flex-1 bg-gray-50">
       {/* Header */}
       <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
-        <TouchableOpacity onPress={() => router.back()} className="mb-2">
-          <Text className="text-blue-500 text-base">← Back</Text>
-        </TouchableOpacity>
+        <View className="flex-row justify-between items-center mb-2">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text className="text-blue-500 text-base">← Back</Text>
+          </TouchableOpacity>
+          {/* Edit workout name */}
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: '/edit-workout' as any,
+                params: { workoutId, splitId, currentName: workoutName },
+              })
+            }
+          >
+            <Ionicons name="pencil-outline" size={20} color="#3B82F6" />
+          </TouchableOpacity>
+        </View>
         <Text className="text-2xl font-bold text-gray-800">{workoutName}</Text>
         <Text className="text-sm text-gray-500 mt-1">
           {exercises?.length ?? 0}{' '}
@@ -105,13 +134,12 @@ export default function WorkoutDetailScreen() {
             disabled={isPending}
           >
             <Text className="text-white text-base font-semibold">
-              {isPending ? 'Starting...' : 'Start Training'}
+              {isPending ? 'Starting...' : '🏋️ Start Training'}
             </Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* Exercise List */}
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
           <Text className="text-gray-500">Loading exercises...</Text>
@@ -126,22 +154,13 @@ export default function WorkoutDetailScreen() {
           ListEmptyComponent={
             <View className="items-center mt-20">
               <Text className="text-xl text-gray-400 mb-2">No exercises yet</Text>
-              <Text className="text-sm text-gray-400">
-                Tap + to add your first exercise
-              </Text>
+              <Text className="text-sm text-gray-400">Tap + to add your first exercise</Text>
             </View>
           }
         />
       )}
 
-      {/* FAB */}
-      <Link
-        href={{
-          pathname: '/create-exercise' as any,
-          params: { workoutId },
-        }}
-        asChild
-      >
+      <Link href={{ pathname: '/create-exercise' as any, params: { workoutId } }} asChild>
         <TouchableOpacity className="absolute right-6 bottom-6 w-14 h-14 bg-blue-500 rounded-full justify-center items-center shadow-lg">
           <Text className="text-white text-3xl font-light">+</Text>
         </TouchableOpacity>

@@ -30,9 +30,7 @@ function formatTime(dateString: string): string {
 export default function HistoryScreen() {
   const router = useRouter();
   const { history, isLoading, isRefetching, refetch, deleteLog } = useHistory();
-
-  const active = history.filter((log: any) => !log.isCompleted);
-
+  history.filter((log: any) => !log.isCompleted);
   const handleDelete = (id: number, splitName: string) => {
     confirm(
       'Delete Session',

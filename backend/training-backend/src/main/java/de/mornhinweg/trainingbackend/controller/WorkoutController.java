@@ -1,6 +1,7 @@
 package de.mornhinweg.trainingbackend.controller;
 
 import de.mornhinweg.trainingbackend.dto.workout.CreateWorkoutRequest;
+import de.mornhinweg.trainingbackend.dto.workout.UpdateWorkoutRequest;
 import de.mornhinweg.trainingbackend.dto.workout.WorkoutResponse;
 import de.mornhinweg.trainingbackend.service.WorkoutService;
 import jakarta.validation.Valid;
@@ -23,8 +24,7 @@ public class WorkoutController {
   public ResponseEntity<List<WorkoutResponse>> getWorkoutsBySplit(
       @PathVariable Long splitId,
       Authentication authentication) {
-    List<WorkoutResponse> workouts = workoutService.getWorkoutsBySplit(splitId, authentication);
-    return ResponseEntity.ok(workouts);
+    return ResponseEntity.ok(workoutService.getWorkoutsBySplit(splitId, authentication));
   }
 
   @PostMapping("/split/{splitId}")
@@ -32,8 +32,8 @@ public class WorkoutController {
       @PathVariable Long splitId,
       @Valid @RequestBody CreateWorkoutRequest request,
       Authentication authentication) {
-    WorkoutResponse workout = workoutService.createWorkout(splitId, request, authentication);
-    return ResponseEntity.status(HttpStatus.CREATED).body(workout);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(workoutService.createWorkout(splitId, request, authentication));
   }
 
   @GetMapping("/{id}")
@@ -41,8 +41,22 @@ public class WorkoutController {
       @PathVariable Long id,
       Authentication authentication) {
     try {
-      WorkoutResponse workout = workoutService.getWorkout(id, authentication);
-      return ResponseEntity.ok(workout);
+      return ResponseEntity.ok(workoutService.getWorkout(id, authentication));
+    } catch (RuntimeException e) {
+      if (e.getMessage().equals("Unauthorized")) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+      }
+      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+    }
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity<WorkoutResponse> updateWorkout(
+      @PathVariable Long id,
+      @Valid @RequestBody UpdateWorkoutRequest request,
+      Authentication authentication) {
+    try {
+      return ResponseEntity.ok(workoutService.updateWorkout(id, request, authentication));
     } catch (RuntimeException e) {
       if (e.getMessage().equals("Unauthorized")) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

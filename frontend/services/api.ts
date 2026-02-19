@@ -63,6 +63,11 @@ export const splitsApi = {
     return response.data;
   },
 
+  update: async (id: number, name: string) => {
+    const response = await api.put(`/splits/${id}`, { name });
+    return response.data;
+  },
+
   delete: async (id: number) => {
     await api.delete(`/splits/${id}`);
   },
@@ -83,6 +88,11 @@ export const workoutsApi = {
 
   getById: async (id: number) => {
     const response = await api.get(`/workouts/${id}`);
+    return response.data;
+  },
+
+  update: async (id: number, name: string) => {
+    const response = await api.put(`/workouts/${id}`, { name });
     return response.data;
   },
 

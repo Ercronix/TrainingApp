@@ -142,7 +142,7 @@ public class TrainingLogService {
     return userRepository.findByUsername(username)
         .orElseThrow(() -> new RuntimeException("User not found"));
   }
-  
+
   @Transactional
   public void deleteTraining(Long trainingLogId, Authentication authentication) {
     User user = getCurrentUser(authentication);
