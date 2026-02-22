@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { storage } from './storage';
 import { LoginRequest, RegisterRequest, AuthResponse } from '@/types';
+import { Platform } from 'react-native';
 // api.ts
-const API_URL = 'http://localhost:8080/api';
+
+const API_URL = Platform.OS === 'web'
+  ? 'http://localhost:8080/api'
+  : 'http://192.168.2.106:8080/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -140,6 +144,11 @@ export const exercisesApi = {
 
   delete: async (workoutId: number, exerciseId: number) => {
     await api.delete(`/workouts/${workoutId}/exercises/${exerciseId}`);
+  },
+
+  getProgress: async (exerciseId: number) => {
+    const response = await api.get(`/exercises/${exerciseId}/progress`);
+    return response.data;
   },
 };
 

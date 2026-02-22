@@ -1,12 +1,11 @@
 package de.mornhinweg.trainingbackend.service;
 
-import de.mornhinweg.trainingbackend.dto.exercise.CreateExerciseRequest;
-import de.mornhinweg.trainingbackend.dto.exercise.ExerciseResponse;
-import de.mornhinweg.trainingbackend.dto.exercise.ReorderExercisesRequest;
-import de.mornhinweg.trainingbackend.dto.exercise.UpdateExerciseRequest;
+import de.mornhinweg.trainingbackend.dto.exercise.*;
 import de.mornhinweg.trainingbackend.model.Exercise;
+import de.mornhinweg.trainingbackend.model.ExerciseLog;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.model.Workout;
+import de.mornhinweg.trainingbackend.repository.ExerciseLogRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.UserRepository;
 import de.mornhinweg.trainingbackend.repository.WorkoutRepository;
@@ -26,6 +25,7 @@ public class ExerciseService {
   private final ExerciseRepository exerciseRepository;
   private final WorkoutRepository workoutRepository;
   private final UserRepository userRepository;
+  private final ExerciseLogRepository exerciseLogRepository;
 
   public List<ExerciseResponse> getExercisesByWorkout(Long workoutId, Authentication authentication) {
     User user = getCurrentUser(authentication);
@@ -118,6 +118,29 @@ public class ExerciseService {
     String username = authentication.getName();
     return userRepository.findByUsername(username)
         .orElseThrow(() -> new RuntimeException("User not found"));
+  }
+
+  public ExerciseProgressResponse getProgress(Long exerciseId, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    Exercise exercise = getOwnedExercise(exerciseId, user);
+
+    List<ExerciseLog> logs = exerciseLogRepository.findCompletedByExerciseIdOrderByDate(exerciseId);
+
+    List<ExerciseProgressResponse.ProgressEntry> entries = logs.stream()
+        .map(log -> ExerciseProgressResponse.ProgressEntry.builder()
+            .date(log.getTrainingLog().getCompletedAt())
+            .weightUsed(log.getWeightUsed())
+            .setsCompleted(log.getSetsCompleted())
+            .repsCompleted(log.getRepsCompleted())
+            .trainingLogId(log.getTrainingLog().getId())
+            .build())
+        .collect(Collectors.toList());
+
+    return ExerciseProgressResponse.builder()
+        .exerciseId(exercise.getId())
+        .exerciseName(exercise.getName())
+        .entries(entries)
+        .build();
   }
 
   private ExerciseResponse toResponse(Exercise exercise) {

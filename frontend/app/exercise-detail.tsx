@@ -4,6 +4,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons } from '@expo/vector-icons';
 import { useExerciseDetail } from '@/hooks/useExerciseDetail';
+import { useExerciseProgress } from '@/hooks/useExerciseProgress';
+import { ExerciseProgressChart } from '@/components/exercise-progress-chart';
 
 export default function ExerciseDetailScreen() {
   const {
@@ -33,7 +35,7 @@ export default function ExerciseDetailScreen() {
   const [description, setDescription] = useState(initialDescription || '');
   const [editingVideo, setEditingVideo] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
-
+  const { progress, isLoading: progressLoading } = useExerciseProgress(exerciseId);
   const getYouTubeId = (url: string) => {
     if (!url) return null;
     if (url.includes('youtube.com/watch?v=')) return url.split('v=')[1].split('&')[0];
@@ -118,7 +120,24 @@ export default function ExerciseDetailScreen() {
             )}
           </View>
         )}
-
+       {/* Progress Chart */}
+        <View className="mx-4 mt-3 bg-white rounded-xl border border-gray-200">
+          <View className="px-4 py-3 border-b border-gray-100">
+            <Text className="text-sm font-semibold text-gray-700">Weight Progress</Text>
+          </View>
+          <View className="p-4">
+            {progressLoading ? (
+              <View className="items-center py-6">
+                <Text className="text-sm text-gray-400">Loading progress...</Text>
+              </View>
+            ) : (
+              <ExerciseProgressChart
+                entries={progress?.entries ?? []}
+                exerciseName={exerciseName}
+              />
+            )}
+          </View>
+        </View>
         {/* Description Section */}
         <View className="mx-4 mt-3 mb-8 bg-white rounded-xl border border-gray-200">
           <View className="flex-row justify-between items-center px-4 py-3 border-b border-gray-100">

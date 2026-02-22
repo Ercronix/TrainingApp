@@ -1,9 +1,6 @@
 package de.mornhinweg.trainingbackend.controller;
 
-import de.mornhinweg.trainingbackend.dto.exercise.CreateExerciseRequest;
-import de.mornhinweg.trainingbackend.dto.exercise.ExerciseResponse;
-import de.mornhinweg.trainingbackend.dto.exercise.ReorderExercisesRequest;
-import de.mornhinweg.trainingbackend.dto.exercise.UpdateExerciseRequest;
+import de.mornhinweg.trainingbackend.dto.exercise.*;
 import de.mornhinweg.trainingbackend.service.ExerciseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
