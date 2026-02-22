@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { storage } from './storage';
 import { LoginRequest, RegisterRequest, AuthResponse } from '@/types';
-
-const API_URL = 'http://192.168.2.150:8080/api';
+// api.ts
+const API_URL = 'http://localhost:8080/api';
 
 const api = axios.create({
   baseURL: API_URL,
