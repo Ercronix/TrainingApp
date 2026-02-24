@@ -17,6 +17,8 @@ public class TrainingLogResponse {
   private Long id;
   private Long splitId;
   private String splitName;
+  private Long workoutId;      // Added
+  private String workoutName;  // Added
   private LocalDateTime startedAt;
   private LocalDateTime completedAt;
   private Integer durationSeconds;

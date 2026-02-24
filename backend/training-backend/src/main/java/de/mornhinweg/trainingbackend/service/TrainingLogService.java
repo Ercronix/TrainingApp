@@ -41,6 +41,7 @@ public class TrainingLogService {
     TrainingLog trainingLog = TrainingLog.builder()
         .user(user)
         .split(split)
+        .workout(workout)  // Added workout reference
         .startedAt(LocalDateTime.now())
         .build();
 
@@ -156,6 +157,8 @@ public class TrainingLogService {
         .id(trainingLog.getId())
         .splitId(trainingLog.getSplit().getId())
         .splitName(trainingLog.getSplit().getName())
+        .workoutId(trainingLog.getWorkout().getId())  // Added workout ID
+        .workoutName(trainingLog.getWorkout().getName())  // Added workout name
         .startedAt(trainingLog.getStartedAt())
         .completedAt(trainingLog.getCompletedAt())
         .durationSeconds(trainingLog.getDurationSeconds())

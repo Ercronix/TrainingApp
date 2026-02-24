@@ -2,11 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trainingLogsApi } from '@/services/api';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { alert } from '@/utils/confirm';
+import { TrainingLog } from '@/types'; 
 
 export function useHistory() {
   const queryClient = useQueryClient();
 
-  const query = useQuery({
+  const query = useQuery<TrainingLog[]>({
     queryKey: ['history'],
     queryFn: trainingLogsApi.getAll,
   });

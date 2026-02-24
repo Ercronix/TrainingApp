@@ -37,3 +37,33 @@ export interface TrainingSplit {
 export interface CreateSplitRequest {
     name: string;
 }
+
+export interface TrainingLog {
+  id: number;
+  splitId: number;
+  splitName: string;
+  workoutId: number;      
+  workoutName: string;    
+  startedAt: string;
+  completedAt: string | null;
+  durationSeconds: number | null;
+  notes: string | null;
+  exercises: ExerciseLog[];
+  isCompleted: boolean;
+}
+
+export interface ExerciseLog {
+  id: number;
+  exerciseId: number;
+  exerciseName: string;
+  workoutId: number;
+  workoutName: string;
+  plannedSets: number | null;
+  plannedReps: number | null;
+  plannedWeight: number | null;
+  setsCompleted: number;
+  repsCompleted: number;
+  weightUsed: number | null;
+  completed: boolean;
+  notes: string | null;
+}

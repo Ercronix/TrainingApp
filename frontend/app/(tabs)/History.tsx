@@ -30,11 +30,11 @@ function formatTime(dateString: string): string {
 export default function HistoryScreen() {
   const router = useRouter();
   const { history, isLoading, isRefetching, refetch, deleteLog } = useHistory();
-  history.filter((log: any) => !log.isCompleted);
-  const handleDelete = (id: number, splitName: string) => {
+
+  const handleDelete = (id: number, workoutName: string) => {
     confirm(
       'Delete Session',
-      `Delete the training session for "${splitName}"? This cannot be undone.`,
+      `Delete the training session for "${workoutName}"? This cannot be undone.`,
       () => deleteLog.mutate(id),
       'Delete'
     );
@@ -56,21 +56,23 @@ export default function HistoryScreen() {
       >
         {/* Top row */}
         <View className="flex-row justify-between items-start mb-2">
-          <Text className="text-lg font-bold text-gray-800 flex-1 mr-2">
-            {item.splitName}
-          </Text>
-          <View className="flex-row items-center gap-3">
-            <Text className="text-xs text-gray-400">{formatDate(item.startedAt)}</Text>
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                handleDelete(item.id, item.splitName);
-              }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons name="trash-outline" size={18} color="#EF4444" />
-            </TouchableOpacity>
+          <View className="flex-1 mr-2">
+            <Text className="text-lg font-bold text-gray-800">
+              {item.workoutName || item.splitName}
+            </Text>
+            <Text className="text-xs text-gray-500 mt-0.5">
+              {item.splitName} • {formatDate(item.startedAt)}
+            </Text>
           </View>
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              handleDelete(item.id, item.workoutName || item.splitName);
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="trash-outline" size={18} color="#EF4444" />
+          </TouchableOpacity>
         </View>
 
         {/* Stats row */}
@@ -127,13 +129,15 @@ export default function HistoryScreen() {
     );
   }
 
+  const completedSessions = history.filter((l: any) => l.isCompleted);
+
   return (
     <View className="flex-1 bg-gray-50">
       <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
         <Text className="text-2xl font-bold text-gray-800">Training History</Text>
         <Text className="text-sm text-gray-500 mt-1">
-          {history.filter((l: any) => l.isCompleted).length} session
-          {history.filter((l: any) => l.isCompleted).length !== 1 ? 's' : ''} completed
+          {completedSessions.length} session
+          {completedSessions.length !== 1 ? 's' : ''} completed
         </Text>
       </View>
 

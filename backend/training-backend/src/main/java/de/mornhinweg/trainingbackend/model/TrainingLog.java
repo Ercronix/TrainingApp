@@ -28,6 +28,10 @@ public class TrainingLog {
   @JoinColumn(name = "split_id", nullable = false)
   private TrainingSplit split;
 
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "workout_id", nullable = false)
+  private Workout workout;
+
   @Column(name = "started_at", nullable = false)
   private LocalDateTime startedAt;
 

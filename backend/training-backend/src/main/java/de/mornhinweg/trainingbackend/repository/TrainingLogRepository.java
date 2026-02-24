@@ -19,4 +19,6 @@ public interface TrainingLogRepository extends JpaRepository<TrainingLog, Long> 
       Long userId, LocalDateTime start, LocalDateTime end);
 
   Optional<TrainingLog> findByIdAndUserId(Long id, Long userId);
+
+  List<TrainingLog> findByWorkoutIdOrderByStartedAtDesc(Long workoutId);
 }

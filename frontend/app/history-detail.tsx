@@ -110,10 +110,23 @@ export default function HistoryDetailScreen() {
             <Ionicons name="trash-outline" size={22} color="#EF4444" />
           </TouchableOpacity>
         </View>
-        <Text className="text-2xl font-bold text-gray-800">{training?.splitName}</Text>
-        {training?.startedAt && (
+        
+        {/* Main title - Workout name */}
+        <Text className="text-2xl font-bold text-gray-800">
+          {training?.workoutName || training?.splitName}
+        </Text>
+        
+        {/* Subtitle - Split name and date */}
+        {training?.splitName && (
           <Text className="text-sm text-gray-500 mt-1">
-            {formatDate(training.startedAt)} · {formatTime(training.startedAt)}
+            {training.splitName} • {training?.startedAt ? formatDate(training.startedAt) : ''}
+          </Text>
+        )}
+        
+        {/* Time */}
+        {training?.startedAt && (
+          <Text className="text-sm text-gray-400 mt-1">
+            {formatTime(training.startedAt)}
           </Text>
         )}
       </View>
@@ -156,6 +169,13 @@ export default function HistoryDetailScreen() {
         renderItem={renderExerciseItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ padding: 16 }}
+        ListHeaderComponent={
+          <View className="mb-3">
+            <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              EXERCISES
+            </Text>
+          </View>
+        }
       />
     </View>
   );
