@@ -67,3 +67,32 @@ export interface ExerciseLog {
   completed: boolean;
   notes: string | null;
 }
+
+export interface DashboardStats {
+  streak: {
+    current: number;
+    longest: number;
+    last7Days: boolean[];
+  };
+  sessions: {
+    week: number;
+    month: number;
+    year: number;
+  };
+  volume: {
+    week: number;
+    month: number;
+    year: number;
+  };
+  time: {
+    week: string;
+    month: string;
+    year: string;
+  };
+  averageVolume: number;
+  lastSession: TrainingLog | null;
+  mostActiveDay: string;
+  sessionsByDay: Record<string, number>;
+}
+
+
