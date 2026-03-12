@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { confirm, alert } from '@/utils/confirm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,6 +11,50 @@ export default function TrainingScreen() {
   const router = useRouter();
 
   const { training, isLoading, updateExerciseLog, completeTraining } = useTraining(trainingLogId);
+
+  // Keep a stable UI order even if the backend refetch returns a different sort (e.g. completed last).
+  const [exerciseOrder, setExerciseOrder] = useState<number[]>([]);
+
+  useEffect(() => {
+    setExerciseOrder([]);
+  }, [trainingLogId]);
+
+  useEffect(() => {
+    const exercises = training?.exercises;
+    if (!exercises || exercises.length === 0) return;
+
+    setExerciseOrder((prev) => {
+      if (prev.length === 0) return exercises.map((e: any) => e.id);
+
+      const ids = exercises.map((e: any) => e.id);
+      const idSet = new Set(ids);
+
+      const next = prev.filter((id) => idSet.has(id));
+      const nextSet = new Set(next);
+
+      for (const id of ids) {
+        if (!nextSet.has(id)) {
+          next.push(id);
+          nextSet.add(id);
+        }
+      }
+
+      return next;
+    });
+  }, [training?.exercises]);
+
+  const orderedExercises = useMemo(() => {
+    const exercises = training?.exercises ?? [];
+    if (exerciseOrder.length === 0) return exercises;
+
+    const byId = new Map<number, any>(exercises.map((e: any) => [e.id, e]));
+    const orderSet = new Set(exerciseOrder);
+
+    const inOrder = exerciseOrder.map((id) => byId.get(id)).filter(Boolean);
+    const remaining = exercises.filter((e: any) => !orderSet.has(e.id));
+
+    return inOrder.concat(remaining);
+  }, [training?.exercises, exerciseOrder]);
 
   const toggleExercise = (exerciseLog: any) => {
     const completing = !exerciseLog.completed;
@@ -190,7 +235,7 @@ export default function TrainingScreen() {
 
       {/* Exercise List */}
       <FlatList
-        data={training?.exercises}
+        data={orderedExercises}
         renderItem={renderExerciseItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ padding: 16, paddingBottom: 180 }}
