@@ -159,6 +159,20 @@ export const trainingLogsApi = {
     return response.data;
   },
 
+  addExerciseLog: async (
+    trainingLogId: number,
+    data: {
+      name: string;
+      sets?: number | null;
+      reps?: number | null;
+      plannedWeight?: number | null;
+      addToWorkout: boolean;
+    }
+  ) => {
+    const response = await api.post(`/training-logs/${trainingLogId}/exercise-logs`, data);
+    return response.data;
+  },
+
   // Renamed endpoint: /exercises/ → /exercise-logs/
   updateExerciseLog: async (exerciseLogId: number, data: {
     setsCompleted?: number;

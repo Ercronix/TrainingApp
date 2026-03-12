@@ -45,6 +45,7 @@ public class TrainingLog {
   private String notes;
 
   @OneToMany(mappedBy = "trainingLog", cascade = CascadeType.ALL, orphanRemoval = true)
+  @OrderBy("id ASC")
   @Builder.Default
   private List<ExerciseLog> exerciseLogs = new ArrayList<>();
 

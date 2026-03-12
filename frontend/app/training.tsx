@@ -214,9 +214,23 @@ export default function TrainingScreen() {
     <View className="flex-1 bg-slate-950">
       {/* Header */}
       <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <TouchableOpacity onPress={() => router.back()} className="mb-2">
-          <Text className="text-blue-400 text-base">← Back</Text>
-        </TouchableOpacity>
+        <View className="flex-row items-center justify-between mb-2">
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text className="text-blue-400 text-base">← Back</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({
+                pathname: '/add-exercise' as any,
+                params: { trainingLogId },
+              })
+            }
+            className="flex-row items-center"
+          >
+            <Ionicons name="add" size={18} color="#60A5FA" />
+            <Text className="text-blue-400 text-base ml-1">Add</Text>
+          </TouchableOpacity>
+        </View>
         <Text className="text-2xl font-bold text-slate-100">{training?.splitName}</Text>
         <Text className="text-sm text-slate-400 mt-1">
           {completedCount}/{totalCount} exercises completed

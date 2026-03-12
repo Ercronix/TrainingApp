@@ -34,6 +34,15 @@ public class TrainingLogController {
     return ResponseEntity.ok(trainingLogService.updateExerciseLog(exerciseLogId, request, authentication));
   }
 
+  @PostMapping("/{trainingLogId}/exercise-logs")
+  public ResponseEntity<ExerciseLogResponse> addExerciseLog(
+      @PathVariable Long trainingLogId,
+      @Valid @RequestBody AddExerciseLogRequest request,
+      Authentication authentication) {
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(trainingLogService.addExerciseLog(trainingLogId, request, authentication));
+  }
+
   @PutMapping("/{id}/complete")
   public ResponseEntity<TrainingLogResponse> completeTraining(
       @PathVariable Long id,

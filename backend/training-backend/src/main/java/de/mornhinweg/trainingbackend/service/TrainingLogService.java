@@ -48,7 +48,8 @@ public class TrainingLogService {
     trainingLog = trainingLogRepository.save(trainingLog);
 
     // Create an exercise log only for exercises in this specific workout day
-    List<Exercise> exercises = exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId());
+    // Only include workout-template exercises. Temporary exercises are for ad-hoc logging.
+    List<Exercise> exercises = exerciseRepository.findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(workout.getId());
 
     for (Exercise exercise : exercises) {
       ExerciseLog exerciseLog = ExerciseLog.builder()
@@ -86,6 +87,50 @@ public class TrainingLogService {
     if (request.getNotes() != null) exerciseLog.setNotes(request.getNotes());
 
     exerciseLog = exerciseLogRepository.save(exerciseLog);
+    return toExerciseLogResponse(exerciseLog);
+  }
+
+  @Transactional
+  public ExerciseLogResponse addExerciseLog(Long trainingLogId, AddExerciseLogRequest request, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+
+    TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
+        .orElseThrow(() -> new RuntimeException("Training log not found"));
+
+    if (trainingLog.isCompleted()) {
+      throw new RuntimeException("Training is already completed");
+    }
+
+    Workout workout = trainingLog.getWorkout();
+
+    boolean addToWorkout = Boolean.TRUE.equals(request.getAddToWorkout());
+    boolean temporary = !addToWorkout;
+
+    int nextOrderIndex = addToWorkout
+        ? exerciseRepository.findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(workout.getId()).size()
+        : exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId()).size();
+
+    Exercise exercise = Exercise.builder()
+        .workout(workout)
+        .name(request.getName())
+        .sets(request.getSets())
+        .reps(request.getReps())
+        .plannedWeight(request.getPlannedWeight())
+        .orderIndex(nextOrderIndex)
+        .temporary(temporary)
+        .build();
+    exercise = exerciseRepository.save(exercise);
+
+    ExerciseLog exerciseLog = ExerciseLog.builder()
+        .trainingLog(trainingLog)
+        .exercise(exercise)
+        .setsCompleted(0)
+        .repsCompleted(0)
+        .weightUsed(exercise.getLastUsedWeight())
+        .completed(false)
+        .build();
+    exerciseLog = exerciseLogRepository.save(exerciseLog);
+
     return toExerciseLogResponse(exerciseLog);
   }
 

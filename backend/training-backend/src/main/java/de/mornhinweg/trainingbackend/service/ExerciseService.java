@@ -30,7 +30,9 @@ public class ExerciseService {
   public List<ExerciseResponse> getExercisesByWorkout(Long workoutId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Workout workout = getOwnedWorkout(workoutId, user);
-    return exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId())
+    // Temporary exercises are created for one-off logging during a training session and should not
+    // show up on the workout template.
+    return exerciseRepository.findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(workout.getId())
         .stream().map(this::toResponse).collect(Collectors.toList());
   }
 
@@ -38,7 +40,9 @@ public class ExerciseService {
   public ExerciseResponse createExercise(Long workoutId, CreateExerciseRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Workout workout = getOwnedWorkout(workoutId, user);
-    int nextOrderIndex = workout.getExercises().size();
+    int nextOrderIndex = exerciseRepository
+        .findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(workout.getId())
+        .size();
     Exercise exercise = Exercise.builder()
         .workout(workout)
         .name(request.getName())
@@ -49,6 +53,7 @@ public class ExerciseService {
         .reps(request.getReps())
         .plannedWeight(request.getPlannedWeight())
         .orderIndex(nextOrderIndex)
+        .temporary(false)
         .build();
     return toResponse(exerciseRepository.save(exercise));
   }
@@ -79,7 +84,8 @@ public class ExerciseService {
             ReorderExercisesRequest.ExerciseOrderItem::getOrderIndex
         ));
 
-    List<Exercise> exercises = exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workoutId);
+    // Reordering only applies to workout-template exercises.
+    List<Exercise> exercises = exerciseRepository.findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(workoutId);
     for (Exercise exercise : exercises) {
       Integer newIndex = orderMap.get(exercise.getId());
       if (newIndex != null) {

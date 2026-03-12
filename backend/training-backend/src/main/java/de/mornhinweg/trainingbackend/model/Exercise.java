@@ -54,6 +54,10 @@ public class Exercise {
   @Builder.Default
   private Integer orderIndex = 0;
 
+  @Column(nullable = false)
+  @Builder.Default
+  private Boolean temporary = false;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
