@@ -27,6 +27,7 @@ export function useAddExerciseLog(trainingLogId?: string) {
         void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.training(trainingLogId) });
       }
       void queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      void queryClient.invalidateQueries({ queryKey: ['workouts'] });
       Alert.alert('Success', 'Exercise added!');
       router.back();
     },

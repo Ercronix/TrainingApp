@@ -172,7 +172,7 @@ export default function WorkoutDetailScreen() {
             disabled={isStarting}
           >
             <Text className="text-white text-base font-semibold">
-              {isStarting ? 'Starting...' : '🏋️ Start Training'}
+              {isStarting ? 'Starting...' : 'Start Training'}
             </Text>
           </TouchableOpacity>
         </View>

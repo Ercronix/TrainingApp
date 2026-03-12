@@ -6,6 +6,7 @@ import de.mornhinweg.trainingbackend.dto.workout.WorkoutResponse;
 import de.mornhinweg.trainingbackend.model.TrainingSplit;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.model.Workout;
+import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.TrainingSplitRepository;
 import de.mornhinweg.trainingbackend.repository.UserRepository;
 import de.mornhinweg.trainingbackend.repository.WorkoutRepository;
@@ -24,6 +25,7 @@ public class WorkoutService {
   private final WorkoutRepository workoutRepository;
   private final TrainingSplitRepository trainingSplitRepository;
   private final UserRepository userRepository;
+  private final ExerciseRepository exerciseRepository;
 
   public List<WorkoutResponse> getWorkoutsBySplit(Long splitId, Authentication authentication) {
     User user = getCurrentUser(authentication);
@@ -91,7 +93,9 @@ public class WorkoutService {
         .id(workout.getId())
         .splitId(workout.getSplit().getId())
         .name(workout.getName())
-        .exerciseCount(workout.getExercises().size())
+        // Temporary exercises exist only for one-off training logs and should not count towards
+        // the workout template's exercise count.
+        .exerciseCount((int) exerciseRepository.countByWorkoutIdAndTemporaryFalse(workout.getId()))
         .orderIndex(workout.getOrderIndex())
         .createdAt(workout.getCreatedAt())
         .updatedAt(workout.getUpdatedAt())

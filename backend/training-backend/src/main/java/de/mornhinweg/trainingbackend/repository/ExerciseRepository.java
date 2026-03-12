@@ -12,4 +12,6 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
   List<Exercise> findByWorkoutIdOrderByOrderIndexAsc(Long workoutId);
 
   List<Exercise> findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(Long workoutId);
+
+  long countByWorkoutIdAndTemporaryFalse(Long workoutId);
 }
