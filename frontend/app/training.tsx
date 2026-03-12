@@ -101,8 +101,8 @@ export default function TrainingScreen() {
 
   const renderExerciseItem = ({ item }: { item: any }) => (
     <View
-      className={`bg-white rounded-xl mb-3 border ${
-        item.completed ? 'border-green-500' : 'border-gray-200'
+      className={`bg-slate-900 rounded-xl mb-3 border ${
+        item.completed ? 'border-blue-500' : 'border-slate-800'
       }`}
     >
       <View className="flex-row">
@@ -128,41 +128,41 @@ export default function TrainingScreen() {
           <View className="flex-row items-start">
             <View className="flex-1">
               {item.workoutName && (
-                <Text className="text-xs text-gray-400 mb-0.5">{item.workoutName}</Text>
+                <Text className="text-xs text-slate-500 mb-0.5">{item.workoutName}</Text>
               )}
               <Text
                 className={`text-base font-semibold ${
-                  item.completed ? 'text-green-700' : 'text-gray-800'
+                  item.completed ? 'text-blue-200' : 'text-slate-100'
                 }`}
               >
                 {item.exerciseName}
                 {item.completed && ' ✓'}
               </Text>
               {item.plannedSets && item.plannedReps && (
-                <Text className="text-sm text-gray-600 mt-1">
+                <Text className="text-sm text-slate-300 mt-1">
                   {item.plannedSets} × {item.plannedReps} reps
                   {item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
                 </Text>
               )}
               {item.completed && (
-                <Text className="text-xs text-green-600 font-medium mt-1">
+                <Text className="text-xs text-blue-300 font-medium mt-1">
                   ✓ Logged: {item.setsCompleted}×{item.repsCompleted}
                   {item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
                 </Text>
               )}
             </View>
-            <Ionicons name="information-circle-outline" size={20} color="#9CA3AF" />
+            <Ionicons name="information-circle-outline" size={20} color="#64748B" />
           </View>
         </TouchableOpacity>
 
         {/* Toggle complete checkbox */}
         <TouchableOpacity
-          className="w-16 justify-center items-center border-l border-gray-200"
+          className="w-16 justify-center items-center border-l border-slate-800"
           onPress={() => toggleExercise(item)}
         >
           <View
             className={`w-6 h-6 rounded-full justify-center items-center ${
-              item.completed ? 'bg-green-500' : 'border-2 border-gray-300'
+              item.completed ? 'bg-blue-600' : 'border-2 border-slate-600'
             }`}
           >
             {item.completed && <Ionicons name="checkmark" size={16} color="white" />}
@@ -171,7 +171,7 @@ export default function TrainingScreen() {
 
         {/* Log button */}
         <TouchableOpacity
-          className="w-16 justify-center items-center border-l border-gray-200"
+          className="w-16 justify-center items-center border-l border-slate-800"
           onPress={() =>
             router.push({
               pathname: '/log-exercise' as any,
@@ -189,9 +189,9 @@ export default function TrainingScreen() {
           <Ionicons
             name="create-outline"
             size={24}
-            color={item.completed ? '#10B981' : '#3B82F6'}
+            color={item.completed ? '#93C5FD' : '#60A5FA'}
           />
-          <Text className={`text-xs mt-1 ${item.completed ? 'text-green-600' : 'text-blue-600'}`}>
+          <Text className={`text-xs mt-1 ${item.completed ? 'text-blue-300' : 'text-blue-400'}`}>
             Log
           </Text>
         </TouchableOpacity>
@@ -201,8 +201,8 @@ export default function TrainingScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <Text className="text-gray-500">Loading training...</Text>
+      <View className="flex-1 justify-center items-center bg-slate-950">
+        <Text className="text-slate-400">Loading training...</Text>
       </View>
     );
   }
@@ -211,23 +211,23 @@ export default function TrainingScreen() {
   const totalCount = training?.exercises.length || 0;
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-slate-950">
       {/* Header */}
-      <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
+      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
         <TouchableOpacity onPress={() => router.back()} className="mb-2">
-          <Text className="text-blue-500 text-base">← Back</Text>
+          <Text className="text-blue-400 text-base">← Back</Text>
         </TouchableOpacity>
-        <Text className="text-2xl font-bold text-gray-800">{training?.splitName}</Text>
-        <Text className="text-sm text-gray-500 mt-1">
+        <Text className="text-2xl font-bold text-slate-100">{training?.splitName}</Text>
+        <Text className="text-sm text-slate-400 mt-1">
           {completedCount}/{totalCount} exercises completed
         </Text>
       </View>
 
       {/* Progress Bar */}
-      <View className="bg-white px-6 py-3">
-        <View className="h-2 bg-gray-200 rounded-full overflow-hidden">
+      <View className="bg-slate-900 px-6 py-3">
+        <View className="h-2 bg-slate-800 rounded-full overflow-hidden">
           <View
-            className="h-full bg-green-500"
+            className="h-full bg-blue-600"
             style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
           />
         </View>
@@ -242,7 +242,7 @@ export default function TrainingScreen() {
       />
 
       {/* Bottom — Rest Timer + Complete */}
-      <View className="bg-white border-t border-gray-200">
+      <View className="bg-slate-900 border-t border-slate-800">
         <View className="px-4 pt-4">
           <RestTimer
             duration={120}
@@ -251,7 +251,7 @@ export default function TrainingScreen() {
         </View>
         <View className="p-4">
           <TouchableOpacity
-            className={`bg-green-500 rounded-lg py-4 items-center ${
+            className={`bg-blue-600 rounded-lg py-4 items-center ${
               completeTraining.isPending ? 'opacity-50' : ''
             }`}
             onPress={handleComplete}

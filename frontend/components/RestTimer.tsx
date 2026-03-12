@@ -55,13 +55,13 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
   };
 
   return (
-    <View className="bg-white rounded-xl p-4 border border-gray-200">
+    <View className="bg-slate-900 rounded-xl p-4 border border-slate-800">
       <View className="flex-row items-center justify-between">
         {/* Timer Display */}
         <View className="flex-1">
-          <Text className="text-xs text-gray-500 mb-1">Rest Timer</Text>
+          <Text className="text-xs text-slate-400 mb-1">Rest Timer</Text>
           <Text className={`text-3xl font-bold ${
-            seconds <= 10 && isRunning ? 'text-red-500' : 'text-gray-800'
+            seconds <= 10 && isRunning ? 'text-red-400' : 'text-slate-100'
           }`}>
             {formatTime(seconds)}
           </Text>
@@ -71,7 +71,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
         <View className="flex-row gap-2">
           <TouchableOpacity
             className={`w-12 h-12 rounded-full justify-center items-center ${
-              isRunning ? 'bg-orange-500' : 'bg-green-500'
+              isRunning ? 'bg-slate-700' : 'bg-blue-600'
             }`}
             onPress={toggle}
           >
@@ -83,19 +83,19 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="w-12 h-12 rounded-full justify-center items-center bg-gray-200"
+            className="w-12 h-12 rounded-full justify-center items-center bg-slate-800"
             onPress={reset}
           >
-            <Ionicons name="refresh" size={20} color="#374151" />
+            <Ionicons name="refresh" size={20} color="#94A3B8" />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Progress Bar */}
-      <View className="mt-3 h-1 bg-gray-200 rounded-full overflow-hidden">
+      <View className="mt-3 h-1 bg-slate-800 rounded-full overflow-hidden">
         <View
           className={`h-full ${
-            seconds <= 10 && isRunning ? 'bg-red-500' : 'bg-green-500'
+            seconds <= 10 && isRunning ? 'bg-red-400' : 'bg-blue-600'
           }`}
           style={{ width: `${((duration - seconds) / duration) * 100}%` }}
         />
@@ -104,28 +104,44 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
       {/* Preset Buttons */}
       <View className="flex-row gap-2 mt-3">
         <TouchableOpacity
-          className="flex-1 bg-gray-100 rounded-lg py-2"
+          className={`flex-1 rounded-lg py-2 ${
+            customDuration === 60 ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
+          }`}
           onPress={() => setPreset(1)}
         >
-          <Text className="text-center text-sm text-gray-700">1 min</Text>
+          <Text className={`text-center text-sm ${
+            customDuration === 60 ? 'text-blue-200' : 'text-slate-200'
+          }`}>1 min</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="flex-1 bg-gray-100 rounded-lg py-2"
+          className={`flex-1 rounded-lg py-2 ${
+            customDuration === 120 ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
+          }`}
           onPress={() => setPreset(2)}
         >
-          <Text className="text-center text-sm text-gray-700">2 min</Text>
+          <Text className={`text-center text-sm ${
+            customDuration === 120 ? 'text-blue-200' : 'text-slate-200'
+          }`}>2 min</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="flex-1 bg-gray-100 rounded-lg py-2"
+          className={`flex-1 rounded-lg py-2 ${
+            customDuration === 180 ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
+          }`}
           onPress={() => setPreset(3)}
         >
-          <Text className="text-center text-sm text-gray-700">3 min</Text>
+          <Text className={`text-center text-sm ${
+            customDuration === 180 ? 'text-blue-200' : 'text-slate-200'
+          }`}>3 min</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          className="flex-1 bg-gray-100 rounded-lg py-2"
+          className={`flex-1 rounded-lg py-2 ${
+            customDuration === 300 ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
+          }`}
           onPress={() => setPreset(5)}
         >
-          <Text className="text-center text-sm text-gray-700">5 min</Text>
+          <Text className={`text-center text-sm ${
+            customDuration === 300 ? 'text-blue-200' : 'text-slate-200'
+          }`}>5 min</Text>
         </TouchableOpacity>
       </View>
     </View>

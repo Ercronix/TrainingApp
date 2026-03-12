@@ -39,33 +39,37 @@ export default function LoginScreen() {
     };
 
     return (
-        <View className="flex-1 justify-center px-6 bg-white">
-            <Text className="text-3xl font-bold text-center mb-12">
+        <View className="flex-1 justify-center px-6 bg-slate-950">
+            <Text className="text-3xl font-bold text-slate-100 text-center mb-12">
                 Training App 🏋️
             </Text>
 
-            <Text className="text-base mb-2 text-gray-700">Username</Text>
+            <Text className="text-base mb-2 text-slate-300">Username</Text>
             <TextInput
-                className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
+                className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
                 placeholder="Enter username"
+                placeholderTextColor="#64748B"
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
+                keyboardAppearance="dark"
                 editable={!loading}
             />
 
-            <Text className="text-base mb-2 text-gray-700">Password</Text>
+            <Text className="text-base mb-2 text-slate-300">Password</Text>
             <TextInput
-                className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-6"
+                className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-6"
                 placeholder="Enter password"
+                placeholderTextColor="#64748B"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                keyboardAppearance="dark"
                 editable={!loading}
             />
 
             <TouchableOpacity
-                className={`bg-blue-500 rounded-lg py-4 items-center ${loading ? 'opacity-50' : ''}`}
+                className={`bg-blue-600 rounded-lg py-4 items-center ${loading ? 'opacity-50' : ''}`}
                 onPress={handleLogin}
                 disabled={loading}
             >
@@ -76,7 +80,7 @@ export default function LoginScreen() {
 
             <Link href="/register" asChild>
                 <TouchableOpacity className="mt-4 items-center" disabled={loading}>
-                    <Text className="text-blue-500 text-base">
+                    <Text className="text-blue-400 text-base">
                         Don't have an account? Register
                     </Text>
                 </TouchableOpacity>

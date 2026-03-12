@@ -2,13 +2,15 @@ import { Stack } from 'expo-router';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StatusBar } from 'expo-status-bar';
 import "./styles/global.css";
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#020617' }}>
+      <StatusBar style="light" backgroundColor="#020617" />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Stack screenOptions={{ headerShown: false }}>

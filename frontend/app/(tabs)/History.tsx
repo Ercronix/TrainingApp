@@ -46,7 +46,7 @@ export default function HistoryScreen() {
 
     return (
       <TouchableOpacity
-        className="bg-white rounded-xl mb-3 border border-gray-200 p-4"
+        className="bg-slate-900 rounded-xl mb-3 border border-slate-800 p-4"
         onPress={() =>
           router.push({
             pathname: '/history-detail' as any,
@@ -57,10 +57,10 @@ export default function HistoryScreen() {
         {/* Top row */}
         <View className="flex-row justify-between items-start mb-2">
           <View className="flex-1 mr-2">
-            <Text className="text-lg font-bold text-gray-800">
+            <Text className="text-lg font-bold text-slate-100">
               {item.workoutName || item.splitName}
             </Text>
-            <Text className="text-xs text-gray-500 mt-0.5">
+            <Text className="text-xs text-slate-400 mt-0.5">
               {item.splitName} • {formatDate(item.startedAt)}
             </Text>
           </View>
@@ -78,16 +78,16 @@ export default function HistoryScreen() {
         {/* Stats row */}
         <View className="flex-row items-center gap-4 mb-3">
           <View className="flex-row items-center gap-1">
-            <Ionicons name="time-outline" size={14} color="#9CA3AF" />
-            <Text className="text-xs text-gray-500">{formatTime(item.startedAt)}</Text>
+            <Ionicons name="time-outline" size={14} color="#64748B" />
+            <Text className="text-xs text-slate-400">{formatTime(item.startedAt)}</Text>
           </View>
           <View className="flex-row items-center gap-1">
-            <Ionicons name="stopwatch-outline" size={14} color="#9CA3AF" />
-            <Text className="text-xs text-gray-500">{formatDuration(item.durationSeconds)}</Text>
+            <Ionicons name="stopwatch-outline" size={14} color="#64748B" />
+            <Text className="text-xs text-slate-400">{formatDuration(item.durationSeconds)}</Text>
           </View>
           <View className="flex-row items-center gap-1">
-            <Ionicons name="barbell-outline" size={14} color="#9CA3AF" />
-            <Text className="text-xs text-gray-500">
+            <Ionicons name="barbell-outline" size={14} color="#64748B" />
+            <Text className="text-xs text-slate-400">
               {completedExercises}/{totalExercises} exercises
             </Text>
           </View>
@@ -99,23 +99,23 @@ export default function HistoryScreen() {
             <View
               key={exercise.id}
               className={`px-2 py-0.5 rounded-full ${
-                exercise.completed ? 'bg-green-100' : 'bg-gray-100'
+                exercise.completed ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
               }`}
             >
-              <Text className={`text-xs ${exercise.completed ? 'text-green-700' : 'text-gray-500'}`}>
+              <Text className={`text-xs ${exercise.completed ? 'text-blue-200' : 'text-slate-300'}`}>
                 {exercise.exerciseName}
               </Text>
             </View>
           ))}
           {item.exercises?.length > 4 && (
-            <View className="px-2 py-0.5 rounded-full bg-gray-100">
-              <Text className="text-xs text-gray-500">+{item.exercises.length - 4} more</Text>
+            <View className="px-2 py-0.5 rounded-full bg-slate-800">
+              <Text className="text-xs text-slate-300">+{item.exercises.length - 4} more</Text>
             </View>
           )}
         </View>
 
         {item.notes && (
-          <Text className="text-xs text-gray-400 mt-2 italic">"{item.notes}"</Text>
+          <Text className="text-xs text-slate-500 mt-2 italic">"{item.notes}"</Text>
         )}
       </TouchableOpacity>
     );
@@ -123,8 +123,8 @@ export default function HistoryScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <Text className="text-gray-500">Loading history...</Text>
+      <View className="flex-1 justify-center items-center bg-slate-950">
+        <Text className="text-slate-400">Loading history...</Text>
       </View>
     );
   }
@@ -132,10 +132,10 @@ export default function HistoryScreen() {
   const completedSessions = history.filter((l: any) => l.isCompleted);
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
-        <Text className="text-2xl font-bold text-gray-800">Training History</Text>
-        <Text className="text-sm text-gray-500 mt-1">
+    <View className="flex-1 bg-slate-950">
+      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
+        <Text className="text-2xl font-bold text-slate-100">Training History</Text>
+        <Text className="text-sm text-slate-400 mt-1">
           {completedSessions.length} session
           {completedSessions.length !== 1 ? 's' : ''} completed
         </Text>
@@ -149,9 +149,9 @@ export default function HistoryScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
         ListEmptyComponent={
           <View className="items-center mt-20">
-            <Ionicons name="barbell-outline" size={48} color="#D1D5DB" />
-            <Text className="text-xl text-gray-400 mt-4 mb-2">No training yet</Text>
-            <Text className="text-sm text-gray-400">
+            <Ionicons name="barbell-outline" size={48} color="#475569" />
+            <Text className="text-xl text-slate-500 mt-4 mb-2">No training yet</Text>
+            <Text className="text-sm text-slate-500">
               Complete your first session to see it here
             </Text>
           </View>

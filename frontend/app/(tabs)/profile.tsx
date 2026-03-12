@@ -22,21 +22,21 @@ export default function ProfileScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-slate-950">
       {/* Header */}
-      <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
-        <Text className="text-2xl font-bold text-gray-800">Profile</Text>
+      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
+        <Text className="text-2xl font-bold text-slate-100">Profile</Text>
       </View>
 
       {/* User Info */}
-      <View className="bg-white m-4 rounded-xl p-6">
-        <Text className="text-sm text-gray-500 mb-1">Username</Text>
-        <Text className="text-lg font-semibold text-gray-800 mb-4">
+      <View className="bg-slate-900 border border-slate-800 m-4 rounded-xl p-6">
+        <Text className="text-sm text-slate-400 mb-1">Username</Text>
+        <Text className="text-lg font-semibold text-slate-100 mb-4">
           {user?.username || 'User'}
         </Text>
 
-        <Text className="text-sm text-gray-500 mb-1">Email</Text>
-        <Text className="text-lg font-semibold text-gray-800">
+        <Text className="text-sm text-slate-400 mb-1">Email</Text>
+        <Text className="text-lg font-semibold text-slate-100">
           {user?.email || 'N/A'}
         </Text>
       </View>

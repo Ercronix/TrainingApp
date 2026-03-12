@@ -13,28 +13,29 @@ export default function EditSplitModal() {
   const { save, isPending } = useEditSplit(splitId);
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
+    <View className="flex-1 bg-slate-950">
+      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
         <View className="flex-row justify-between items-center">
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-500 text-base">Cancel</Text>
+            <Text className="text-blue-400 text-base">Cancel</Text>
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-800">Edit Split</Text>
+          <Text className="text-xl font-bold text-slate-100">Edit Split</Text>
           <View className="w-16" />
         </View>
       </View>
 
       <View className="p-6">
-        <Text className="text-base mb-2 text-gray-700">Split Name</Text>
+        <Text className="text-base mb-2 text-slate-300">Split Name</Text>
         <TextInput
-          className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base mb-6"
+          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-6"
           value={name}
           onChangeText={setName}
           autoFocus
+          keyboardAppearance="dark"
           editable={!isPending}
         />
         <TouchableOpacity
-          className={`bg-blue-500 rounded-lg py-4 items-center ${isPending ? 'opacity-50' : ''}`}
+          className={`bg-blue-600 rounded-lg py-4 items-center ${isPending ? 'opacity-50' : ''}`}
           onPress={() => save(name)}
           disabled={isPending}
         >

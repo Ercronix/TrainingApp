@@ -26,9 +26,9 @@ export function ExerciseProgressChart({ entries }: Props) {
   if (withWeight.length === 0) {
     return (
       <View className="items-center py-8">
-        <Ionicons name="trending-up-outline" size={36} color="#D1D5DB" />
-        <Text className="text-sm text-gray-400 mt-2">No weight data yet</Text>
-        <Text className="text-xs text-gray-400 mt-1">
+        <Ionicons name="trending-up-outline" size={36} color="#475569" />
+        <Text className="text-sm text-slate-500 mt-2">No weight data yet</Text>
+        <Text className="text-xs text-slate-500 mt-1">
           Log weight during training to see your progress
         </Text>
       </View>
@@ -42,7 +42,7 @@ export function ExerciseProgressChart({ entries }: Props) {
 
   const chartData = {
     labels: displayed.map((e) => formatShortDate(e.date)),
-    datasets: [{ data: weights, color: () => '#3B82F6', strokeWidth: 2 }],
+    datasets: [{ data: weights, color: () => '#60A5FA', strokeWidth: 2 }],
   };
 
   return (
@@ -50,24 +50,24 @@ export function ExerciseProgressChart({ entries }: Props) {
       {/* Stats row */}
       <View className="flex-row justify-around mb-4">
         <View className="items-center">
-          <Text className="text-lg font-bold text-gray-800">{personalBest} kg</Text>
-          <Text className="text-xs text-gray-400">Personal Best</Text>
+          <Text className="text-lg font-bold text-slate-100">{personalBest} kg</Text>
+          <Text className="text-xs text-slate-500">Personal Best</Text>
         </View>
-        <View className="w-px bg-gray-200" />
+        <View className="w-px bg-slate-800" />
         <View className="items-center">
-          <Text className="text-lg font-bold text-gray-800">{lastWeight} kg</Text>
-          <Text className="text-xs text-gray-400">Last Session</Text>
+          <Text className="text-lg font-bold text-slate-100">{lastWeight} kg</Text>
+          <Text className="text-xs text-slate-500">Last Session</Text>
         </View>
-        <View className="w-px bg-gray-200" />
+        <View className="w-px bg-slate-800" />
         <View className="items-center">
           <Text
             className={`text-lg font-bold ${
-              trend > 0 ? 'text-green-600' : trend < 0 ? 'text-red-500' : 'text-gray-800'
+              trend > 0 ? 'text-blue-300' : trend < 0 ? 'text-red-400' : 'text-slate-100'
             }`}
           >
             {trend > 0 ? '+' : ''}{trend.toFixed(1)} kg
           </Text>
-          <Text className="text-xs text-gray-400">All Time</Text>
+          <Text className="text-xs text-slate-500">All Time</Text>
         </View>
       </View>
 
@@ -78,9 +78,9 @@ export function ExerciseProgressChart({ entries }: Props) {
             <TouchableOpacity
               key={r}
               onPress={() => setRange(r)}
-              className={`px-3 py-1 rounded-full ${range === r ? 'bg-blue-500' : 'bg-gray-100'}`}
+              className={`px-3 py-1 rounded-full ${range === r ? 'bg-blue-600' : 'bg-slate-800'}`}
             >
-              <Text className={`text-xs font-medium ${range === r ? 'text-white' : 'text-gray-500'}`}>
+              <Text className={`text-xs font-medium ${range === r ? 'text-white' : 'text-slate-300'}`}>
                 {r === '10' ? 'Last 10' : 'All Time'}
               </Text>
             </TouchableOpacity>
@@ -95,14 +95,14 @@ export function ExerciseProgressChart({ entries }: Props) {
           width={Math.max(CHART_WIDTH, displayed.length * 50)}
           height={180}
           chartConfig={{
-            backgroundColor: '#ffffff',
-            backgroundGradientFrom: '#ffffff',
-            backgroundGradientTo: '#ffffff',
+            backgroundColor: '#0F172A',
+            backgroundGradientFrom: '#0F172A',
+            backgroundGradientTo: '#0F172A',
             decimalPlaces: 1,
-            color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`,
-            labelColor: () => '#9CA3AF',
-            propsForDots: { r: '4', strokeWidth: '2', stroke: '#ffffff' },
-            propsForBackgroundLines: { stroke: '#F3F4F6' },
+            color: (opacity = 1) => `rgba(96, 165, 250, ${opacity})`,
+            labelColor: () => '#64748B',
+            propsForDots: { r: '4', strokeWidth: '2', stroke: '#0F172A' },
+            propsForBackgroundLines: { stroke: '#1E293B' },
           }}
           bezier
           style={{ borderRadius: 8 }}
@@ -112,13 +112,13 @@ export function ExerciseProgressChart({ entries }: Props) {
           withHorizontalLabels
           formatYLabel={(v) => `${v}kg`}
           getDotColor={(dataPoint) =>
-            dataPoint === personalBest ? '#10B981' : '#3B82F6'
+            dataPoint === personalBest ? '#93C5FD' : '#60A5FA'
           }
         />
       </ScrollView>
 
       {displayed.length > 1 && (
-        <Text className="text-xs text-gray-400 text-center mt-2">
+        <Text className="text-xs text-slate-500 text-center mt-2">
           {formatShortDate(displayed[0].date)} — {formatShortDate(displayed[displayed.length - 1].date)}
         </Text>
       )}

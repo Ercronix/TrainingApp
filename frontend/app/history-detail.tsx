@@ -48,39 +48,39 @@ export default function HistoryDetailScreen() {
 
   const renderExerciseItem = ({ item }: { item: any }) => (
     <View
-      className={`bg-white rounded-xl mb-3 border p-4 ${
-        item.completed ? 'border-green-200' : 'border-gray-200'
+      className={`bg-slate-900 rounded-xl mb-3 border p-4 ${
+        item.completed ? 'border-blue-700/60' : 'border-slate-800'
       }`}
     >
       <View className="flex-row items-start">
         <View className="mt-0.5 mr-2">
           {item.completed ? (
-            <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+            <Ionicons name="checkmark-circle" size={18} color="#60A5FA" />
           ) : (
-            <Ionicons name="ellipse-outline" size={18} color="#9CA3AF" />
+            <Ionicons name="ellipse-outline" size={18} color="#64748B" />
           )}
         </View>
         <View className="flex-1">
-          <Text className="text-base font-semibold text-gray-800 mb-1">
+          <Text className="text-base font-semibold text-slate-100 mb-1">
             {item.exerciseName}
           </Text>
 
           {item.plannedSets && item.plannedReps && (
-            <Text className="text-xs text-gray-400">
+            <Text className="text-xs text-slate-500">
               Planned: {item.plannedSets} × {item.plannedReps} reps
               {item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
             </Text>
           )}
 
           {item.completed && (
-            <Text className="text-sm text-green-700 font-medium mt-0.5">
+            <Text className="text-sm text-blue-200 font-medium mt-0.5">
               Done: {item.setsCompleted} × {item.repsCompleted} reps
               {item.weightUsed ? ` @ ${item.weightUsed} kg` : ''}
             </Text>
           )}
 
           {item.notes && (
-            <Text className="text-xs text-gray-400 italic mt-1">"{item.notes}"</Text>
+            <Text className="text-xs text-slate-500 italic mt-1">"{item.notes}"</Text>
           )}
         </View>
       </View>
@@ -89,8 +89,8 @@ export default function HistoryDetailScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <Text className="text-gray-500">Loading session...</Text>
+      <View className="flex-1 justify-center items-center bg-slate-950">
+        <Text className="text-slate-400">Loading session...</Text>
       </View>
     );
   }
@@ -99,12 +99,12 @@ export default function HistoryDetailScreen() {
   const totalCount = training?.exercises?.length ?? 0;
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-slate-950">
       {/* Header */}
-      <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
+      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
         <View className="flex-row justify-between items-center mb-2">
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-500 text-base">← Back</Text>
+            <Text className="text-blue-400 text-base">← Back</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="trash-outline" size={22} color="#EF4444" />
@@ -112,54 +112,54 @@ export default function HistoryDetailScreen() {
         </View>
         
         {/* Main title - Workout name */}
-        <Text className="text-2xl font-bold text-gray-800">
+        <Text className="text-2xl font-bold text-slate-100">
           {training?.workoutName || training?.splitName}
         </Text>
         
         {/* Subtitle - Split name and date */}
         {training?.splitName && (
-          <Text className="text-sm text-gray-500 mt-1">
+          <Text className="text-sm text-slate-400 mt-1">
             {training.splitName} • {training?.startedAt ? formatDate(training.startedAt) : ''}
           </Text>
         )}
         
         {/* Time */}
         {training?.startedAt && (
-          <Text className="text-sm text-gray-400 mt-1">
+          <Text className="text-sm text-slate-500 mt-1">
             {formatTime(training.startedAt)}
           </Text>
         )}
       </View>
 
       {/* Stats bar */}
-      <View className="bg-white border-b border-gray-100 px-6 py-3 flex-row gap-6">
+      <View className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex-row gap-6">
         <View className="items-center">
-          <Text className="text-lg font-bold text-gray-800">
+          <Text className="text-lg font-bold text-slate-100">
             {formatDuration(training?.durationSeconds)}
           </Text>
-          <Text className="text-xs text-gray-400">Duration</Text>
+          <Text className="text-xs text-slate-500">Duration</Text>
         </View>
-        <View className="w-px bg-gray-200" />
+        <View className="w-px bg-slate-800" />
         <View className="items-center">
-          <Text className="text-lg font-bold text-gray-800">
+          <Text className="text-lg font-bold text-slate-100">
             {completedCount}/{totalCount}
           </Text>
-          <Text className="text-xs text-gray-400">Completed</Text>
+          <Text className="text-xs text-slate-500">Completed</Text>
         </View>
-        <View className="w-px bg-gray-200" />
+        <View className="w-px bg-slate-800" />
         <View className="items-center">
-          <Text className="text-lg font-bold text-gray-800">
+          <Text className="text-lg font-bold text-slate-100">
             {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
           </Text>
-          <Text className="text-xs text-gray-400">Rate</Text>
+          <Text className="text-xs text-slate-500">Rate</Text>
         </View>
       </View>
 
       {/* Session notes */}
       {training?.notes && (
-        <View className="mx-4 mt-3 bg-white rounded-xl p-4 border border-gray-200">
-          <Text className="text-xs font-semibold text-gray-500 mb-1">SESSION NOTES</Text>
-          <Text className="text-sm text-gray-700">{training.notes}</Text>
+        <View className="mx-4 mt-3 bg-slate-900 rounded-xl p-4 border border-slate-800">
+          <Text className="text-xs font-semibold text-slate-500 mb-1">SESSION NOTES</Text>
+          <Text className="text-sm text-slate-200">{training.notes}</Text>
         </View>
       )}
 
@@ -171,7 +171,7 @@ export default function HistoryDetailScreen() {
         contentContainerStyle={{ padding: 16 }}
         ListHeaderComponent={
           <View className="mb-3">
-            <Text className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
               EXERCISES
             </Text>
           </View>

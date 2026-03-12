@@ -37,8 +37,8 @@ export default function SplitsScreen() {
   const renderSplitItem = ({ item }: { item: TrainingSplit }) => (
     <View className="relative">
       <TouchableOpacity
-        className={`bg-white rounded-xl p-4 mb-3 ${
-          item.isActive ? 'border-2 border-blue-500' : 'border border-gray-200'
+        className={`bg-slate-900 rounded-xl p-4 mb-3 ${
+          item.isActive ? 'border-2 border-blue-500' : 'border border-slate-800'
         }`}
         onPress={() => router.push({
           pathname: '/workouts',
@@ -51,13 +51,13 @@ export default function SplitsScreen() {
       >
         <View className="flex-row justify-between items-center mb-2">
           <View className="flex-1">
-            <Text className="text-lg font-semibold text-gray-800">
+            <Text className="text-lg font-semibold text-slate-100">
               {item.name}
             </Text>
           </View>
 
           {item.isActive && (
-            <View className="bg-blue-500 px-3 py-1 rounded-full mr-2">
+            <View className="bg-blue-600 px-3 py-1 rounded-full mr-2">
               <Text className="text-white text-xs font-bold">ACTIVE</Text>
             </View>
           )}
@@ -73,10 +73,10 @@ export default function SplitsScreen() {
             <Ionicons name="trash-outline" size={20} color="#EF4444" />
           </TouchableOpacity>
 
-          <Ionicons name="chevron-forward" size={20} color="#9CA3AF" />
+          <Ionicons name="chevron-forward" size={20} color="#64748B" />
         </View>
 
-        <Text className="text-sm text-gray-500">
+        <Text className="text-sm text-slate-400">
           {item.workoutCount} {item.workoutCount === 1 ? 'workout' : 'workouts'}
         </Text>
       </TouchableOpacity>
@@ -85,16 +85,16 @@ export default function SplitsScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-gray-50">
-        <Text className="text-gray-500">Loading splits...</Text>
+      <View className="flex-1 justify-center items-center bg-slate-950">
+        <Text className="text-slate-400">Loading splits...</Text>
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
-        <Text className="text-2xl font-bold text-gray-800">Training Splits</Text>
+    <View className="flex-1 bg-slate-950">
+      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
+        <Text className="text-2xl font-bold text-slate-100">Training Splits</Text>
       </View>
 
       <FlatList
@@ -107,8 +107,8 @@ export default function SplitsScreen() {
         }
         ListEmptyComponent={
           <View className="items-center mt-20">
-            <Text className="text-xl text-gray-400 mb-2">No splits yet</Text>
-            <Text className="text-sm text-gray-400">
+            <Text className="text-xl text-slate-500 mb-2">No splits yet</Text>
+            <Text className="text-sm text-slate-500">
               Create your first training split!
             </Text>
           </View>
@@ -116,7 +116,7 @@ export default function SplitsScreen() {
       />
 
       <Link href="/create-split" asChild>
-        <TouchableOpacity className="absolute right-6 bottom-6 w-14 h-14 bg-blue-500 rounded-full justify-center items-center shadow-lg">
+        <TouchableOpacity className="absolute right-6 bottom-6 w-14 h-14 bg-blue-600 rounded-full justify-center items-center shadow-lg">
           <Text className="text-white text-3xl font-light">+</Text>
         </TouchableOpacity>
       </Link>

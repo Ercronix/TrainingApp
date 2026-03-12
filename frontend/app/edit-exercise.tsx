@@ -27,59 +27,66 @@ export default function EditExerciseModal() {
     setForm(prev => ({ ...prev, [field]: value }));
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <View className="bg-white border-b border-gray-200 pt-12 pb-4 px-6">
+    <View className="flex-1 bg-slate-950">
+      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
         <View className="flex-row justify-between items-center">
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-500 text-base">Cancel</Text>
+            <Text className="text-blue-400 text-base">Cancel</Text>
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-800">Edit Exercise</Text>
+          <Text className="text-xl font-bold text-slate-100">Edit Exercise</Text>
           <View className="w-16" />
         </View>
       </View>
 
       <ScrollView className="flex-1 p-6">
-        <Text className="text-base mb-2 text-gray-700">Exercise Name *</Text>
+        <Text className="text-base mb-2 text-slate-300">Exercise Name *</Text>
         <TextInput
-          className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
+          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
           value={form.name}
           onChangeText={updateField('name')}
           autoFocus
+          keyboardAppearance="dark"
           editable={!isPending}
         />
 
-        <Text className="text-base mb-2 text-gray-700">Sets</Text>
+        <Text className="text-base mb-2 text-slate-300">Sets</Text>
         <TextInput
-          className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
+          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
           value={form.sets}
           onChangeText={updateField('sets')}
           keyboardType="numeric"
           placeholder="e.g., 4"
+          placeholderTextColor="#64748B"
+          keyboardAppearance="dark"
           editable={!isPending}
         />
 
-        <Text className="text-base mb-2 text-gray-700">Reps</Text>
+        <Text className="text-base mb-2 text-slate-300">Reps</Text>
         <TextInput
-          className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
+          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
           value={form.reps}
           onChangeText={updateField('reps')}
           keyboardType="numeric"
           placeholder="e.g., 10"
+          placeholderTextColor="#64748B"
+          keyboardAppearance="dark"
           editable={!isPending}
         />
 
-        <Text className="text-base mb-2 text-gray-700">Planned Weight (kg)</Text>
+        <Text className="text-base mb-2 text-slate-300">Planned Weight (kg)</Text>
         <TextInput
-          className="bg-white border border-gray-300 rounded-lg px-4 py-3 text-base mb-6"
+          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-6"
           value={form.plannedWeight}
           onChangeText={updateField('plannedWeight')}
           keyboardType="decimal-pad"
           placeholder="e.g., 80"
+          placeholderTextColor="#64748B"
+          keyboardAppearance="dark"
           editable={!isPending}
         />
 
         <TouchableOpacity
-          className={`bg-blue-500 rounded-lg py-4 items-center mb-8 ${isPending ? 'opacity-50' : ''}`}
+          className={`bg-blue-600 rounded-lg py-4 items-center mb-8 ${isPending ? 'opacity-50' : ''}`}
           onPress={() => save(form)}
           disabled={isPending}
         >

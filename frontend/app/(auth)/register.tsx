@@ -49,45 +49,51 @@ export default function RegisterScreen() {
     };
 
     return (
-        <ScrollView className="flex-1 bg-white">
+        <ScrollView className="flex-1 bg-slate-950">
             <View className="flex-1 justify-center px-6 py-12">
-                <Text className="text-3xl font-bold text-center mb-12">
+                <Text className="text-3xl font-bold text-slate-100 text-center mb-12">
                     Create Account
                 </Text>
 
-                <Text className="text-base mb-2 text-gray-700">Username</Text>
+                <Text className="text-base mb-2 text-slate-300">Username</Text>
                 <TextInput
-                    className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
+                    className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
                     placeholder="Enter username"
+                    placeholderTextColor="#64748B"
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
+                    keyboardAppearance="dark"
                     editable={!loading}
                 />
 
-                <Text className="text-base mb-2 text-gray-700">Email</Text>
+                <Text className="text-base mb-2 text-slate-300">Email</Text>
                 <TextInput
-                    className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-4"
+                    className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
                     placeholder="Enter email"
+                    placeholderTextColor="#64748B"
                     value={email}
                     onChangeText={setEmail}
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    keyboardAppearance="dark"
                     editable={!loading}
                 />
 
-                <Text className="text-base mb-2 text-gray-700">Password</Text>
+                <Text className="text-base mb-2 text-slate-300">Password</Text>
                 <TextInput
-                    className="border border-gray-300 rounded-lg px-4 py-3 text-base mb-6"
+                    className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-6"
                     placeholder="Enter password (min 6 characters)"
+                    placeholderTextColor="#64748B"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
+                    keyboardAppearance="dark"
                     editable={!loading}
                 />
 
                 <TouchableOpacity
-                    className={`bg-blue-500 rounded-lg py-4 items-center ${loading ? 'opacity-50' : ''}`}
+                    className={`bg-blue-600 rounded-lg py-4 items-center ${loading ? 'opacity-50' : ''}`}
                     onPress={handleRegister}
                     disabled={loading}
                 >
@@ -98,7 +104,7 @@ export default function RegisterScreen() {
 
                 <Link href="/login" asChild>
                     <TouchableOpacity className="mt-4 items-center" disabled={loading}>
-                        <Text className="text-blue-500 text-base">
+                        <Text className="text-blue-400 text-base">
                             Already have an account? Login
                         </Text>
                     </TouchableOpacity>
