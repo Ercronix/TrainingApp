@@ -5,12 +5,26 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
+import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
+
+function formatElapsed(seconds: number | null): string {
+  if (seconds == null) return '--:--:--';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
 
 export default function TrainingScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
   const router = useRouter();
   const { training, isLoading, updateExerciseLog, completeTraining } = useTraining(trainingLogId);
   const [exerciseOrder, setExerciseOrder] = useState<number[]>([]);
+  const elapsedSeconds = useElapsedSeconds({
+    startedAt: training?.startedAt,
+    completedAt: training?.completedAt,
+    durationSeconds: training?.durationSeconds,
+  });
 
   useEffect(() => { setExerciseOrder([]); }, [trainingLogId]);
 
@@ -151,7 +165,9 @@ export default function TrainingScreen() {
         </TouchableOpacity>
         <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">ACTIVE SESSION</Text>
         <Text className="text-[#f5f5f5] text-[32px] font-bold tracking-tighter mb-1">{training?.splitName}</Text>
-        <Text className="text-[#4a4a4a] text-[11px] tracking-[2px]">{completedCount}/{totalCount} COMPLETE</Text>
+        <Text className="text-[#4a4a4a] text-[11px] tracking-[2px]">
+          {completedCount}/{totalCount} COMPLETE · {formatElapsed(elapsedSeconds)} ELAPSED
+        </Text>
       </View>
 
       {/* Progress bar */}
