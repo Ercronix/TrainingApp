@@ -14,18 +14,12 @@ function formatDuration(seconds: number | null): string {
 
 function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString(undefined, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
   });
 }
 
 function formatTime(dateString: string): string {
-  return new Date(dateString).toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return new Date(dateString).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
 export default function HistoryDetailScreen() {
@@ -35,53 +29,35 @@ export default function HistoryDetailScreen() {
   const { deleteLog } = useHistory();
 
   const handleDelete = () => {
-    confirm(
-      'Delete Session',
-      `Delete this training session? This cannot be undone.`,
-      () =>
-        deleteLog.mutate(Number(trainingLogId), {
-          onSuccess: () => router.back(),
-        }),
-      'Delete'
-    );
+    confirm('Delete Session', 'Delete this training session? This cannot be undone.',
+      () => deleteLog.mutate(Number(trainingLogId), { onSuccess: () => router.back() }), 'Delete');
   };
 
-  const renderExerciseItem = ({ item }: { item: any }) => (
-    <View
-      className={`bg-slate-900 rounded-xl mb-3 border p-4 ${
-        item.completed ? 'border-blue-700/60' : 'border-slate-800'
-      }`}
-    >
-      <View className="flex-row items-start">
-        <View className="mt-0.5 mr-2">
-          {item.completed ? (
-            <Ionicons name="checkmark-circle" size={18} color="#60A5FA" />
-          ) : (
-            <Ionicons name="ellipse-outline" size={18} color="#64748B" />
+  const renderExerciseItem = ({ item, index }: { item: any; index: number }) => (
+    <View className={`rounded-md mb-2 overflow-hidden relative ${item.completed ? 'bg-[#0d1408]' : 'bg-[#131313]'}`}>
+      {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#cafd00]" />}
+      <View className="flex-row items-start px-5 py-4 gap-3">
+        <Text className="text-[#1a1a1a] text-xl font-bold tracking-tight min-w-[28px]">
+          {String(index + 1).padStart(2, '0')}
+        </Text>
+        <View className="flex-1">
+          <Text className="text-[#f5f5f5] text-sm font-bold tracking-tight mb-1">{item.exerciseName}</Text>
+          {item.plannedSets && item.plannedReps && (
+            <Text className="text-[#4a4a4a] text-[10px] tracking-widest">
+              PLANNED: {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+            </Text>
+          )}
+          {item.completed && (
+            <Text className="text-[#cafd00] text-[11px] tracking-wider mt-0.5">
+              ✓ DONE: {item.setsCompleted} × {item.repsCompleted}{item.weightUsed ? ` @ ${item.weightUsed} kg` : ''}
+            </Text>
+          )}
+          {item.notes && (
+            <Text className="text-[#3a3a3a] text-[11px] italic mt-1">"{item.notes}"</Text>
           )}
         </View>
-        <View className="flex-1">
-          <Text className="text-base font-semibold text-slate-100 mb-1">
-            {item.exerciseName}
-          </Text>
-
-          {item.plannedSets && item.plannedReps && (
-            <Text className="text-xs text-slate-500">
-              Planned: {item.plannedSets} × {item.plannedReps} reps
-              {item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
-            </Text>
-          )}
-
-          {item.completed && (
-            <Text className="text-sm text-blue-200 font-medium mt-0.5">
-              Done: {item.setsCompleted} × {item.repsCompleted} reps
-              {item.weightUsed ? ` @ ${item.weightUsed} kg` : ''}
-            </Text>
-          )}
-
-          {item.notes && (
-            <Text className="text-xs text-slate-500 italic mt-1">"{item.notes}"</Text>
-          )}
+        <View className={`w-5 h-5 rounded-full justify-center items-center mt-0.5 ${item.completed ? 'bg-[#cafd00]' : 'border border-[#2a2a2a]'}`}>
+          {item.completed && <Ionicons name="checkmark" size={10} color="#0e0e0e" />}
         </View>
       </View>
     </View>
@@ -89,92 +65,81 @@ export default function HistoryDetailScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-slate-950">
-        <Text className="text-slate-400">Loading session...</Text>
+      <View className="flex-1 justify-center items-center bg-[#0e0e0e]">
+        <Text className="text-[#cafd00] text-sm font-bold tracking-[4px]">LOADING...</Text>
       </View>
     );
   }
 
   const completedCount = training?.exercises?.filter((e: any) => e.completed).length ?? 0;
   const totalCount = training?.exercises?.length ?? 0;
+  const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-[#0e0e0e]">
       {/* Header */}
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <View className="flex-row justify-between items-center mb-2">
+      <View className="px-6 pt-14 pb-5">
+        <View className="flex-row justify-between items-center mb-4">
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-400 text-base">← Back</Text>
+            <Ionicons name="arrow-back" size={20} color="#cafd00" />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="trash-outline" size={22} color="#EF4444" />
+            <Ionicons name="trash-outline" size={20} color="#ff734a" />
           </TouchableOpacity>
         </View>
-        
-        {/* Main title - Workout name */}
-        <Text className="text-2xl font-bold text-slate-100">
+        <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">SESSION LOG</Text>
+        <Text className="text-[#f5f5f5] text-[32px] font-bold tracking-tighter mb-1">
           {training?.workoutName || training?.splitName}
         </Text>
-        
-        {/* Subtitle - Split name and date */}
         {training?.splitName && (
-          <Text className="text-sm text-slate-400 mt-1">
-            {training.splitName} • {training?.startedAt ? formatDate(training.startedAt) : ''}
-          </Text>
+          <Text className="text-[#4a4a4a] text-sm mb-0.5">{training.splitName}</Text>
         )}
-        
-        {/* Time */}
         {training?.startedAt && (
-          <Text className="text-sm text-slate-500 mt-1">
-            {formatTime(training.startedAt)}
+          <Text className="text-[#3a3a3a] text-xs">
+            {formatDate(training.startedAt)} · {formatTime(training.startedAt)}
           </Text>
         )}
       </View>
 
-      {/* Stats bar */}
-      <View className="bg-slate-900 border-b border-slate-800 px-6 py-3 flex-row gap-6">
-        <View className="items-center">
-          <Text className="text-lg font-bold text-slate-100">
+      {/* Stats row */}
+      <View className="flex-row mx-4 mb-3 bg-[#131313] rounded-md py-4">
+        <View className="flex-1 items-center">
+          <Text className="text-[#f5f5f5] text-[22px] font-bold tracking-tight mb-0.5">
             {formatDuration(training?.durationSeconds)}
           </Text>
-          <Text className="text-xs text-slate-500">Duration</Text>
+          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px]">DURATION</Text>
         </View>
-        <View className="w-px bg-slate-800" />
-        <View className="items-center">
-          <Text className="text-lg font-bold text-slate-100">
+        <View className="w-px bg-[#1a1a1a] my-1" />
+        <View className="flex-1 items-center">
+          <Text className="text-[#f5f5f5] text-[22px] font-bold tracking-tight mb-0.5">
             {completedCount}/{totalCount}
           </Text>
-          <Text className="text-xs text-slate-500">Completed</Text>
+          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px]">COMPLETED</Text>
         </View>
-        <View className="w-px bg-slate-800" />
-        <View className="items-center">
-          <Text className="text-lg font-bold text-slate-100">
-            {totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0}%
+        <View className="w-px bg-[#1a1a1a] my-1" />
+        <View className="flex-1 items-center">
+          <Text className={`text-[22px] font-bold tracking-tight mb-0.5 ${completionRate === 100 ? 'text-[#cafd00]' : 'text-[#f5f5f5]'}`}>
+            {completionRate}%
           </Text>
-          <Text className="text-xs text-slate-500">Rate</Text>
+          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px]">RATE</Text>
         </View>
       </View>
 
       {/* Session notes */}
       {training?.notes && (
-        <View className="mx-4 mt-3 bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <Text className="text-xs font-semibold text-slate-500 mb-1">SESSION NOTES</Text>
-          <Text className="text-sm text-slate-200">{training.notes}</Text>
+        <View className="mx-4 mb-3 bg-[#131313] rounded-md p-4">
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">SESSION NOTES</Text>
+          <Text className="text-[#adaaaa] text-sm leading-5">{training.notes}</Text>
         </View>
       )}
 
-      {/* Exercise list */}
       <FlatList
         data={training?.exercises}
         renderItem={renderExerciseItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
         ListHeaderComponent={
-          <View className="mb-3">
-            <Text className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              EXERCISES
-            </Text>
-          </View>
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-3">EXERCISES</Text>
         }
       />
     </View>

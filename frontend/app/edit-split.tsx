@@ -2,45 +2,48 @@ import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEditSplit } from '@/hooks/useEditSplit';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function EditSplitModal() {
-  const { splitId, currentName } = useLocalSearchParams<{
-    splitId: string;
-    currentName: string;
-  }>();
+  const { splitId, currentName } = useLocalSearchParams<{ splitId: string; currentName: string }>();
   const router = useRouter();
   const [name, setName] = useState(currentName || '');
   const { save, isPending } = useEditSplit(splitId);
 
   return (
-    <View className="flex-1 bg-slate-950">
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <View className="flex-row justify-between items-center">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-400 text-base">Cancel</Text>
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-slate-100">Edit Split</Text>
-          <View className="w-16" />
-        </View>
+    <View className="flex-1 bg-[#0e0e0e]">
+      <View className="flex-row justify-between items-center px-6 pt-14 pb-5">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="close" size={22} color="#4a4a4a" />
+        </TouchableOpacity>
+        <Text className="text-[#4a4a4a] text-[10px] tracking-[4px]">EDIT SPLIT</Text>
+        <View className="w-6" />
       </View>
 
-      <View className="p-6">
-        <Text className="text-base mb-2 text-slate-300">Split Name</Text>
+      <View className="flex-1 px-6">
+        <Text className="text-[#f5f5f5] text-[40px] font-bold tracking-tighter leading-[44px] mb-8">
+          RENAME{'\n'}SPLIT
+        </Text>
+
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">SPLIT NAME</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-6"
+          className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight mb-6"
           value={name}
           onChangeText={setName}
           autoFocus
           keyboardAppearance="dark"
           editable={!isPending}
         />
+
         <TouchableOpacity
-          className={`bg-blue-600 rounded-lg py-4 items-center ${isPending ? 'opacity-50' : ''}`}
+          className={`bg-[#cafd00] rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
+          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
           onPress={() => save(name)}
           disabled={isPending}
+          activeOpacity={0.85}
         >
-          <Text className="text-white text-lg font-semibold">
-            {isPending ? 'Saving...' : 'Save'}
+          <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+            {isPending ? 'SAVING...' : 'SAVE CHANGES'}
           </Text>
         </TouchableOpacity>
       </View>

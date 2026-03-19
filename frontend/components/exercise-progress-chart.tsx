@@ -25,11 +25,11 @@ export function ExerciseProgressChart({ entries }: Props) {
 
   if (withWeight.length === 0) {
     return (
-      <View className="items-center py-8">
-        <Ionicons name="trending-up-outline" size={36} color="#475569" />
-        <Text className="text-sm text-slate-500 mt-2">No weight data yet</Text>
-        <Text className="text-xs text-slate-500 mt-1">
-          Log weight during training to see your progress
+      <View className="items-center py-8 gap-2">
+        <Ionicons name="trending-up-outline" size={36} color="#262626" />
+        <Text className="text-[#3a3a3a] text-sm font-bold tracking-widest">NO DATA YET</Text>
+        <Text className="text-[#2a2a2a] text-[11px] text-center">
+          Log weight during training to track progress
         </Text>
       </View>
     );
@@ -42,46 +42,45 @@ export function ExerciseProgressChart({ entries }: Props) {
 
   const chartData = {
     labels: displayed.map((e) => formatShortDate(e.date)),
-    datasets: [{ data: weights, color: () => '#60A5FA', strokeWidth: 2 }],
+    datasets: [{ data: weights, color: () => '#cafd00', strokeWidth: 2 }],
   };
 
   return (
     <View>
       {/* Stats row */}
-      <View className="flex-row justify-around mb-4">
-        <View className="items-center">
-          <Text className="text-lg font-bold text-slate-100">{personalBest} kg</Text>
-          <Text className="text-xs text-slate-500">Personal Best</Text>
+      <View className="flex-row bg-[#0e0e0e] rounded-sm mb-4">
+        <View className="flex-1 items-center py-3">
+          <Text className="text-[#cafd00] text-xl font-bold tracking-tight">{personalBest} kg</Text>
+          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px] mt-0.5">PERSONAL BEST</Text>
         </View>
-        <View className="w-px bg-slate-800" />
-        <View className="items-center">
-          <Text className="text-lg font-bold text-slate-100">{lastWeight} kg</Text>
-          <Text className="text-xs text-slate-500">Last Session</Text>
+        <View className="w-px bg-[#131313] my-2" />
+        <View className="flex-1 items-center py-3">
+          <Text className="text-[#f5f5f5] text-xl font-bold tracking-tight">{lastWeight} kg</Text>
+          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px] mt-0.5">LAST SESSION</Text>
         </View>
-        <View className="w-px bg-slate-800" />
-        <View className="items-center">
-          <Text
-            className={`text-lg font-bold ${
-              trend > 0 ? 'text-blue-300' : trend < 0 ? 'text-red-400' : 'text-slate-100'
-            }`}
-          >
+        <View className="w-px bg-[#131313] my-2" />
+        <View className="flex-1 items-center py-3">
+          <Text className={`text-xl font-bold tracking-tight ${
+            trend > 0 ? 'text-[#cafd00]' : trend < 0 ? 'text-[#ff734a]' : 'text-[#f5f5f5]'
+          }`}>
             {trend > 0 ? '+' : ''}{trend.toFixed(1)} kg
           </Text>
-          <Text className="text-xs text-slate-500">All Time</Text>
+          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px] mt-0.5">ALL TIME</Text>
         </View>
       </View>
 
       {/* Range toggle */}
       {withWeight.length > 10 && (
-        <View className="flex-row justify-end mb-2 gap-2">
+        <View className="flex-row justify-end mb-3 gap-2">
           {(['10', 'all'] as const).map((r) => (
             <TouchableOpacity
               key={r}
               onPress={() => setRange(r)}
-              className={`px-3 py-1 rounded-full ${range === r ? 'bg-blue-600' : 'bg-slate-800'}`}
+              className={`px-3 py-1.5 rounded-sm ${r === range ? 'bg-[#cafd00]' : 'bg-[#1a1a1a]'}`}
+              activeOpacity={0.85}
             >
-              <Text className={`text-xs font-medium ${range === r ? 'text-white' : 'text-slate-300'}`}>
-                {r === '10' ? 'Last 10' : 'All Time'}
+              <Text className={`text-[10px] font-bold tracking-widest ${r === range ? 'text-[#0e0e0e]' : 'text-[#4a4a4a]'}`}>
+                {r === '10' ? 'LAST 10' : 'ALL TIME'}
               </Text>
             </TouchableOpacity>
           ))}
@@ -89,36 +88,36 @@ export function ExerciseProgressChart({ entries }: Props) {
       )}
 
       {/* Chart */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="rounded-sm overflow-hidden">
         <LineChart
           data={chartData}
           width={Math.max(CHART_WIDTH, displayed.length * 50)}
-          height={180}
+          height={160}
           chartConfig={{
-            backgroundColor: '#0F172A',
-            backgroundGradientFrom: '#0F172A',
-            backgroundGradientTo: '#0F172A',
+            backgroundColor: '#0e0e0e',
+            backgroundGradientFrom: '#0e0e0e',
+            backgroundGradientTo: '#0e0e0e',
             decimalPlaces: 1,
-            color: (opacity = 1) => `rgba(96, 165, 250, ${opacity})`,
-            labelColor: () => '#64748B',
-            propsForDots: { r: '4', strokeWidth: '2', stroke: '#0F172A' },
-            propsForBackgroundLines: { stroke: '#1E293B' },
+            color: (opacity = 1) => `rgba(202, 253, 0, ${opacity})`,
+            labelColor: () => '#4a4a4a',
+            propsForDots: { r: '4', strokeWidth: '2', stroke: '#0e0e0e' },
+            propsForBackgroundLines: { stroke: '#131313' },
           }}
           bezier
-          style={{ borderRadius: 8 }}
+          style={{ borderRadius: 4 }}
           withInnerLines
           withOuterLines={false}
           withVerticalLabels={displayed.length <= 12}
           withHorizontalLabels
           formatYLabel={(v) => `${v}kg`}
           getDotColor={(dataPoint) =>
-            dataPoint === personalBest ? '#93C5FD' : '#60A5FA'
+            dataPoint === personalBest ? '#f3ffca' : '#cafd00'
           }
         />
       </ScrollView>
 
       {displayed.length > 1 && (
-        <Text className="text-xs text-slate-500 text-center mt-2">
+        <Text className="text-[#3a3a3a] text-[10px] text-center tracking-widest mt-2">
           {formatShortDate(displayed[0].date)} — {formatShortDate(displayed[displayed.length - 1].date)}
         </Text>
       )}

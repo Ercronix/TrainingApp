@@ -2,26 +2,18 @@ import { View, Text, TouchableOpacity, RefreshControl } from 'react-native';
 import { useState } from 'react';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import DraggableFlatList, {
-  RenderItemParams,
-  ScaleDecorator,
-} from 'react-native-draggable-flatlist';
+import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { useExercises } from '@/hooks/useExercises';
 import { useStartTraining } from '@/hooks/useStartTraining';
 import { confirm } from '@/utils/confirm';
 
 export default function WorkoutDetailScreen() {
   const { workoutId, workoutName, splitId } = useLocalSearchParams<{
-    workoutId: string;
-    workoutName: string;
-    splitId: string;
+    workoutId: string; workoutName: string; splitId: string;
   }>();
-
   const router = useRouter();
-  const { exercises, isLoading, isRefetching, refetch, deleteExercise, reorderExercises } =
-    useExercises(workoutId);
+  const { exercises, isLoading, isRefetching, refetch, deleteExercise, reorderExercises } = useExercises(workoutId);
   const { startTraining, isPending: isStarting } = useStartTraining(workoutId, workoutName);
-
   const [reorderMode, setReorderMode] = useState(false);
 
   const handleDelete = (id: number, name: string) => {
@@ -29,158 +21,131 @@ export default function WorkoutDetailScreen() {
   };
 
   const handleDragEnd = ({ data }: { data: any[] }) => {
-    const reordered = data.map((item, index) => ({ id: item.id, orderIndex: index }));
-    reorderExercises.mutate(reordered);
+    reorderExercises.mutate(data.map((item, index) => ({ id: item.id, orderIndex: index })));
   };
 
   const renderExerciseItem = ({ item, drag, isActive }: RenderItemParams<any>) => (
     <ScaleDecorator>
-      <View
-        className={`bg-slate-900 rounded-xl mb-3 border ${
-          isActive ? 'border-blue-400 shadow-md' : 'border-slate-800'
-        }`}
-        style={{ opacity: isActive ? 0.95 : 1 }}
+      <TouchableOpacity
+        className={`rounded-md mb-2 overflow-hidden ${isActive ? 'bg-[#1a1a1a]' : 'bg-[#131313]'}`}
+        onPress={() => {
+          if (reorderMode) return;
+          router.push({
+            pathname: '/exercise-detail' as any,
+            params: {
+              exerciseId: item.id.toString(), exerciseName: item.name,
+              description: item.description || '', videoUrl: item.videoUrl || '',
+              sets: item.sets?.toString() || '', reps: item.reps?.toString() || '',
+              weight: item.plannedWeight?.toString() || '', workoutId,
+            },
+          });
+        }}
+        onLongPress={reorderMode ? drag : undefined}
+        delayLongPress={100}
+        disabled={isActive}
+        activeOpacity={0.85}
       >
-        <TouchableOpacity
-          className="p-4"
-          onPress={() => {
-            if (reorderMode) return;
-            router.push({
-              pathname: '/exercise-detail' as any,
-              params: {
-                exerciseId: item.id.toString(),
-                exerciseName: item.name,
-                description: item.description || '',
-                videoUrl: item.videoUrl || '',
-                sets: item.sets?.toString() || '',
-                reps: item.reps?.toString() || '',
-                weight: item.plannedWeight?.toString() || '',
-                workoutId,
-              },
-            });
-          }}
-          onLongPress={reorderMode ? drag : undefined}
-          delayLongPress={100}
-          disabled={isActive}
-        >
-          <View className="flex-row justify-between items-start">
-            <View className="flex-1">
-              <Text className="text-lg font-semibold text-slate-100 mb-1">{item.name}</Text>
-              {item.sets && item.reps && (
-                <Text className="text-sm text-slate-300">
-                  {item.sets} × {item.reps} reps
-                  {item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
-                </Text>
-              )}
-              {item.lastUsedWeight && (
-                <Text className="text-xs text-blue-300 font-medium mt-1">
-                  Last: {item.lastUsedWeight} kg
-                </Text>
-              )}
-            </View>
-
-            <View className="flex-row gap-3 items-center ml-2">
-              {reorderMode ? (
-                // In reorder mode: show drag handle, hide other actions
-                <TouchableOpacity onLongPress={drag} delayLongPress={100}>
-                  <Ionicons name="reorder-three-outline" size={26} color="#64748B" />
-                </TouchableOpacity>
-              ) : (
-                <>
-                  {item.videoUrl && <Ionicons name="play-circle" size={20} color="#60A5FA" />}
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      router.push({
-                        pathname: '/edit-exercise' as any,
-                        params: {
-                          workoutId,
-                          exerciseId: item.id.toString(),
-                          currentName: item.name,
-                          currentSets: item.sets?.toString() || '',
-                          currentReps: item.reps?.toString() || '',
-                          currentWeight: item.plannedWeight?.toString() || '',
-                        },
-                      });
-                    }}
-                  >
-                    <Ionicons name="pencil-outline" size={20} color="#60A5FA" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleDelete(item.id, item.name);
-                    }}
-                  >
-                    <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                  </TouchableOpacity>
-                  <Ionicons name="chevron-forward" size={20} color="#64748B" />
-                </>
-              )}
-            </View>
+        <View className="flex-row items-center px-5 py-4 gap-3">
+          <View className="flex-1">
+            <Text className="text-[#f5f5f5] text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
+            {item.sets && item.reps && (
+              <Text className="text-[#4a4a4a] text-xs">
+                {item.sets} × {item.reps} reps{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+              </Text>
+            )}
+            {item.lastUsedWeight && (
+              <Text className="text-[#cafd00] text-[9px] tracking-[2px] mt-1">LAST: {item.lastUsedWeight} kg</Text>
+            )}
           </View>
-        </TouchableOpacity>
-      </View>
+          <View className="flex-row items-center gap-3">
+            {reorderMode ? (
+              <TouchableOpacity onLongPress={drag} delayLongPress={100}>
+                <Ionicons name="reorder-three-outline" size={24} color="#4a4a4a" />
+              </TouchableOpacity>
+            ) : (
+              <>
+                {item.videoUrl && <Ionicons name="play-circle" size={18} color="#81ecff" />}
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    router.push({
+                      pathname: '/edit-exercise' as any,
+                      params: {
+                        workoutId, exerciseId: item.id.toString(),
+                        currentName: item.name, currentSets: item.sets?.toString() || '',
+                        currentReps: item.reps?.toString() || '', currentWeight: item.plannedWeight?.toString() || '',
+                      },
+                    });
+                  }}
+                >
+                  <Ionicons name="pencil-outline" size={18} color="#4a4a4a" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }}>
+                  <Ionicons name="trash-outline" size={18} color="#ff734a" />
+                </TouchableOpacity>
+                <Ionicons name="chevron-forward" size={18} color="#262626" />
+              </>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
     </ScaleDecorator>
   );
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-[#0e0e0e]">
       {/* Header */}
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <View className="flex-row justify-between items-center mb-2">
+      <View className="px-6 pt-14 pb-5">
+        <View className="flex-row justify-between items-center mb-4">
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-400 text-base">← Back</Text>
+            <Ionicons name="arrow-back" size={20} color="#cafd00" />
           </TouchableOpacity>
           <View className="flex-row gap-4 items-center">
-            {/* Reorder toggle */}
             <TouchableOpacity onPress={() => setReorderMode((v) => !v)}>
               <Ionicons
                 name={reorderMode ? 'checkmark-done-outline' : 'reorder-three-outline'}
                 size={22}
-                color={reorderMode ? '#60A5FA' : '#64748B'}
+                color={reorderMode ? '#cafd00' : '#4a4a4a'}
               />
             </TouchableOpacity>
-            {/* Edit workout name */}
             {!reorderMode && (
               <TouchableOpacity
                 onPress={() =>
-                  router.push({
-                    pathname: '/edit-workout' as any,
-                    params: { workoutId, splitId, currentName: workoutName },
-                  })
+                  router.push({ pathname: '/edit-workout' as any, params: { workoutId, splitId, currentName: workoutName } })
                 }
               >
-                <Ionicons name="pencil-outline" size={20} color="#60A5FA" />
+                <Ionicons name="pencil-outline" size={20} color="#4a4a4a" />
               </TouchableOpacity>
             )}
           </View>
         </View>
-        <Text className="text-2xl font-bold text-slate-100">{workoutName}</Text>
-        <Text className="text-sm text-slate-400 mt-1">
-          {exercises.length} {exercises.length === 1 ? 'exercise' : 'exercises'}
-          {reorderMode ? ' · Hold and drag to reorder' : ''}
+        <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">WORKOUT DAY</Text>
+        <Text className="text-[#f5f5f5] text-[36px] font-bold tracking-tighter mb-1">{workoutName}</Text>
+        <Text className="text-[#4a4a4a] text-[10px] tracking-[2px]">
+          {exercises.length} {exercises.length === 1 ? 'EXERCISE' : 'EXERCISES'}
+          {reorderMode ? ' · HOLD TO REORDER' : ''}
         </Text>
       </View>
 
-      {/* Start Training Button — hidden in reorder mode */}
+      {/* Start Training */}
       {!reorderMode && exercises.length > 0 && (
-        <View className="bg-slate-900 px-4 py-3 border-b border-slate-800">
-          <TouchableOpacity
-            className={`bg-blue-600 rounded-lg py-3 items-center ${isStarting ? 'opacity-50' : ''}`}
-            onPress={() => startTraining(exercises.length)}
-            disabled={isStarting}
-          >
-            <Text className="text-white text-base font-semibold">
-              {isStarting ? 'Starting...' : 'Start Training'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          className={`mx-4 mb-3 bg-[#cafd00] rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
+          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
+          onPress={() => startTraining(exercises.length)}
+          disabled={isStarting}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="flash" size={18} color="#0e0e0e" />
+          <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+            {isStarting ? 'STARTING...' : 'START TRAINING'}
+          </Text>
+        </TouchableOpacity>
       )}
 
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <Text className="text-slate-400">Loading exercises...</Text>
+          <Text className="text-[#cafd00] text-sm font-bold tracking-[4px]">LOADING...</Text>
         </View>
       ) : (
         <DraggableFlatList
@@ -188,27 +153,29 @@ export default function WorkoutDetailScreen() {
           renderItem={renderExerciseItem}
           keyExtractor={(item) => item.id.toString()}
           onDragEnd={handleDragEnd}
-          activationDistance={reorderMode ? 5 : 999} // only draggable in reorder mode
-          contentContainerStyle={{ padding: 16 }}
+          activationDistance={reorderMode ? 5 : 999}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
           refreshControl={
-            !reorderMode ? (
-              <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
-            ) : undefined
+            !reorderMode ? <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#cafd00" /> : undefined
           }
           ListEmptyComponent={
-            <View className="items-center mt-20">
-              <Text className="text-xl text-slate-500 mb-2">No exercises yet</Text>
-              <Text className="text-sm text-slate-500">Tap + to add your first exercise</Text>
+            <View className="items-center mt-20 gap-3">
+              <Ionicons name="add-circle-outline" size={48} color="#262626" />
+              <Text className="text-[#262626] text-xl font-bold tracking-[2px]">NO EXERCISES YET</Text>
+              <Text className="text-[#3a3a3a] text-sm">Tap + to add your first exercise</Text>
             </View>
           }
         />
       )}
 
-      {/* FAB — hidden in reorder mode */}
       {!reorderMode && (
         <Link href={{ pathname: '/create-exercise' as any, params: { workoutId } }} asChild>
-          <TouchableOpacity className="absolute right-6 bottom-6 w-14 h-14 bg-blue-600 rounded-full justify-center items-center shadow-lg">
-            <Text className="text-white text-3xl font-light">+</Text>
+          <TouchableOpacity
+            className="absolute right-6 bottom-8 w-14 h-14 rounded-md bg-[#cafd00] justify-center items-center"
+            style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
+            activeOpacity={0.8}
+          >
+            <Text className="text-[#0e0e0e] text-3xl font-bold leading-8">+</Text>
           </TouchableOpacity>
         </Link>
       )}

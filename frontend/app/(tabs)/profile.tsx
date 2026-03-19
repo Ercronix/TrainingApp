@@ -3,50 +3,68 @@ import { useAuthStore } from '@/store/authStore';
 import { authApi } from '@/services/api';
 import { useRouter } from 'expo-router';
 import { confirm } from '@/utils/confirm';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
 
   const handleLogout = () => {
-    confirm(
-      'Logout',
-      'Are you sure you want to logout?',
-      async () => {
-        await authApi.logout();
-        logout();
-        router.replace('/login');
-      },
-      'Logout'
-    );
+    confirm('Logout', 'Are you sure you want to logout?', async () => {
+      await authApi.logout();
+      logout();
+      router.replace('/login');
+    }, 'Logout');
   };
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-[#0e0e0e]">
       {/* Header */}
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <Text className="text-2xl font-bold text-slate-100">Profile</Text>
+      <View className="px-6 pt-16 pb-6">
+        <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">ACCOUNT</Text>
+        <Text className="text-[#f5f5f5] text-[44px] font-bold tracking-tighter">PROFILE</Text>
       </View>
 
-      {/* User Info */}
-      <View className="bg-slate-900 border border-slate-800 m-4 rounded-xl p-6">
-        <Text className="text-sm text-slate-400 mb-1">Username</Text>
-        <Text className="text-lg font-semibold text-slate-100 mb-4">
-          {user?.username || 'User'}
+      {/* Avatar card */}
+      <View className="mx-4 mb-3 bg-[#131313] rounded-md p-8 items-center">
+        <View className="w-20 h-20 rounded-full bg-[#cafd00] items-center justify-center mb-4">
+          <Text className="text-[#0e0e0e] text-[36px] font-bold tracking-tighter leading-10">
+            {(user?.username || 'U')[0].toUpperCase()}
+          </Text>
+        </View>
+        <Text className="text-[#f5f5f5] text-2xl font-bold tracking-tight mb-1">
+          {user?.username || 'Athlete'}
         </Text>
-
-        <Text className="text-sm text-slate-400 mb-1">Email</Text>
-        <Text className="text-lg font-semibold text-slate-100">
-          {user?.email || 'N/A'}
-        </Text>
+        <Text className="text-[#4a4a4a] text-sm">{user?.email || 'N/A'}</Text>
       </View>
 
-      {/* Logout Button */}
+      {/* Info rows */}
+      <View className="mx-4 mb-3 bg-[#131313] rounded-md px-5">
+        <View className="flex-row items-center justify-between py-4">
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="person-outline" size={16} color="#4a4a4a" />
+            <Text className="text-[#4a4a4a] text-[10px] tracking-[2px]">USERNAME</Text>
+          </View>
+          <Text className="text-[#f5f5f5] text-sm font-bold">{user?.username || '—'}</Text>
+        </View>
+        <View className="h-px bg-[#1a1a1a]" />
+        <View className="flex-row items-center justify-between py-4">
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="mail-outline" size={16} color="#4a4a4a" />
+            <Text className="text-[#4a4a4a] text-[10px] tracking-[2px]">EMAIL</Text>
+          </View>
+          <Text className="text-[#f5f5f5] text-sm font-bold">{user?.email || '—'}</Text>
+        </View>
+      </View>
+
+      {/* Logout */}
       <TouchableOpacity
-        className="bg-red-500 mx-4 rounded-xl py-4 items-center"
+        className="mx-4 bg-[#131313] rounded-md py-5 flex-row items-center justify-center gap-2"
         onPress={handleLogout}
+        activeOpacity={0.85}
       >
-        <Text className="text-white text-lg font-semibold">Logout</Text>
+        <Ionicons name="log-out-outline" size={18} color="#ff734a" />
+        <Text className="text-[#ff734a] text-sm font-bold tracking-[2px]">LOGOUT</Text>
       </TouchableOpacity>
     </View>
   );

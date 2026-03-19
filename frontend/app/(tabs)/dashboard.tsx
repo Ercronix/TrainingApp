@@ -10,190 +10,143 @@ export default function DashboardScreen() {
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
 
   const weekDays = [
-    { key: 'mon', label: 'M' },
-    { key: 'tue', label: 'T' },
-    { key: 'wed', label: 'W' },
-    { key: 'thu', label: 'T' },
-    { key: 'fri', label: 'F' },
-    { key: 'sat', label: 'S' },
-    { key: 'sun', label: 'S' }
+    { key: 'mon', label: 'M' }, { key: 'tue', label: 'T' }, { key: 'wed', label: 'W' },
+    { key: 'thu', label: 'T' }, { key: 'fri', label: 'F' }, { key: 'sat', label: 'S' }, { key: 'sun', label: 'S' },
   ];
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-slate-950">
-        <Text className="text-slate-400">Loading dashboard...</Text>
+      <View className="flex-1 justify-center items-center bg-[#0e0e0e]">
+        <Text className="text-[#cafd00] text-sm font-bold tracking-[4px]">LOADING...</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView 
-      className="flex-1 bg-slate-950"
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+    <ScrollView
+      className="flex-1 bg-[#0e0e0e]"
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#cafd00" />}
     >
       {/* Header */}
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <Text className="text-2xl font-bold text-slate-100">Dashboard</Text>
-        <Text className="text-sm text-slate-400 mt-1">
-          Your training overview
+      <View className="px-6 pt-16 pb-6">
+        <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">OVERVIEW</Text>
+        <Text className="text-[#f5f5f5] text-[40px] font-bold leading-[42px] tracking-tighter">
+          PERFORMANCE{'\n'}STATS
         </Text>
       </View>
 
       {/* Streak Card */}
-      <View className="mx-4 mt-4 bg-slate-900 rounded-xl p-6 border border-slate-800">
-        <View className="flex-row items-center mb-4">
-          <View className="bg-orange-950/50 border border-orange-900/40 p-3 rounded-full mr-3">
-            <Ionicons name="flame" size={24} color="#F97316" />
-          </View>
+      <View className="mx-4 mb-3 bg-[#131313] rounded-md p-6">
+        <View className="flex-row justify-between items-start mb-5">
           <View>
-            <Text className="text-sm text-slate-400">Current Streak</Text>
-            <Text className="text-3xl font-bold text-slate-100">
-              {stats.streak.current} <Text className="text-base font-normal text-slate-500">days</Text>
-            </Text>
+            <Text className="text-[#4a4a4a] text-[10px] tracking-[3px] mb-1">CURRENT STREAK</Text>
+            <View className="flex-row items-end gap-2">
+              <Text className="text-[#f5f5f5] text-[64px] font-bold leading-[68px] tracking-tighter">
+                {stats.streak.current}
+              </Text>
+              <Text className="text-[#4a4a4a] text-xs tracking-widest mb-2">DAYS</Text>
+            </View>
           </View>
+          <Ionicons name="flame" size={48} color="#ff734a" />
         </View>
-        
-        {/* Streak days visualization */}
-        <View className="flex-row justify-between items-center">
+
+        {/* Week grid */}
+        <View className="flex-row justify-between">
           {weekDays.map((day, index) => {
             const isTrained = stats.streak.last7Days[index];
             return (
-              <View key={`${day.key}-${index}`} className="items-center">
-                <Text className="text-xs text-slate-500 mb-1">{day.label}</Text>
-                <View 
-                  className={`w-8 h-8 rounded-full items-center justify-center ${
-                    isTrained ? 'bg-blue-600' : 'bg-slate-800'
-                  }`}
-                >
-                  {isTrained && <Ionicons name="checkmark" size={16} color="white" />}
+              <View key={`${day.key}-${index}`} className="items-center gap-1">
+                <Text className="text-[#4a4a4a] text-[10px] tracking-widest">{day.label}</Text>
+                <View className={`w-8 h-8 rounded-full items-center justify-center ${isTrained ? 'bg-[#cafd00]' : 'bg-[#1a1a1a]'}`}>
+                  {isTrained && <Ionicons name="checkmark" size={12} color="#0e0e0e" />}
                 </View>
               </View>
             );
           })}
         </View>
-        
+
         {stats.streak.longest > stats.streak.current && (
-          <Text className="text-xs text-slate-500 mt-3">
-            Longest streak: {stats.streak.longest} days
-          </Text>
+          <Text className="text-[#4a4a4a] text-xs mt-4">Best: {stats.streak.longest} days</Text>
         )}
       </View>
 
-      {/* Time Range Selector */}
-      <View className="flex-row mx-4 mt-4 bg-slate-900 rounded-lg p-1 border border-slate-800">
+      {/* Time Range Toggle */}
+      <View className="flex-row mx-4 mb-3 bg-[#131313] rounded-md p-1">
         {(['week', 'month', 'year'] as const).map((range) => (
           <TouchableOpacity
             key={range}
-            className={`flex-1 py-2 rounded-md ${timeRange === range ? 'bg-blue-600' : ''}`}
+            className={`flex-1 py-2.5 rounded-sm items-center ${timeRange === range ? 'bg-[#cafd00]' : ''}`}
             onPress={() => setTimeRange(range)}
           >
-            <Text 
-              className={`text-center text-sm font-medium ${
-                timeRange === range ? 'text-white' : 'text-slate-300'
-              }`}
-            >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
+            <Text className={`text-[11px] font-bold tracking-widest ${timeRange === range ? 'text-[#0e0e0e]' : 'text-[#4a4a4a]'}`}>
+              {range.toUpperCase()}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {/* Stats Grid */}
-      <View className="flex-row flex-wrap mx-4 mt-4">
-        {/* Sessions Card */}
-        <View className="w-1/2 p-1">
-          <View className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-            <Ionicons name="barbell-outline" size={24} color="#60A5FA" />
-            <Text className="text-2xl font-bold text-slate-100 mt-2">
-              {stats.sessions[timeRange]}
-            </Text>
-            <Text className="text-sm text-slate-400">Sessions</Text>
-          </View>
+      <View className="flex-row flex-wrap mx-3 mb-3 gap-1">
+        <View className="bg-[#131313] rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
+          <Ionicons name="barbell-outline" size={20} color="#cafd00" />
+          <Text className="text-[#cafd00] text-[28px] font-bold tracking-tighter">{stats.sessions[timeRange]}</Text>
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">SESSIONS</Text>
         </View>
 
-        {/* Volume Card */}
-        <View className="w-1/2 p-1">
-          <View className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-            <Ionicons name="fitness-outline" size={24} color="#60A5FA" />
-            <Text className="text-2xl font-bold text-slate-100 mt-2">
-              {stats.volume[timeRange]} kg
-            </Text>
-            <Text className="text-sm text-slate-400">Total Volume</Text>
-          </View>
+        <View className="bg-[#1a1a1a] rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
+          <Ionicons name="fitness-outline" size={20} color="#81ecff" />
+          <Text className="text-[#81ecff] text-[28px] font-bold tracking-tighter">{stats.volume[timeRange]}</Text>
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">KG VOLUME</Text>
         </View>
 
-        {/* Time Card */}
-        <View className="w-1/2 p-1 mt-2">
-          <View className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-            <Ionicons name="time-outline" size={24} color="#60A5FA" />
-            <Text className="text-2xl font-bold text-slate-100 mt-2">
-              {stats.time[timeRange]}
-            </Text>
-            <Text className="text-sm text-slate-400">Time Trained</Text>
-          </View>
+        <View className="bg-[#131313] rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
+          <Ionicons name="time-outline" size={20} color="#ff734a" />
+          <Text className="text-[#ff734a] text-[28px] font-bold tracking-tighter">{stats.time[timeRange]}</Text>
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">TIME TRAINED</Text>
         </View>
 
-        {/* Avg Session Card */}
-        <View className="w-1/2 p-1 mt-2">
-          <View className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-            <Ionicons name="stats-chart-outline" size={24} color="#60A5FA" />
-            <Text className="text-2xl font-bold text-slate-100 mt-2">
-              {stats.averageVolume} kg
-            </Text>
-            <Text className="text-sm text-slate-400">Avg / Session</Text>
-          </View>
+        <View className="bg-[#1a1a1a] rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
+          <Ionicons name="trending-up-outline" size={20} color="#cafd00" />
+          <Text className="text-[#cafd00] text-[28px] font-bold tracking-tighter">{stats.averageVolume}</Text>
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">AVG / SESSION</Text>
         </View>
       </View>
 
-      {/* Last Session Card */}
+      {/* Last Session */}
       {stats.lastSession && (
         <TouchableOpacity
-          className="mx-4 mt-4 bg-slate-900 rounded-xl p-4 border border-slate-800"
-          onPress={() => {
-            if (stats.lastSession) {
-              router.push({
-                pathname: '/history-detail',
-                params: { trainingLogId: stats.lastSession.id.toString() }
-              });
-            }
-          }}
+          className="mx-4 mb-3 bg-[#131313] rounded-md p-5"
+          onPress={() =>
+            router.push({ pathname: '/history-detail', params: { trainingLogId: stats.lastSession.id.toString() } })
+          }
+          activeOpacity={0.85}
         >
-          <Text className="text-sm font-semibold text-slate-500 mb-2">LAST SESSION</Text>
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-3">LAST SESSION</Text>
           <View className="flex-row justify-between items-center">
-            <View>
-              <Text className="text-lg font-bold text-slate-100">
+            <View className="flex-1 mr-2">
+              <Text className="text-[#f5f5f5] text-xl font-bold tracking-tight mb-1">
                 {stats.lastSession.workoutName || stats.lastSession.splitName}
               </Text>
-              <Text className="text-sm text-slate-400 mt-1">
+              <Text className="text-[#4a4a4a] text-xs">
                 {new Date(stats.lastSession.startedAt).toLocaleDateString(undefined, {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long',
+                  weekday: 'long', day: 'numeric', month: 'long',
                 })} · {stats.lastSession.exercises?.length || 0} exercises
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#64748B" />
+            <Ionicons name="chevron-forward" size={20} color="#4a4a4a" />
           </View>
         </TouchableOpacity>
       )}
 
       {/* Most Active Day */}
       {stats.mostActiveDay && (
-        <View className="mx-4 mt-4 mb-8 bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <Text className="text-sm font-semibold text-slate-500 mb-2">MOST ACTIVE DAY</Text>
-          <View className="flex-row items-center">
-            <View className="bg-blue-950/40 border border-blue-900/40 p-3 rounded-full mr-3">
-              <Ionicons name="calendar" size={20} color="#60A5FA" />
-            </View>
-            <View>
-              <Text className="text-lg font-bold text-slate-100">
-                {stats.mostActiveDay}
-              </Text>
-              <Text className="text-sm text-slate-400">
-                {(stats.sessionsByDay[stats.mostActiveDay as keyof typeof stats.sessionsByDay]) || 0} sessions
-              </Text>
-            </View>
+        <View className="mx-4 mb-10 bg-[#131313] rounded-md p-5">
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-3">MOST ACTIVE DAY</Text>
+          <View className="flex-row items-end justify-between">
+            <Text className="text-[#f5f5f5] text-[28px] font-bold tracking-tight">{stats.mostActiveDay}</Text>
+            <Text className="text-[#4a4a4a] text-xs mb-1">
+              {(stats.sessionsByDay[stats.mostActiveDay as keyof typeof stats.sessionsByDay]) || 0} sessions
+            </Text>
           </View>
         </View>
       )}

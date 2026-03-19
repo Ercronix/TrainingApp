@@ -9,36 +9,21 @@ import { RestTimer } from '@/components/RestTimer';
 export default function TrainingScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
   const router = useRouter();
-
   const { training, isLoading, updateExerciseLog, completeTraining } = useTraining(trainingLogId);
-
-  // Keep a stable UI order even if the backend refetch returns a different sort (e.g. completed last).
   const [exerciseOrder, setExerciseOrder] = useState<number[]>([]);
 
-  useEffect(() => {
-    setExerciseOrder([]);
-  }, [trainingLogId]);
+  useEffect(() => { setExerciseOrder([]); }, [trainingLogId]);
 
   useEffect(() => {
     const exercises = training?.exercises;
     if (!exercises || exercises.length === 0) return;
-
     setExerciseOrder((prev) => {
       if (prev.length === 0) return exercises.map((e: any) => e.id);
-
       const ids = exercises.map((e: any) => e.id);
       const idSet = new Set(ids);
-
       const next = prev.filter((id) => idSet.has(id));
       const nextSet = new Set(next);
-
-      for (const id of ids) {
-        if (!nextSet.has(id)) {
-          next.push(id);
-          nextSet.add(id);
-        }
-      }
-
+      for (const id of ids) { if (!nextSet.has(id)) { next.push(id); nextSet.add(id); } }
       return next;
     });
   }, [training?.exercises]);
@@ -46,30 +31,18 @@ export default function TrainingScreen() {
   const orderedExercises = useMemo(() => {
     const exercises = training?.exercises ?? [];
     if (exerciseOrder.length === 0) return exercises;
-
     const byId = new Map<number, any>(exercises.map((e: any) => [e.id, e]));
     const orderSet = new Set(exerciseOrder);
-
-    const inOrder = exerciseOrder.map((id) => byId.get(id)).filter(Boolean);
-    const remaining = exercises.filter((e: any) => !orderSet.has(e.id));
-
-    return inOrder.concat(remaining);
+    return exerciseOrder.map((id) => byId.get(id)).filter(Boolean).concat(exercises.filter((e: any) => !orderSet.has(e.id)));
   }, [training?.exercises, exerciseOrder]);
 
   const toggleExercise = (exerciseLog: any) => {
     const completing = !exerciseLog.completed;
     const data: any = { completed: completing };
-
     if (completing) {
-      if (!exerciseLog.setsCompleted || exerciseLog.setsCompleted === 0) {
-        data.setsCompleted = exerciseLog.plannedSets ?? 0;
-      }
-      if (!exerciseLog.repsCompleted || exerciseLog.repsCompleted === 0) {
-        data.repsCompleted = exerciseLog.plannedReps ?? 0;
-      }
-      if (!exerciseLog.weightUsed && exerciseLog.plannedWeight) {
-        data.weightUsed = exerciseLog.plannedWeight;
-      }
+      if (!exerciseLog.setsCompleted || exerciseLog.setsCompleted === 0) data.setsCompleted = exerciseLog.plannedSets ?? 0;
+      if (!exerciseLog.repsCompleted || exerciseLog.repsCompleted === 0) data.repsCompleted = exerciseLog.plannedReps ?? 0;
+      if (!exerciseLog.weightUsed && exerciseLog.plannedWeight) data.weightUsed = exerciseLog.plannedWeight;
     }
     updateExerciseLog.mutate({ exerciseLogId: exerciseLog.id, data });
   };
@@ -77,205 +50,139 @@ export default function TrainingScreen() {
   const handleComplete = () => {
     const completedCount = training?.exercises.filter((e: any) => e.completed).length || 0;
     const totalCount = training?.exercises.length || 0;
-
     const doComplete = () =>
       completeTraining.mutate(undefined, {
-        onSuccess: () => {
-          alert('Success', 'Training completed!');
-          router.replace('/(tabs)');
-        },
+        onSuccess: () => { alert('Done!', 'Training session complete!'); router.replace('/(tabs)'); },
       });
-
     if (completedCount < totalCount) {
-      confirm(
-        'Incomplete Training',
-        `You've only completed ${completedCount}/${totalCount} exercises. Complete anyway?`,
-        doComplete,
-        'Complete',
-        'Cancel'
-      );
+      confirm('Incomplete', `${completedCount}/${totalCount} exercises done. Complete anyway?`, doComplete, 'Complete', 'Cancel');
     } else {
       doComplete();
     }
   };
 
   const renderExerciseItem = ({ item }: { item: any }) => (
-    <View
-      className={`bg-slate-900 rounded-xl mb-3 border ${
-        item.completed ? 'border-blue-500' : 'border-slate-800'
-      }`}
-    >
-      <View className="flex-row">
-        {/* Exercise info — tap to see details/video */}
-        <TouchableOpacity
-          className="flex-1 p-4"
-          onPress={() =>
-            router.push({
-              pathname: '/exercise-detail' as any,
-              params: {
-                exerciseId: item.exerciseId?.toString() ?? '',
-                exerciseName: item.exerciseName,
-                description: '',
-                videoUrl: '',
-                sets: item.plannedSets?.toString() || '',
-                reps: item.plannedReps?.toString() || '',
-                weight: item.plannedWeight?.toString() || '',
-                workoutId: item.workoutId?.toString() ?? '',
-              },
-            })
-          }
-        >
-          <View className="flex-row items-start">
-            <View className="flex-1">
-              {item.workoutName && (
-                <Text className="text-xs text-slate-500 mb-0.5">{item.workoutName}</Text>
-              )}
-              <Text
-                className={`text-base font-semibold ${
-                  item.completed ? 'text-blue-200' : 'text-slate-100'
-                }`}
-              >
-                {item.exerciseName}
-                {item.completed && ' ✓'}
-              </Text>
-              {item.plannedSets && item.plannedReps && (
-                <Text className="text-sm text-slate-300 mt-1">
-                  {item.plannedSets} × {item.plannedReps} reps
-                  {item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
-                </Text>
-              )}
-              {item.completed && (
-                <Text className="text-xs text-blue-300 font-medium mt-1">
-                  ✓ Logged: {item.setsCompleted}×{item.repsCompleted}
-                  {item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
-                </Text>
-              )}
-            </View>
-            <Ionicons name="information-circle-outline" size={20} color="#64748B" />
-          </View>
-        </TouchableOpacity>
+    <View className={`rounded-md mb-2 flex-row overflow-hidden relative ${item.completed ? 'bg-[#0d1408]' : 'bg-[#131313]'}`}>
+      {/* Done stripe */}
+      {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#cafd00]" />}
 
-        {/* Toggle complete checkbox */}
-        <TouchableOpacity
-          className="w-16 justify-center items-center border-l border-slate-800"
-          onPress={() => toggleExercise(item)}
-        >
-          <View
-            className={`w-6 h-6 rounded-full justify-center items-center ${
-              item.completed ? 'bg-blue-600' : 'border-2 border-slate-600'
-            }`}
-          >
-            {item.completed && <Ionicons name="checkmark" size={16} color="white" />}
-          </View>
-        </TouchableOpacity>
-
-        {/* Log button */}
-        <TouchableOpacity
-          className="w-16 justify-center items-center border-l border-slate-800"
-          onPress={() =>
-            router.push({
-              pathname: '/log-exercise' as any,
-              params: {
-                exerciseLogId: item.id.toString(),
-                exerciseName: item.exerciseName,
-                plannedSets: item.plannedSets?.toString() || '',
-                plannedReps: item.plannedReps?.toString() || '',
-                plannedWeight: item.plannedWeight?.toString() || '',
-                trainingLogId,
-              },
-            })
-          }
-        >
-          <Ionicons
-            name="create-outline"
-            size={24}
-            color={item.completed ? '#93C5FD' : '#60A5FA'}
-          />
-          <Text className={`text-xs mt-1 ${item.completed ? 'text-blue-300' : 'text-blue-400'}`}>
-            Log
+      {/* Main tap area */}
+      <TouchableOpacity
+        className="flex-1 px-5 py-4 flex-row items-center gap-2"
+        onPress={() =>
+          router.push({
+            pathname: '/exercise-detail' as any,
+            params: {
+              exerciseId: item.exerciseId?.toString() ?? '', exerciseName: item.exerciseName,
+              description: '', videoUrl: '',
+              sets: item.plannedSets?.toString() || '', reps: item.plannedReps?.toString() || '',
+              weight: item.plannedWeight?.toString() || '', workoutId: item.workoutId?.toString() ?? '',
+            },
+          })
+        }
+        activeOpacity={0.85}
+      >
+        <View className="flex-1">
+          <Text className={`text-base font-bold tracking-tight mb-1 ${item.completed ? 'text-[#f5f5f5]' : 'text-[#f5f5f5]'}`}>
+            {item.exerciseName}
           </Text>
-        </TouchableOpacity>
-      </View>
+          {item.plannedSets && item.plannedReps && (
+            <Text className="text-[#4a4a4a] text-xs">
+              {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+            </Text>
+          )}
+          {item.completed && (
+            <Text className="text-[#cafd00] text-[11px] mt-1">
+              ✓ {item.setsCompleted}×{item.repsCompleted}{item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
+            </Text>
+          )}
+        </View>
+        <Ionicons name="information-circle-outline" size={18} color="#4a4a4a" />
+      </TouchableOpacity>
+
+      {/* Toggle */}
+      <TouchableOpacity
+        className={`w-14 justify-center items-center ${item.completed ? 'bg-[#0d1408]' : 'bg-[#0e0e0e]'}`}
+        onPress={() => toggleExercise(item)}
+      >
+        <View className={`w-6 h-6 rounded-full justify-center items-center ${item.completed ? 'bg-[#cafd00]' : 'border-2 border-[#2a2a2a]'}`}>
+          {item.completed && <Ionicons name="checkmark" size={14} color="#0e0e0e" />}
+        </View>
+      </TouchableOpacity>
+
+      {/* Log */}
+      <TouchableOpacity
+        className="w-14 justify-center items-center bg-[#0e0e0e] gap-0.5"
+        onPress={() =>
+          router.push({
+            pathname: '/log-exercise' as any,
+            params: {
+              exerciseLogId: item.id.toString(), exerciseName: item.exerciseName,
+              plannedSets: item.plannedSets?.toString() || '', plannedReps: item.plannedReps?.toString() || '',
+              plannedWeight: item.plannedWeight?.toString() || '', trainingLogId,
+            },
+          })
+        }
+      >
+        <Ionicons name="create-outline" size={22} color={item.completed ? '#cafd00' : '#4a4a4a'} />
+        <Text className={`text-[8px] tracking-widest ${item.completed ? 'text-[#cafd00]' : 'text-[#4a4a4a]'}`}>LOG</Text>
+      </TouchableOpacity>
     </View>
   );
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-slate-950">
-        <Text className="text-slate-400">Loading training...</Text>
+      <View className="flex-1 justify-center items-center bg-[#0e0e0e]">
+        <Text className="text-[#cafd00] text-sm font-bold tracking-[4px]">LOADING...</Text>
       </View>
     );
   }
 
   const completedCount = training?.exercises.filter((e: any) => e.completed).length || 0;
   const totalCount = training?.exercises.length || 0;
+  const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-[#0e0e0e]">
       {/* Header */}
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <View className="flex-row items-center justify-between mb-2">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-400 text-base">← Back</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              router.push({
-                pathname: '/add-exercise' as any,
-                params: { trainingLogId },
-              })
-            }
-            className="flex-row items-center"
-          >
-            <Ionicons name="add" size={18} color="#60A5FA" />
-            <Text className="text-blue-400 text-base ml-1">Add</Text>
-          </TouchableOpacity>
-        </View>
-        <Text className="text-2xl font-bold text-slate-100">{training?.splitName}</Text>
-        <Text className="text-sm text-slate-400 mt-1">
-          {completedCount}/{totalCount} exercises completed
-        </Text>
+      <View className="px-6 pt-14 pb-4">
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Ionicons name="arrow-back" size={20} color="#cafd00" />
+        </TouchableOpacity>
+        <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">ACTIVE SESSION</Text>
+        <Text className="text-[#f5f5f5] text-[32px] font-bold tracking-tighter mb-1">{training?.splitName}</Text>
+        <Text className="text-[#4a4a4a] text-[11px] tracking-[2px]">{completedCount}/{totalCount} COMPLETE</Text>
       </View>
 
-      {/* Progress Bar */}
-      <View className="bg-slate-900 px-6 py-3">
-        <View className="h-2 bg-slate-800 rounded-full overflow-hidden">
-          <View
-            className="h-full bg-blue-600"
-            style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
-          />
-        </View>
+      {/* Progress bar */}
+      <View className="h-[3px] bg-[#131313] mx-4 mb-3 rounded-full overflow-hidden">
+        <View className="h-full bg-[#cafd00] rounded-full" style={{ width: `${progressPct}%` }} />
       </View>
 
-      {/* Exercise List */}
       <FlatList
         data={orderedExercises}
         renderItem={renderExerciseItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ padding: 16, paddingBottom: 180 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 220 }}
       />
 
-      {/* Bottom — Rest Timer + Complete */}
-      <View className="bg-slate-900 border-t border-slate-800">
-        <View className="px-4 pt-4">
-          <RestTimer
-            duration={120}
-            onComplete={() => alert('Rest Complete!', 'Time for next set!')}
-          />
+      {/* Bottom dock */}
+      <View className="absolute bottom-0 left-0 right-0 bg-[#0e0e0e] border-t border-[#131313] px-4 pb-8 pt-4">
+        <View className="mb-3">
+          <RestTimer duration={120} onComplete={() => alert('Rest Complete!', 'Time for next set!')} />
         </View>
-        <View className="p-4">
-          <TouchableOpacity
-            className={`bg-blue-600 rounded-lg py-4 items-center ${
-              completeTraining.isPending ? 'opacity-50' : ''
-            }`}
-            onPress={handleComplete}
-            disabled={completeTraining.isPending}
-          >
-            <Text className="text-white text-lg font-semibold">
-              {completeTraining.isPending ? 'Completing...' : 'Complete Training'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          className={`bg-[#cafd00] rounded-md py-4 flex-row items-center justify-center gap-2 ${completeTraining.isPending ? 'opacity-50' : ''}`}
+          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
+          onPress={handleComplete}
+          disabled={completeTraining.isPending}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="checkmark-done" size={18} color="#0e0e0e" />
+          <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+            {completeTraining.isPending ? 'SAVING...' : 'COMPLETE SESSION'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

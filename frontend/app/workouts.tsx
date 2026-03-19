@@ -1,128 +1,110 @@
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { confirm } from '@/utils/confirm';
 
 export default function WorkoutsScreen() {
-  const { splitId, splitName } = useLocalSearchParams<{
-    splitId: string;
-    splitName: string;
-  }>();
+  const { splitId, splitName } = useLocalSearchParams<{ splitId: string; splitName: string }>();
   const router = useRouter();
   const { workouts, isLoading, isRefetching, refetch, deleteWorkout } = useWorkouts(splitId);
 
   const handleDelete = (id: number, name: string) => {
-    confirm(
-      'Delete Workout',
-      `Delete "${name}" and all its exercises?`,
-      () => deleteWorkout.mutate(id),
-      'Delete'
-    );
+    confirm('Delete Workout', `Delete "${name}" and all its exercises?`, () => deleteWorkout.mutate(id), 'Delete');
   };
 
-  const renderWorkoutItem = ({ item }: { item: any }) => (
-    <View className="bg-slate-900 rounded-xl mb-3 border border-slate-800">
-      <TouchableOpacity
-        className="p-4"
-        onPress={() =>
-          router.push({
-            pathname: '/workout-detail' as any,
-            params: { workoutId: item.id.toString(), workoutName: item.name, splitId },
-          })
-        }
-      >
-        <View className="flex-row justify-between items-center">
-          <View className="flex-1">
-            <Text className="text-lg font-semibold text-slate-100 mb-1">{item.name}</Text>
-            <Text className="text-sm text-slate-400">
-              {item.exerciseCount ?? 0}{' '}
-              {item.exerciseCount === 1 ? 'exercise' : 'exercises'} · Tap to view & train
-            </Text>
-          </View>
-
-          <View className="flex-row gap-3 items-center ml-2">
-            {/* Edit */}
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                router.push({
-                  pathname: '/edit-workout' as any,
-                  params: {
-                    workoutId: item.id.toString(),
-                    splitId,
-                    currentName: item.name,
-                  },
-                });
-              }}
-            >
-              <Ionicons name="pencil-outline" size={20} color="#60A5FA" />
-            </TouchableOpacity>
-            {/* Delete */}
-            <TouchableOpacity
-              onPress={(e) => {
-                e.stopPropagation();
-                handleDelete(item.id, item.name);
-              }}
-            >
-              <Ionicons name="trash-outline" size={20} color="#EF4444" />
-            </TouchableOpacity>
-            <Ionicons name="chevron-forward" size={20} color="#64748B" />
-          </View>
-        </View>
-      </TouchableOpacity>
-    </View>
+  const renderWorkoutItem = ({ item, index }: { item: any; index: number }) => (
+    <TouchableOpacity
+      className="bg-[#131313] rounded-md mb-2 px-5 py-5 flex-row items-center gap-3"
+      onPress={() =>
+        router.push({ pathname: '/workout-detail' as any, params: { workoutId: item.id.toString(), workoutName: item.name, splitId } })
+      }
+      activeOpacity={0.85}
+    >
+      <Text className="text-[#1a1a1a] text-[28px] font-bold tracking-tighter min-w-[36px]">
+        {String(index + 1).padStart(2, '0')}
+      </Text>
+      <View className="flex-1">
+        <Text className="text-[#f5f5f5] text-lg font-bold tracking-tight mb-1">{item.name}</Text>
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">
+          {item.exerciseCount ?? 0} {item.exerciseCount === 1 ? 'EXERCISE' : 'EXERCISES'}
+        </Text>
+      </View>
+      <View className="flex-row items-center gap-3">
+        <TouchableOpacity
+          onPress={(e) => {
+            e.stopPropagation();
+            router.push({ pathname: '/edit-workout' as any, params: { workoutId: item.id.toString(), splitId, currentName: item.name } });
+          }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="pencil-outline" size={18} color="#4a4a4a" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="trash-outline" size={18} color="#ff734a" />
+        </TouchableOpacity>
+        <Ionicons name="chevron-forward" size={18} color="#262626" />
+      </View>
+    </TouchableOpacity>
   );
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-[#0e0e0e]">
       {/* Header */}
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <View className="flex-row justify-between items-center mb-2">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-400 text-base">← Back</Text>
-          </TouchableOpacity>
-          {/* Edit split name */}
+      <View className="px-6 pt-14 pb-5">
+        <TouchableOpacity onPress={() => router.back()} className="mb-4">
+          <Ionicons name="arrow-back" size={20} color="#cafd00" />
+        </TouchableOpacity>
+        <View className="flex-row items-start justify-between mb-2">
+          <View className="flex-1 mr-3">
+            <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">SPLIT</Text>
+            <Text className="text-[#f5f5f5] text-[36px] font-bold tracking-tighter leading-10" numberOfLines={1}>
+              {splitName}
+            </Text>
+          </View>
           <TouchableOpacity
             onPress={() =>
-              router.push({
-                pathname: '/edit-split' as any,
-                params: { splitId, currentName: splitName },
-              })
+              router.push({ pathname: '/edit-split' as any, params: { splitId, currentName: splitName } })
             }
+            className="mt-5"
           >
-            <Ionicons name="pencil-outline" size={20} color="#60A5FA" />
+            <Ionicons name="pencil-outline" size={18} color="#4a4a4a" />
           </TouchableOpacity>
         </View>
-        <Text className="text-2xl font-bold text-slate-100">{splitName}</Text>
-        <Text className="text-sm text-slate-400 mt-1">
-          Select a workout day to view exercises and start training
-        </Text>
+        <Text className="text-[#4a4a4a] text-xs">Select a day to view exercises and start training</Text>
       </View>
 
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <Text className="text-slate-400">Loading workouts...</Text>
+          <Text className="text-[#cafd00] text-sm font-bold tracking-[4px]">LOADING...</Text>
         </View>
       ) : (
         <FlatList
           data={workouts}
           renderItem={renderWorkoutItem}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ padding: 16 }}
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#cafd00" />}
           ListEmptyComponent={
-            <View className="items-center mt-20">
-              <Text className="text-xl text-slate-500 mb-2">No workout days yet</Text>
-              <Text className="text-sm text-slate-500">Tap + to add your first workout day</Text>
+            <View className="items-center mt-20 gap-3">
+              <Ionicons name="calendar-outline" size={48} color="#262626" />
+              <Text className="text-[#262626] text-xl font-bold tracking-[2px]">NO WORKOUT DAYS</Text>
+              <Text className="text-[#3a3a3a] text-sm">Tap + to add your first day</Text>
             </View>
           }
         />
       )}
 
       <Link href={{ pathname: '/create-workout', params: { splitId } }} asChild>
-        <TouchableOpacity className="absolute right-6 bottom-6 w-14 h-14 bg-blue-600 rounded-full justify-center items-center shadow-lg">
-          <Text className="text-white text-3xl font-light">+</Text>
+        <TouchableOpacity
+          className="absolute right-6 bottom-8 w-14 h-14 rounded-md bg-[#cafd00] justify-center items-center"
+          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
+          activeOpacity={0.8}
+        >
+          <Text className="text-[#0e0e0e] text-3xl font-bold leading-8">+</Text>
         </TouchableOpacity>
       </Link>
     </View>

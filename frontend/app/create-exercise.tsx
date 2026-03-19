@@ -2,64 +2,48 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useExercises } from '@/hooks/useExercises';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function CreateExerciseModal() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const router = useRouter();
   const { createExercise } = useExercises(workoutId);
-
-  const [form, setForm] = useState({
-    name: '',
-    sets: '',
-    reps: '',
-    weight: '',
-    videoUrl: '',
-    description: '',
-  });
-
-  const updateField = (field: keyof typeof form) => (value: string) =>
-    setForm(prev => ({ ...prev, [field]: value }));
-
+  const [form, setForm] = useState({ name: '', sets: '', reps: '', weight: '', videoUrl: '', description: '' });
+  const updateField = (field: keyof typeof form) => (value: string) => setForm(prev => ({ ...prev, [field]: value }));
   const isPending = createExercise.isPending;
 
   const handleCreate = () => {
-    if (!form.name.trim()) {
-      Alert.alert('Error', 'Please enter an exercise name');
-      return;
-    }
-    createExercise.mutate(
-      {
-        name: form.name.trim(),
-        sets: form.sets ? parseInt(form.sets) : null,
-        reps: form.reps ? parseInt(form.reps) : null,
-        plannedWeight: form.weight ? parseFloat(form.weight) : null,
-        videoUrl: form.videoUrl.trim() || null,
-        description: form.description.trim() || null,
-      },
-      { onSuccess: () => router.back() }
-    );
+    if (!form.name.trim()) { Alert.alert('Error', 'Please enter an exercise name'); return; }
+    createExercise.mutate({
+      name: form.name.trim(),
+      sets: form.sets ? parseInt(form.sets) : null,
+      reps: form.reps ? parseInt(form.reps) : null,
+      plannedWeight: form.weight ? parseFloat(form.weight) : null,
+      videoUrl: form.videoUrl.trim() || null,
+      description: form.description.trim() || null,
+    }, { onSuccess: () => router.back() });
   };
 
   return (
-    <View className="flex-1 bg-slate-950">
-      {/* Header */}
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <View className="flex-row justify-between items-center">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="text-blue-400 text-base">Cancel</Text>
-          </TouchableOpacity>
-          <Text className="text-xl font-bold text-slate-100">New Exercise</Text>
-          <View className="w-16" />
-        </View>
+    <View className="flex-1 bg-[#0e0e0e]">
+      <View className="flex-row justify-between items-center px-6 pt-14 pb-5">
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="close" size={22} color="#4a4a4a" />
+        </TouchableOpacity>
+        <Text className="text-[#4a4a4a] text-[10px] tracking-[4px]">NEW EXERCISE</Text>
+        <View className="w-6" />
       </View>
 
-      <ScrollView className="flex-1 p-6">
-        {/* Name */}
-        <Text className="text-base mb-2 text-slate-300">Exercise Name *</Text>
+      <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 40 }}>
+        <Text className="text-[#f5f5f5] text-[36px] font-bold tracking-tighter leading-10 mb-8">
+          ADD AN{'\n'}EXERCISE
+        </Text>
+
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
-          placeholder="e.g., Bench Press, Squat, Pull-up"
-          placeholderTextColor="#64748B"
+          className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-[22px] font-bold tracking-tight mb-5"
+          placeholder="Bench Press, Squat..."
+          placeholderTextColor="#2a2a2a"
           value={form.name}
           onChangeText={updateField('name')}
           autoFocus
@@ -67,38 +51,40 @@ export default function CreateExerciseModal() {
           editable={!isPending}
         />
 
-        {/* Sets */}
-        <Text className="text-base mb-2 text-slate-300">Sets</Text>
-        <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
-          placeholder="e.g., 4"
-          placeholderTextColor="#64748B"
-          value={form.sets}
-          onChangeText={updateField('sets')}
-          keyboardType="numeric"
-          keyboardAppearance="dark"
-          editable={!isPending}
-        />
+        <View className="flex-row gap-3 mb-5">
+          <View className="flex-1">
+            <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">SETS</Text>
+            <TextInput
+              className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-lg font-bold tracking-tight"
+              placeholder="4"
+              placeholderTextColor="#2a2a2a"
+              value={form.sets}
+              onChangeText={updateField('sets')}
+              keyboardType="numeric"
+              keyboardAppearance="dark"
+              editable={!isPending}
+            />
+          </View>
+          <View className="flex-1">
+            <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">REPS</Text>
+            <TextInput
+              className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-lg font-bold tracking-tight"
+              placeholder="10"
+              placeholderTextColor="#2a2a2a"
+              value={form.reps}
+              onChangeText={updateField('reps')}
+              keyboardType="numeric"
+              keyboardAppearance="dark"
+              editable={!isPending}
+            />
+          </View>
+        </View>
 
-        {/* Reps */}
-        <Text className="text-base mb-2 text-slate-300">Reps</Text>
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
-          placeholder="e.g., 10"
-          placeholderTextColor="#64748B"
-          value={form.reps}
-          onChangeText={updateField('reps')}
-          keyboardType="numeric"
-          keyboardAppearance="dark"
-          editable={!isPending}
-        />
-
-        {/* Weight */}
-        <Text className="text-base mb-2 text-slate-300">Planned Weight (kg)</Text>
-        <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
-          placeholder="e.g., 80"
-          placeholderTextColor="#64748B"
+          className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-lg font-bold tracking-tight mb-5"
+          placeholder="80"
+          placeholderTextColor="#2a2a2a"
           value={form.weight}
           onChangeText={updateField('weight')}
           keyboardType="decimal-pad"
@@ -106,12 +92,11 @@ export default function CreateExerciseModal() {
           editable={!isPending}
         />
 
-        {/* Video URL */}
-        <Text className="text-base mb-2 text-slate-300">YouTube Video URL</Text>
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">YOUTUBE URL</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
-          placeholder="e.g., https://youtube.com/watch?v=..."
-          placeholderTextColor="#64748B"
+          className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-sm mb-5"
+          placeholder="https://youtube.com/watch?v=..."
+          placeholderTextColor="#2a2a2a"
           value={form.videoUrl}
           onChangeText={updateField('videoUrl')}
           keyboardType="url"
@@ -120,27 +105,29 @@ export default function CreateExerciseModal() {
           editable={!isPending}
         />
 
-        {/* Description */}
-        <Text className="text-base mb-2 text-slate-300">Description / Notes</Text>
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">NOTES</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-6"
-          placeholder="e.g., Keep elbows tucked, full range of motion"
-          placeholderTextColor="#64748B"
+          className="bg-[#131313] rounded px-4 py-3 text-[#f5f5f5] text-sm mb-6"
+          placeholder="Cues, form tips..."
+          placeholderTextColor="#2a2a2a"
           value={form.description}
           onChangeText={updateField('description')}
           multiline
           numberOfLines={3}
           keyboardAppearance="dark"
           editable={!isPending}
+          style={{ textAlignVertical: 'top', minHeight: 80 }}
         />
 
         <TouchableOpacity
-          className={`bg-blue-600 rounded-lg py-4 items-center mb-8 ${isPending ? 'opacity-50' : ''}`}
+          className={`bg-[#cafd00] rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
+          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
           onPress={handleCreate}
           disabled={isPending}
+          activeOpacity={0.85}
         >
-          <Text className="text-white text-lg font-semibold">
-            {isPending ? 'Creating...' : 'Add Exercise'}
+          <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+            {isPending ? 'ADDING...' : 'ADD EXERCISE'}
           </Text>
         </TouchableOpacity>
       </ScrollView>

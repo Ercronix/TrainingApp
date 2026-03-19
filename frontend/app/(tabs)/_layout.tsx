@@ -5,11 +5,18 @@ export default function TabsLayout() {
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: '#60A5FA',
-                tabBarInactiveTintColor: '#64748B',
+                tabBarActiveTintColor: '#cafd00',
+                tabBarInactiveTintColor: '#4a4a4a',
                 tabBarStyle: {
-                    backgroundColor: '#0F172A',
-                    borderTopColor: '#1E293B',
+                    backgroundColor: '#0e0e0e',
+                    borderTopWidth: 0,
+                    height: 64,
+                    paddingBottom: 10,
+                    paddingTop: 8,
+                },
+                tabBarLabelStyle: {
+                    fontSize: 10,
+                    letterSpacing: 0.5,
                 },
                 headerShown: false,
             }}
@@ -17,37 +24,29 @@ export default function TabsLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Splits',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="barbell" size={size} color={color} />
-                    ),
+                    title: 'SPLITS',
+                    tabBarIcon: ({ color, size }) => <Ionicons name="barbell" size={size} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="dashboard"
                 options={{
-                    title: 'Dashboard',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="stats-chart" size={size} color={color} />
-                    ),
+                    title: 'STATS',
+                    tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart" size={size} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="History"
                 options={{
-                    title: 'History',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="time" size={size} color={color} />
-                    ),
+                    title: 'HISTORY',
+                    tabBarIcon: ({ color, size }) => <Ionicons name="time" size={size} color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="profile"
                 options={{
-                    title: 'Profile',
-                    tabBarIcon: ({ color, size }) => (
-                        <Ionicons name="person" size={size} color={color} />
-                    ),
+                    title: 'PROFILE',
+                    tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
                 }}
             />
         </Tabs>

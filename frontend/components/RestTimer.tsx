@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 interface RestTimerProps {
-  duration: number; // Sekunden
+  duration: number;
   onComplete?: () => void;
 }
 
@@ -14,7 +14,6 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
 
   useEffect(() => {
     if (!isRunning || seconds === 0) return;
-
     const timer = setInterval(() => {
       setSeconds((prev) => {
         if (prev <= 1) {
@@ -25,19 +24,16 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, [isRunning, seconds, onComplete]);
 
   const toggle = () => {
-    if (seconds === 0) {
-      setSeconds(duration);
-    }
+    if (seconds === 0) setSeconds(customDuration);
     setIsRunning(!isRunning);
   };
 
   const reset = () => {
-    setSeconds(duration);
+    setSeconds(customDuration);
     setIsRunning(false);
   };
 
@@ -54,15 +50,23 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
     setIsRunning(false);
   };
 
+  const isUrgent = seconds <= 10 && isRunning;
+  const progress = ((customDuration - seconds) / customDuration) * 100;
+
+  const presets = [
+    { label: '1 MIN', mins: 1, secs: 60 },
+    { label: '2 MIN', mins: 2, secs: 120 },
+    { label: '3 MIN', mins: 3, secs: 180 },
+    { label: '5 MIN', mins: 5, secs: 300 },
+  ];
+
   return (
-    <View className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-      <View className="flex-row items-center justify-between">
-        {/* Timer Display */}
-        <View className="flex-1">
-          <Text className="text-xs text-slate-400 mb-1">Rest Timer</Text>
-          <Text className={`text-3xl font-bold ${
-            seconds <= 10 && isRunning ? 'text-red-400' : 'text-slate-100'
-          }`}>
+    <View className="bg-[#131313] rounded-md p-4">
+      <View className="flex-row items-center justify-between mb-3">
+        {/* Timer display */}
+        <View>
+          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-1">REST TIMER</Text>
+          <Text className={`text-[40px] font-bold tracking-tighter leading-10 ${isUrgent ? 'text-[#ff734a]' : 'text-[#f5f5f5]'}`}>
             {formatTime(seconds)}
           </Text>
         </View>
@@ -70,79 +74,49 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
         {/* Controls */}
         <View className="flex-row gap-2">
           <TouchableOpacity
-            className={`w-12 h-12 rounded-full justify-center items-center ${
-              isRunning ? 'bg-slate-700' : 'bg-blue-600'
-            }`}
+            className={`w-12 h-12 rounded-md justify-center items-center ${isRunning ? 'bg-[#1a1a1a]' : 'bg-[#cafd00]'}`}
             onPress={toggle}
+            activeOpacity={0.85}
           >
             <Ionicons
               name={isRunning ? 'pause' : 'play'}
               size={20}
-              color="white"
+              color={isRunning ? '#4a4a4a' : '#0e0e0e'}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="w-12 h-12 rounded-full justify-center items-center bg-slate-800"
+            className="w-12 h-12 rounded-md justify-center items-center bg-[#1a1a1a]"
             onPress={reset}
+            activeOpacity={0.85}
           >
-            <Ionicons name="refresh" size={20} color="#94A3B8" />
+            <Ionicons name="refresh" size={18} color="#4a4a4a" />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Progress Bar */}
-      <View className="mt-3 h-1 bg-slate-800 rounded-full overflow-hidden">
+      {/* Progress bar */}
+      <View className="h-[3px] bg-[#0e0e0e] rounded-full overflow-hidden mb-3">
         <View
-          className={`h-full ${
-            seconds <= 10 && isRunning ? 'bg-red-400' : 'bg-blue-600'
-          }`}
-          style={{ width: `${((duration - seconds) / duration) * 100}%` }}
+          className={`h-full rounded-full ${isUrgent ? 'bg-[#ff734a]' : 'bg-[#cafd00]'}`}
+          style={{ width: `${progress}%` }}
         />
       </View>
 
-      {/* Preset Buttons */}
-      <View className="flex-row gap-2 mt-3">
-        <TouchableOpacity
-          className={`flex-1 rounded-lg py-2 ${
-            customDuration === 60 ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
-          }`}
-          onPress={() => setPreset(1)}
-        >
-          <Text className={`text-center text-sm ${
-            customDuration === 60 ? 'text-blue-200' : 'text-slate-200'
-          }`}>1 min</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className={`flex-1 rounded-lg py-2 ${
-            customDuration === 120 ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
-          }`}
-          onPress={() => setPreset(2)}
-        >
-          <Text className={`text-center text-sm ${
-            customDuration === 120 ? 'text-blue-200' : 'text-slate-200'
-          }`}>2 min</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className={`flex-1 rounded-lg py-2 ${
-            customDuration === 180 ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
-          }`}
-          onPress={() => setPreset(3)}
-        >
-          <Text className={`text-center text-sm ${
-            customDuration === 180 ? 'text-blue-200' : 'text-slate-200'
-          }`}>3 min</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className={`flex-1 rounded-lg py-2 ${
-            customDuration === 300 ? 'bg-blue-950/40 border border-blue-900/40' : 'bg-slate-800'
-          }`}
-          onPress={() => setPreset(5)}
-        >
-          <Text className={`text-center text-sm ${
-            customDuration === 300 ? 'text-blue-200' : 'text-slate-200'
-          }`}>5 min</Text>
-        </TouchableOpacity>
+      {/* Preset buttons */}
+      <View className="flex-row gap-2">
+        {presets.map(({ label, mins, secs }) => (
+          <TouchableOpacity
+            key={secs}
+            className={`flex-1 py-2 rounded-sm items-center ${customDuration === secs ? 'bg-[#cafd00]' : 'bg-[#0e0e0e]'}`}
+            onPress={() => setPreset(mins)}
+            activeOpacity={0.85}
+          >
+            <Text className={`text-[10px] font-bold tracking-widest ${customDuration === secs ? 'text-[#0e0e0e]' : 'text-[#4a4a4a]'}`}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
