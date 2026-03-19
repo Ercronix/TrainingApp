@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAddExerciseLog } from '@/hooks/useAddExerciseLog';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function AddExerciseScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
@@ -10,10 +11,10 @@ export default function AddExerciseScreen() {
 
   if (!trainingLogId) {
     return (
-      <View className="flex-1 justify-center items-center bg-slate-950 p-6">
-        <Text className="text-slate-300 text-base mb-4">Missing training session.</Text>
+      <View className="flex-1 justify-center items-center bg-[#0e0e0e] p-6">
+        <Text className="text-[#4a4a4a] text-base mb-4">Missing training session.</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-blue-400 text-base">Go Back</Text>
+          <Text className="text-[#cafd00] text-base">Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -47,54 +48,57 @@ export default function AddExerciseScreen() {
   };
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-[#0e0e0e]">
       {/* Header */}
-      <View className="bg-slate-900 border-b border-slate-800 pt-12 pb-4 px-6">
-        <View className="flex-row justify-between items-center">
+      <View className="pt-14 pb-5 px-6">
+        <View className="flex-row justify-between items-center mb-4">
           <TouchableOpacity onPress={() => router.back()} disabled={isPending}>
-            <Text className="text-blue-400 text-base">Cancel</Text>
+            <Ionicons name="arrow-back" size={20} color={isPending ? '#3a3a3a' : '#cafd00'} />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-slate-100">Add Exercise</Text>
-          <View className="w-16" />
+          <View>
+            <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1 text-center">ACTIVE SESSION</Text>
+            <Text className="text-[22px] font-bold tracking-tight text-[#f5f5f5] text-center">ADD EXERCISE</Text>
+          </View>
+          <View className="w-5" />
         </View>
       </View>
 
-      <ScrollView className="flex-1 p-6">
+      <ScrollView className="flex-1 px-6">
         {/* Scope */}
-        <Text className="text-base mb-2 text-slate-300">Add Where</Text>
-        <View className="flex-row mb-6 bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">WHERE SHOULD THIS GO?</Text>
+        <View className="flex-row mb-6 bg-[#131313] border border-[#1a1a1a] rounded-md overflow-hidden">
           <TouchableOpacity
-            className={`flex-1 py-3 items-center ${addToWorkout ? 'bg-blue-700' : ''}`}
+            className={`flex-1 py-3 items-center ${addToWorkout ? 'bg-[#cafd00]' : ''}`}
             onPress={() => setAddToWorkout(true)}
             disabled={isPending}
           >
-            <Text className={`text-sm font-semibold ${addToWorkout ? 'text-white' : 'text-slate-200'}`}>
-              Add to Workout
+            <Text className={`text-[12px] font-bold tracking-wider ${addToWorkout ? 'text-[#0e0e0e]' : 'text-[#f5f5f5]'}`}>
+              ADD TO WORKOUT
             </Text>
-            <Text className={`text-xs mt-1 ${addToWorkout ? 'text-blue-100' : 'text-slate-400'}`}>
+            <Text className={`text-[10px] mt-1 ${addToWorkout ? 'text-[#0e0e0e]/60' : 'text-[#4a4a4a]'}`}>
               Also next time
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
-            className={`flex-1 py-3 items-center ${!addToWorkout ? 'bg-blue-700' : ''}`}
+            className={`flex-1 py-3 items-center ${!addToWorkout ? 'bg-[#cafd00]' : ''}`}
             onPress={() => setAddToWorkout(false)}
             disabled={isPending}
           >
-            <Text className={`text-sm font-semibold ${!addToWorkout ? 'text-white' : 'text-slate-200'}`}>
-              Only This Training
+            <Text className={`text-[12px] font-bold tracking-wider ${!addToWorkout ? 'text-[#0e0e0e]' : 'text-[#f5f5f5]'}`}>
+              ONLY THIS SESSION
             </Text>
-            <Text className={`text-xs mt-1 ${!addToWorkout ? 'text-blue-100' : 'text-slate-400'}`}>
-              One-off log
+            <Text className={`text-[10px] mt-1 ${!addToWorkout ? 'text-[#0e0e0e]/60' : 'text-[#4a4a4a]'}`}>
+              Temporary (won't save)
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Name */}
-        <Text className="text-base mb-2 text-slate-300">Exercise Name *</Text>
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
+          className="bg-[#131313] border border-[#1a1a1a] text-[#f5f5f5] rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., Cable Fly, Dips"
-          placeholderTextColor="#64748B"
+          placeholderTextColor="#3a3a3a"
           value={form.name}
           onChangeText={updateField('name')}
           autoFocus
@@ -103,11 +107,11 @@ export default function AddExerciseScreen() {
         />
 
         {/* Sets */}
-        <Text className="text-base mb-2 text-slate-300">Sets</Text>
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">SETS</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
+          className="bg-[#131313] border border-[#1a1a1a] text-[#f5f5f5] rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., 3"
-          placeholderTextColor="#64748B"
+          placeholderTextColor="#3a3a3a"
           value={form.sets}
           onChangeText={updateField('sets')}
           keyboardType="numeric"
@@ -116,11 +120,11 @@ export default function AddExerciseScreen() {
         />
 
         {/* Reps */}
-        <Text className="text-base mb-2 text-slate-300">Reps</Text>
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">REPS</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
+          className="bg-[#131313] border border-[#1a1a1a] text-[#f5f5f5] rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., 12"
-          placeholderTextColor="#64748B"
+          placeholderTextColor="#3a3a3a"
           value={form.reps}
           onChangeText={updateField('reps')}
           keyboardType="numeric"
@@ -129,11 +133,11 @@ export default function AddExerciseScreen() {
         />
 
         {/* Weight */}
-        <Text className="text-base mb-2 text-slate-300">Planned Weight (kg)</Text>
+        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">PLANNED WEIGHT (KG)</Text>
         <TextInput
-          className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-6"
+          className="bg-[#131313] border border-[#1a1a1a] text-[#f5f5f5] rounded-md px-4 py-3 text-base mb-6"
           placeholder="e.g., 25"
-          placeholderTextColor="#64748B"
+          placeholderTextColor="#3a3a3a"
           value={form.weight}
           onChangeText={updateField('weight')}
           keyboardType="decimal-pad"
@@ -142,13 +146,14 @@ export default function AddExerciseScreen() {
         />
 
         <TouchableOpacity
-          className={`bg-blue-600 rounded-lg py-4 items-center mb-8 ${isPending ? 'opacity-50' : ''}`}
+          className={`bg-[#cafd00] rounded-md py-4 flex-row items-center justify-center gap-2 mb-10 ${isPending ? 'opacity-50' : ''}`}
+          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
           onPress={handleAdd}
           disabled={isPending}
+          activeOpacity={0.85}
         >
-          <Text className="text-white text-lg font-semibold">
-            {isPending ? 'Adding...' : 'Add Exercise'}
-          </Text>
+          <Ionicons name="add" size={18} color="#0e0e0e" />
+          <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">{isPending ? 'ADDING...' : 'ADD EXERCISE'}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

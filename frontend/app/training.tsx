@@ -184,6 +184,22 @@ export default function TrainingScreen() {
 
       {/* Bottom dock */}
       <View className="absolute bottom-0 left-0 right-0 bg-[#0e0e0e] border-t border-[#131313] px-4 pb-8 pt-4">
+        {!training?.isCompleted && (
+          <TouchableOpacity
+            className="bg-[#131313] rounded-md py-4 flex-row items-center justify-center gap-2 mb-3"
+            style={{ shadowColor: '#131313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 4 }}
+            onPress={() =>
+              router.push({
+                pathname: '/add-exercise' as any,
+                params: { trainingLogId },
+              })
+            }
+            activeOpacity={0.85}
+          >
+            <Ionicons name="add" size={18} color="#cafd00" />
+            <Text className="text-[#f5f5f5] text-sm font-bold tracking-[2px]">ADD EXERCISE</Text>
+          </TouchableOpacity>
+        )}
         <View className="mb-3">
           <RestTimer duration={120} onComplete={() => alert('Rest Complete!', 'Time for next set!')} />
         </View>
