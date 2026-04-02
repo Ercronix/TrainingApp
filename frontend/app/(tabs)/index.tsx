@@ -3,6 +3,7 @@ import { TrainingSplit } from '@/types';
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSplits } from '@/hooks/useSplits';
+import SwipeableRow from '@/components/SwipeableRow';
 
 export default function SplitsScreen() {
   const router = useRouter();
@@ -23,50 +24,68 @@ export default function SplitsScreen() {
   };
 
   const renderSplitItem = ({ item, index }: { item: TrainingSplit; index: number }) => (
-    <TouchableOpacity
-      className={`rounded-md mb-2 px-5 py-5 flex-row items-center overflow-hidden relative ${
-        item.isActive ? 'bg-[#1a1a1a]' : 'bg-[#131313]'
-      }`}
-      onPress={() =>
-        router.push({ pathname: '/workouts', params: { splitId: item.id.toString(), splitName: item.name } })
+    <SwipeableRow
+      rightActions={[
+        {
+          icon: 'trash-outline',
+          color: '#ff734a',
+          backgroundColor: '#2a1410',
+          label: 'DELETE',
+          onPress: () => handleDelete(item.id, item.name),
+        },
+      ]}
+      leftActions={
+        !item.isActive
+          ? [
+              {
+                icon: 'flash-outline',
+                color: '#cafd00',
+                backgroundColor: '#1a2200',
+                label: 'ACTIVATE',
+                onPress: () => handleActivate(item.id, item.name),
+              },
+            ]
+          : undefined
       }
-      onLongPress={() => handleActivate(item.id, item.name)}
-      activeOpacity={0.85}
     >
-      {/* Active left stripe */}
-      {item.isActive && (
-        <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#cafd00] rounded-l-md" />
-      )}
-
-      {/* Index number */}
-      <Text className="text-[#262626] text-[32px] font-bold tracking-tighter mr-4 leading-9">
-        {String(index + 1).padStart(2, '0')}
-      </Text>
-
-      {/* Name + meta */}
-      <View className="flex-1">
-        <Text className="text-[#f5f5f5] text-lg font-bold tracking-tight mb-1">{item.name}</Text>
-        <Text className="text-[#4a4a4a] text-[10px] tracking-widest">
-          {item.workoutCount} {item.workoutCount === 1 ? 'WORKOUT' : 'WORKOUTS'}
-        </Text>
-      </View>
-
-      {/* Actions */}
-      <View className="flex-row items-center gap-3">
+      <TouchableOpacity
+        className={`rounded-md px-5 py-5 flex-row items-center overflow-hidden relative ${
+          item.isActive ? 'bg-[#1a1a1a]' : 'bg-[#131313]'
+        }`}
+        onPress={() =>
+          router.push({ pathname: '/workouts', params: { splitId: item.id.toString(), splitName: item.name } })
+        }
+        activeOpacity={0.85}
+      >
+        {/* Active left stripe */}
         {item.isActive && (
-          <View className="bg-[#cafd00] px-2 py-1 rounded-sm">
-            <Text className="text-[#0e0e0e] text-[9px] font-bold tracking-widest">ACTIVE</Text>
-          </View>
+          <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#cafd00] rounded-l-md" />
         )}
-        <TouchableOpacity
-          onPress={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="trash-outline" size={18} color="#ff734a" />
-        </TouchableOpacity>
-        <Ionicons name="chevron-forward" size={18} color="#262626" />
-      </View>
-    </TouchableOpacity>
+
+        {/* Index number */}
+        <Text className="text-[#262626] text-[32px] font-bold tracking-tighter mr-4 leading-9">
+          {String(index + 1).padStart(2, '0')}
+        </Text>
+
+        {/* Name + meta */}
+        <View className="flex-1">
+          <Text className="text-[#f5f5f5] text-lg font-bold tracking-tight mb-1">{item.name}</Text>
+          <Text className="text-[#7a7a7a] text-[10px] tracking-widest">
+            {item.workoutCount} {item.workoutCount === 1 ? 'WORKOUT' : 'WORKOUTS'}
+          </Text>
+        </View>
+
+        {/* Actions */}
+        <View className="flex-row items-center gap-3">
+          {item.isActive && (
+            <View className="bg-[#cafd00] px-2 py-1 rounded-sm">
+              <Text className="text-[#0e0e0e] text-[9px] font-bold tracking-widest">ACTIVE</Text>
+            </View>
+          )}
+          <Ionicons name="chevron-forward" size={18} color="#262626" />
+        </View>
+      </TouchableOpacity>
+    </SwipeableRow>
   );
 
   if (isLoading) {

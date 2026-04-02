@@ -65,7 +65,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
       <View className="flex-row items-center justify-between mb-3">
         {/* Timer display */}
         <View>
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-1">REST TIMER</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-1">REST TIMER</Text>
           <Text className={`text-[40px] font-bold tracking-tighter leading-10 ${isUrgent ? 'text-[#ff734a]' : 'text-[#f5f5f5]'}`}>
             {formatTime(seconds)}
           </Text>
@@ -81,7 +81,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
             <Ionicons
               name={isRunning ? 'pause' : 'play'}
               size={20}
-              color={isRunning ? '#4a4a4a' : '#0e0e0e'}
+              color={isRunning ? '#7a7a7a' : '#0e0e0e'}
             />
           </TouchableOpacity>
 
@@ -90,7 +90,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
             onPress={reset}
             activeOpacity={0.85}
           >
-            <Ionicons name="refresh" size={18} color="#4a4a4a" />
+            <Ionicons name="refresh" size={18} color="#7a7a7a" />
           </TouchableOpacity>
         </View>
       </View>
@@ -112,7 +112,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
             onPress={() => setPreset(mins)}
             activeOpacity={0.85}
           >
-            <Text className={`text-[10px] font-bold tracking-widest ${customDuration === secs ? 'text-[#0e0e0e]' : 'text-[#4a4a4a]'}`}>
+            <Text className={`text-[10px] font-bold tracking-widest ${customDuration === secs ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>
               {label}
             </Text>
           </TouchableOpacity>

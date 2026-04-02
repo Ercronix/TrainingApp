@@ -39,12 +39,12 @@ export default function DashboardScreen() {
       <View className="mx-4 mb-3 bg-[#131313] rounded-md p-6">
         <View className="flex-row justify-between items-start mb-5">
           <View>
-            <Text className="text-[#4a4a4a] text-[10px] tracking-[3px] mb-1">CURRENT STREAK</Text>
+            <Text className="text-[#7a7a7a] text-[10px] tracking-[3px] mb-1">CURRENT STREAK</Text>
             <View className="flex-row items-end gap-2">
               <Text className="text-[#f5f5f5] text-[64px] font-bold leading-[68px] tracking-tighter">
                 {stats.streak.current}
               </Text>
-              <Text className="text-[#4a4a4a] text-xs tracking-widest mb-2">DAYS</Text>
+              <Text className="text-[#7a7a7a] text-xs tracking-widest mb-2">DAYS</Text>
             </View>
           </View>
           <Ionicons name="flame" size={48} color="#ff734a" />
@@ -56,7 +56,7 @@ export default function DashboardScreen() {
             const isTrained = stats.streak.last7Days[index];
             return (
               <View key={`${day.key}-${index}`} className="items-center gap-1">
-                <Text className="text-[#4a4a4a] text-[10px] tracking-widest">{day.label}</Text>
+                <Text className="text-[#7a7a7a] text-[10px] tracking-widest">{day.label}</Text>
                 <View className={`w-8 h-8 rounded-full items-center justify-center ${isTrained ? 'bg-[#cafd00]' : 'bg-[#1a1a1a]'}`}>
                   {isTrained && <Ionicons name="checkmark" size={12} color="#0e0e0e" />}
                 </View>
@@ -66,7 +66,7 @@ export default function DashboardScreen() {
         </View>
 
         {stats.streak.longest > stats.streak.current && (
-          <Text className="text-[#4a4a4a] text-xs mt-4">Best: {stats.streak.longest} days</Text>
+          <Text className="text-[#7a7a7a] text-xs mt-4">Best: {stats.streak.longest} days</Text>
         )}
       </View>
 
@@ -78,7 +78,7 @@ export default function DashboardScreen() {
             className={`flex-1 py-2.5 rounded-sm items-center ${timeRange === range ? 'bg-[#cafd00]' : ''}`}
             onPress={() => setTimeRange(range)}
           >
-            <Text className={`text-[11px] font-bold tracking-widest ${timeRange === range ? 'text-[#0e0e0e]' : 'text-[#4a4a4a]'}`}>
+            <Text className={`text-[11px] font-bold tracking-widest ${timeRange === range ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>
               {range.toUpperCase()}
             </Text>
           </TouchableOpacity>
@@ -90,25 +90,25 @@ export default function DashboardScreen() {
         <View className="bg-[#131313] rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
           <Ionicons name="barbell-outline" size={20} color="#cafd00" />
           <Text className="text-[#cafd00] text-[28px] font-bold tracking-tighter">{stats.sessions[timeRange]}</Text>
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">SESSIONS</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[2px]">SESSIONS</Text>
         </View>
 
         <View className="bg-[#1a1a1a] rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
           <Ionicons name="fitness-outline" size={20} color="#81ecff" />
           <Text className="text-[#81ecff] text-[28px] font-bold tracking-tighter">{stats.volume[timeRange]}</Text>
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">KG VOLUME</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[2px]">KG VOLUME</Text>
         </View>
 
         <View className="bg-[#131313] rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
           <Ionicons name="time-outline" size={20} color="#ff734a" />
           <Text className="text-[#ff734a] text-[28px] font-bold tracking-tighter">{stats.time[timeRange]}</Text>
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">TIME TRAINED</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[2px]">TIME TRAINED</Text>
         </View>
 
         <View className="bg-[#1a1a1a] rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
           <Ionicons name="trending-up-outline" size={20} color="#cafd00" />
           <Text className="text-[#cafd00] text-[28px] font-bold tracking-tighter">{stats.averageVolume}</Text>
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">AVG / SESSION</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[2px]">AVG / SESSION</Text>
         </View>
       </View>
 
@@ -121,19 +121,19 @@ export default function DashboardScreen() {
           }
           activeOpacity={0.85}
         >
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-3">LAST SESSION</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-3">LAST SESSION</Text>
           <View className="flex-row justify-between items-center">
             <View className="flex-1 mr-2">
               <Text className="text-[#f5f5f5] text-xl font-bold tracking-tight mb-1">
                 {stats.lastSession.workoutName || stats.lastSession.splitName}
               </Text>
-              <Text className="text-[#4a4a4a] text-xs">
+              <Text className="text-[#7a7a7a] text-xs">
                 {new Date(stats.lastSession.startedAt).toLocaleDateString(undefined, {
                   weekday: 'long', day: 'numeric', month: 'long',
                 })} · {stats.lastSession.exercises?.length || 0} exercises
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color="#4a4a4a" />
+            <Ionicons name="chevron-forward" size={20} color="#7a7a7a" />
           </View>
         </TouchableOpacity>
       )}
@@ -141,10 +141,10 @@ export default function DashboardScreen() {
       {/* Most Active Day */}
       {stats.mostActiveDay && (
         <View className="mx-4 mb-10 bg-[#131313] rounded-md p-5">
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-3">MOST ACTIVE DAY</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-3">MOST ACTIVE DAY</Text>
           <View className="flex-row items-end justify-between">
             <Text className="text-[#f5f5f5] text-[28px] font-bold tracking-tight">{stats.mostActiveDay}</Text>
-            <Text className="text-[#4a4a4a] text-xs mb-1">
+            <Text className="text-[#7a7a7a] text-xs mb-1">
               {(stats.sessionsByDay[stats.mostActiveDay as keyof typeof stats.sessionsByDay]) || 0} sessions
             </Text>
           </View>

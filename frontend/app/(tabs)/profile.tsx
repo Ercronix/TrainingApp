@@ -35,23 +35,23 @@ export default function ProfileScreen() {
         <Text className="text-[#f5f5f5] text-2xl font-bold tracking-tight mb-1">
           {user?.username || 'Athlete'}
         </Text>
-        <Text className="text-[#4a4a4a] text-sm">{user?.email || 'N/A'}</Text>
+        <Text className="text-[#7a7a7a] text-sm">{user?.email || 'N/A'}</Text>
       </View>
 
       {/* Info rows */}
       <View className="mx-4 mb-3 bg-[#131313] rounded-md px-5">
         <View className="flex-row items-center justify-between py-4">
           <View className="flex-row items-center gap-2">
-            <Ionicons name="person-outline" size={16} color="#4a4a4a" />
-            <Text className="text-[#4a4a4a] text-[10px] tracking-[2px]">USERNAME</Text>
+            <Ionicons name="person-outline" size={16} color="#7a7a7a" />
+            <Text className="text-[#7a7a7a] text-[10px] tracking-[2px]">USERNAME</Text>
           </View>
           <Text className="text-[#f5f5f5] text-sm font-bold">{user?.username || '—'}</Text>
         </View>
         <View className="h-px bg-[#1a1a1a]" />
         <View className="flex-row items-center justify-between py-4">
           <View className="flex-row items-center gap-2">
-            <Ionicons name="mail-outline" size={16} color="#4a4a4a" />
-            <Text className="text-[#4a4a4a] text-[10px] tracking-[2px]">EMAIL</Text>
+            <Ionicons name="mail-outline" size={16} color="#7a7a7a" />
+            <Text className="text-[#7a7a7a] text-[10px] tracking-[2px]">EMAIL</Text>
           </View>
           <Text className="text-[#f5f5f5] text-sm font-bold">{user?.email || '—'}</Text>
         </View>

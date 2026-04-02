@@ -51,12 +51,12 @@ export function ExerciseProgressChart({ entries }: Props) {
       <View className="flex-row bg-[#0e0e0e] rounded-sm mb-4">
         <View className="flex-1 items-center py-3">
           <Text className="text-[#cafd00] text-xl font-bold tracking-tight">{personalBest} kg</Text>
-          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px] mt-0.5">PERSONAL BEST</Text>
+          <Text className="text-[#7a7a7a] text-[8px] tracking-[2px] mt-0.5">PERSONAL BEST</Text>
         </View>
         <View className="w-px bg-[#131313] my-2" />
         <View className="flex-1 items-center py-3">
           <Text className="text-[#f5f5f5] text-xl font-bold tracking-tight">{lastWeight} kg</Text>
-          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px] mt-0.5">LAST SESSION</Text>
+          <Text className="text-[#7a7a7a] text-[8px] tracking-[2px] mt-0.5">LAST SESSION</Text>
         </View>
         <View className="w-px bg-[#131313] my-2" />
         <View className="flex-1 items-center py-3">
@@ -65,7 +65,7 @@ export function ExerciseProgressChart({ entries }: Props) {
           }`}>
             {trend > 0 ? '+' : ''}{trend.toFixed(1)} kg
           </Text>
-          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px] mt-0.5">ALL TIME</Text>
+          <Text className="text-[#7a7a7a] text-[8px] tracking-[2px] mt-0.5">ALL TIME</Text>
         </View>
       </View>
 
@@ -79,7 +79,7 @@ export function ExerciseProgressChart({ entries }: Props) {
               className={`px-3 py-1.5 rounded-sm ${r === range ? 'bg-[#cafd00]' : 'bg-[#1a1a1a]'}`}
               activeOpacity={0.85}
             >
-              <Text className={`text-[10px] font-bold tracking-widest ${r === range ? 'text-[#0e0e0e]' : 'text-[#4a4a4a]'}`}>
+              <Text className={`text-[10px] font-bold tracking-widest ${r === range ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>
                 {r === '10' ? 'LAST 10' : 'ALL TIME'}
               </Text>
             </TouchableOpacity>
@@ -99,7 +99,7 @@ export function ExerciseProgressChart({ entries }: Props) {
             backgroundGradientTo: '#0e0e0e',
             decimalPlaces: 1,
             color: (opacity = 1) => `rgba(202, 253, 0, ${opacity})`,
-            labelColor: () => '#4a4a4a',
+            labelColor: () => '#7a7a7a',
             propsForDots: { r: '4', strokeWidth: '2', stroke: '#0e0e0e' },
             propsForBackgroundLines: { stroke: '#131313' },
           }}

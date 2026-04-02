@@ -14,9 +14,9 @@ export default function EditSplitModal() {
     <View className="flex-1 bg-[#0e0e0e]">
       <View className="flex-row justify-between items-center px-6 pt-14 pb-5">
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={22} color="#4a4a4a" />
+          <Ionicons name="close" size={22} color="#7a7a7a" />
         </TouchableOpacity>
-        <Text className="text-[#4a4a4a] text-[10px] tracking-[4px]">EDIT SPLIT</Text>
+        <Text className="text-[#7a7a7a] text-[10px] tracking-[4px]">EDIT SPLIT</Text>
         <View className="w-6" />
       </View>
 
@@ -25,7 +25,7 @@ export default function EditSplitModal() {
           RENAME{'\n'}SPLIT
         </Text>
 
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">SPLIT NAME</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">SPLIT NAME</Text>
         <TextInput
           className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight mb-6"
           value={name}

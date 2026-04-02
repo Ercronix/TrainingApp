@@ -101,7 +101,7 @@ export default function TrainingScreen() {
             {item.exerciseName}
           </Text>
           {item.plannedSets && item.plannedReps && (
-            <Text className="text-[#4a4a4a] text-xs">
+            <Text className="text-[#7a7a7a] text-xs">
               {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
             </Text>
           )}
@@ -111,7 +111,7 @@ export default function TrainingScreen() {
             </Text>
           )}
         </View>
-        <Ionicons name="information-circle-outline" size={18} color="#4a4a4a" />
+        <Ionicons name="information-circle-outline" size={18} color="#7a7a7a" />
       </TouchableOpacity>
 
       {/* Toggle */}
@@ -138,8 +138,8 @@ export default function TrainingScreen() {
           })
         }
       >
-        <Ionicons name="create-outline" size={22} color={item.completed ? '#cafd00' : '#4a4a4a'} />
-        <Text className={`text-[8px] tracking-widest ${item.completed ? 'text-[#cafd00]' : 'text-[#4a4a4a]'}`}>LOG</Text>
+        <Ionicons name="create-outline" size={22} color={item.completed ? '#cafd00' : '#7a7a7a'} />
+        <Text className={`text-[8px] tracking-widest ${item.completed ? 'text-[#cafd00]' : 'text-[#7a7a7a]'}`}>LOG</Text>
       </TouchableOpacity>
     </View>
   );
@@ -165,7 +165,7 @@ export default function TrainingScreen() {
         </TouchableOpacity>
         <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">ACTIVE SESSION</Text>
         <Text className="text-[#f5f5f5] text-[32px] font-bold tracking-tighter mb-1">{training?.splitName}</Text>
-        <Text className="text-[#4a4a4a] text-[11px] tracking-[2px]">
+        <Text className="text-[#7a7a7a] text-[11px] tracking-[2px]">
           {completedCount}/{totalCount} COMPLETE · {formatElapsed(elapsedSeconds)} ELAPSED
         </Text>
       </View>

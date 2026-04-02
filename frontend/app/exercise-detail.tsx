@@ -48,18 +48,18 @@ export default function ExerciseDetailScreen() {
         {/* Planned */}
         {(sets || reps || weight) && (
           <View className="bg-[#131313] rounded-md p-5 mb-2">
-            <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-3">PLANNED</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-3">PLANNED</Text>
             <View className="flex-row gap-6">
               {sets && reps && (
                 <View>
                   <Text className="text-[#cafd00] text-[28px] font-bold tracking-tighter leading-8">{sets}×{reps}</Text>
-                  <Text className="text-[#4a4a4a] text-[9px] tracking-[2px] mt-1">SETS × REPS</Text>
+                  <Text className="text-[#7a7a7a] text-[9px] tracking-[2px] mt-1">SETS × REPS</Text>
                 </View>
               )}
               {weight && (
                 <View>
                   <Text className="text-[#cafd00] text-[28px] font-bold tracking-tighter leading-8">{weight}</Text>
-                  <Text className="text-[#4a4a4a] text-[9px] tracking-[2px] mt-1">KG TARGET</Text>
+                  <Text className="text-[#7a7a7a] text-[9px] tracking-[2px] mt-1">KG TARGET</Text>
                 </View>
               )}
             </View>
@@ -69,9 +69,9 @@ export default function ExerciseDetailScreen() {
         {/* Video */}
         <View className="bg-[#131313] rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-[#4a4a4a] text-[9px] tracking-[3px]">VIDEO</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px]">VIDEO</Text>
             <TouchableOpacity onPress={() => setEditingVideo(!editingVideo)}>
-              <Ionicons name={editingVideo ? 'close-outline' : 'pencil-outline'} size={18} color="#4a4a4a" />
+              <Ionicons name={editingVideo ? 'close-outline' : 'pencil-outline'} size={18} color="#7a7a7a" />
             </TouchableOpacity>
           </View>
 
@@ -115,7 +115,7 @@ export default function ExerciseDetailScreen() {
 
         {/* Progress Chart */}
         <View className="bg-[#131313] rounded-md p-5 mb-2">
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-3">WEIGHT PROGRESS</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-3">WEIGHT PROGRESS</Text>
           {progressLoading ? (
             <View className="items-center py-6">
               <Text className="text-[#2a2a2a] text-[10px] tracking-[3px]">LOADING...</Text>
@@ -128,9 +128,9 @@ export default function ExerciseDetailScreen() {
         {/* Description */}
         <View className="bg-[#131313] rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
-            <Text className="text-[#4a4a4a] text-[9px] tracking-[3px]">NOTES</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px]">NOTES</Text>
             <TouchableOpacity onPress={() => setEditingDescription(!editingDescription)}>
-              <Ionicons name={editingDescription ? 'close-outline' : 'pencil-outline'} size={18} color="#4a4a4a" />
+              <Ionicons name={editingDescription ? 'close-outline' : 'pencil-outline'} size={18} color="#7a7a7a" />
             </TouchableOpacity>
           </View>
 

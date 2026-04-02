@@ -12,7 +12,7 @@ export default function AddExerciseScreen() {
   if (!trainingLogId) {
     return (
       <View className="flex-1 justify-center items-center bg-[#0e0e0e] p-6">
-        <Text className="text-[#4a4a4a] text-base mb-4">Missing training session.</Text>
+        <Text className="text-[#7a7a7a] text-base mb-4">Missing training session.</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text className="text-[#cafd00] text-base">Go Back</Text>
         </TouchableOpacity>
@@ -65,7 +65,7 @@ export default function AddExerciseScreen() {
 
       <ScrollView className="flex-1 px-6">
         {/* Scope */}
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">WHERE SHOULD THIS GO?</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">WHERE SHOULD THIS GO?</Text>
         <View className="flex-row mb-6 bg-[#131313] border border-[#1a1a1a] rounded-md overflow-hidden">
           <TouchableOpacity
             className={`flex-1 py-3 items-center ${addToWorkout ? 'bg-[#cafd00]' : ''}`}
@@ -75,7 +75,7 @@ export default function AddExerciseScreen() {
             <Text className={`text-[12px] font-bold tracking-wider ${addToWorkout ? 'text-[#0e0e0e]' : 'text-[#f5f5f5]'}`}>
               ADD TO WORKOUT
             </Text>
-            <Text className={`text-[10px] mt-1 ${addToWorkout ? 'text-[#0e0e0e]/60' : 'text-[#4a4a4a]'}`}>
+            <Text className={`text-[10px] mt-1 ${addToWorkout ? 'text-[#0e0e0e]/60' : 'text-[#7a7a7a]'}`}>
               Also next time
             </Text>
           </TouchableOpacity>
@@ -87,14 +87,14 @@ export default function AddExerciseScreen() {
             <Text className={`text-[12px] font-bold tracking-wider ${!addToWorkout ? 'text-[#0e0e0e]' : 'text-[#f5f5f5]'}`}>
               ONLY THIS SESSION
             </Text>
-            <Text className={`text-[10px] mt-1 ${!addToWorkout ? 'text-[#0e0e0e]/60' : 'text-[#4a4a4a]'}`}>
+            <Text className={`text-[10px] mt-1 ${!addToWorkout ? 'text-[#0e0e0e]/60' : 'text-[#7a7a7a]'}`}>
               Temporary (won't save)
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Name */}
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
         <TextInput
           className="bg-[#131313] border border-[#1a1a1a] text-[#f5f5f5] rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., Cable Fly, Dips"
@@ -107,7 +107,7 @@ export default function AddExerciseScreen() {
         />
 
         {/* Sets */}
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">SETS</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">SETS</Text>
         <TextInput
           className="bg-[#131313] border border-[#1a1a1a] text-[#f5f5f5] rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., 3"
@@ -120,7 +120,7 @@ export default function AddExerciseScreen() {
         />
 
         {/* Reps */}
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">REPS</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">REPS</Text>
         <TextInput
           className="bg-[#131313] border border-[#1a1a1a] text-[#f5f5f5] rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., 12"
@@ -133,7 +133,7 @@ export default function AddExerciseScreen() {
         />
 
         {/* Weight */}
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">PLANNED WEIGHT (KG)</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">PLANNED WEIGHT (KG)</Text>
         <TextInput
           className="bg-[#131313] border border-[#1a1a1a] text-[#f5f5f5] rounded-md px-4 py-3 text-base mb-6"
           placeholder="e.g., 25"

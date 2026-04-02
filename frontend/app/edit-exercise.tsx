@@ -23,9 +23,9 @@ export default function EditExerciseModal() {
     <View className="flex-1 bg-[#0e0e0e]">
       <View className="flex-row justify-between items-center px-6 pt-14 pb-5">
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="close" size={22} color="#4a4a4a" />
+          <Ionicons name="close" size={22} color="#7a7a7a" />
         </TouchableOpacity>
-        <Text className="text-[#4a4a4a] text-[10px] tracking-[4px]">EDIT EXERCISE</Text>
+        <Text className="text-[#7a7a7a] text-[10px] tracking-[4px]">EDIT EXERCISE</Text>
         <View className="w-6" />
       </View>
 
@@ -34,7 +34,7 @@ export default function EditExerciseModal() {
           EDIT{'\n'}EXERCISE
         </Text>
 
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
         <TextInput
           className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-[22px] font-bold tracking-tight mb-5"
           value={form.name}
@@ -46,7 +46,7 @@ export default function EditExerciseModal() {
 
         <View className="flex-row gap-3 mb-5">
           <View className="flex-1">
-            <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">SETS</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">SETS</Text>
             <TextInput
               className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-lg font-bold tracking-tight"
               value={form.sets}
@@ -59,7 +59,7 @@ export default function EditExerciseModal() {
             />
           </View>
           <View className="flex-1">
-            <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">REPS</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">REPS</Text>
             <TextInput
               className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-lg font-bold tracking-tight"
               value={form.reps}
@@ -73,7 +73,7 @@ export default function EditExerciseModal() {
           </View>
         </View>
 
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>
         <TextInput
           className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-lg font-bold tracking-tight mb-6"
           value={form.plannedWeight}

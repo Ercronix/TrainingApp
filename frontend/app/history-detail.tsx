@@ -43,7 +43,7 @@ export default function HistoryDetailScreen() {
         <View className="flex-1">
           <Text className="text-[#f5f5f5] text-sm font-bold tracking-tight mb-1">{item.exerciseName}</Text>
           {item.plannedSets && item.plannedReps && (
-            <Text className="text-[#4a4a4a] text-[10px] tracking-widest">
+            <Text className="text-[#7a7a7a] text-[10px] tracking-widest">
               PLANNED: {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
             </Text>
           )}
@@ -92,7 +92,7 @@ export default function HistoryDetailScreen() {
           {training?.workoutName || training?.splitName}
         </Text>
         {training?.splitName && (
-          <Text className="text-[#4a4a4a] text-sm mb-0.5">{training.splitName}</Text>
+          <Text className="text-[#7a7a7a] text-sm mb-0.5">{training.splitName}</Text>
         )}
         {training?.startedAt && (
           <Text className="text-[#3a3a3a] text-xs">
@@ -107,28 +107,28 @@ export default function HistoryDetailScreen() {
           <Text className="text-[#f5f5f5] text-[22px] font-bold tracking-tight mb-0.5">
             {formatDuration(training?.durationSeconds)}
           </Text>
-          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px]">DURATION</Text>
+          <Text className="text-[#7a7a7a] text-[8px] tracking-[2px]">DURATION</Text>
         </View>
         <View className="w-px bg-[#1a1a1a] my-1" />
         <View className="flex-1 items-center">
           <Text className="text-[#f5f5f5] text-[22px] font-bold tracking-tight mb-0.5">
             {completedCount}/{totalCount}
           </Text>
-          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px]">COMPLETED</Text>
+          <Text className="text-[#7a7a7a] text-[8px] tracking-[2px]">COMPLETED</Text>
         </View>
         <View className="w-px bg-[#1a1a1a] my-1" />
         <View className="flex-1 items-center">
           <Text className={`text-[22px] font-bold tracking-tight mb-0.5 ${completionRate === 100 ? 'text-[#cafd00]' : 'text-[#f5f5f5]'}`}>
             {completionRate}%
           </Text>
-          <Text className="text-[#4a4a4a] text-[8px] tracking-[2px]">RATE</Text>
+          <Text className="text-[#7a7a7a] text-[8px] tracking-[2px]">RATE</Text>
         </View>
       </View>
 
       {/* Session notes */}
       {training?.notes && (
         <View className="mx-4 mb-3 bg-[#131313] rounded-md p-4">
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-2">SESSION NOTES</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">SESSION NOTES</Text>
           <Text className="text-[#adaaaa] text-sm leading-5">{training.notes}</Text>
         </View>
       )}
@@ -139,7 +139,7 @@ export default function HistoryDetailScreen() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
         ListHeaderComponent={
-          <Text className="text-[#4a4a4a] text-[9px] tracking-[3px] mb-3">EXERCISES</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-3">EXERCISES</Text>
         }
       />
     </View>

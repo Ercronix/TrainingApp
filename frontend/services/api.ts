@@ -1,64 +1,65 @@
-import axios from 'axios';
-import { storage } from './storage';
-import { LoginRequest, RegisterRequest, AuthResponse } from '@/types';
-import { Platform } from 'react-native';
+import axios from "axios";
+import { storage } from "./storage";
+import { LoginRequest, RegisterRequest, AuthResponse } from "@/types";
+import { Platform } from "react-native";
 // api.ts
 
-const API_URL = Platform.OS === 'web'
-  ? 'http://localhost:8080/api'
-  : 'http://10.39.1.123:8080/api';
+const API_URL =
+  Platform.OS === "web"
+    ? "http://localhost:8080/api"
+    : "http://10.39.1.24:8080/api";
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Request Interceptor - Token automatisch hinzufügen
 api.interceptors.request.use(
   async (config) => {
-    const token = await storage.getItem('authToken');
+    const token = await storage.getItem("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 export const authApi = {
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post('/auth/login', data);
+    const response = await api.post("/auth/login", data);
     if (response.data.token) {
-      await storage.setItem('authToken', response.data.token);
+      await storage.setItem("authToken", response.data.token);
     }
     return response.data;
   },
 
   register: async (data: RegisterRequest): Promise<string> => {
-    const response = await api.post('/auth/register', data);
+    const response = await api.post("/auth/register", data);
     return response.data;
   },
 
   logout: async () => {
-    await storage.removeItem('authToken');
+    await storage.removeItem("authToken");
   },
 
   me: async (): Promise<AuthResponse> => {
-    const response = await api.get('/auth/me');
+    const response = await api.get("/auth/me");
     return response.data;
   },
 };
 
 export const splitsApi = {
   getAll: async () => {
-    const response = await api.get('/splits');
+    const response = await api.get("/splits");
     return response.data;
   },
 
   create: async (name: string) => {
-    const response = await api.post('/splits', { name });
+    const response = await api.post("/splits", { name });
     return response.data;
   },
 
@@ -112,33 +113,46 @@ export const exercisesApi = {
     return response.data;
   },
 
-  create: async (workoutId: number, data: {
-    name: string;
-    description?: string | null;
-    videoUrl?: string | null;
-    videoId?: string | null;
-    sets?: number | null;
-    reps?: number | null;
-    plannedWeight?: number | null;
-  }) => {
+  create: async (
+    workoutId: number,
+    data: {
+      name: string;
+      description?: string | null;
+      videoUrl?: string | null;
+      videoId?: string | null;
+      sets?: number | null;
+      reps?: number | null;
+      plannedWeight?: number | null;
+    },
+  ) => {
     const response = await api.post(`/workouts/${workoutId}/exercises`, data);
     return response.data;
   },
 
-  update: async (workoutId: number, exerciseId: number, data: {
-    name?: string;
-    description?: string | null;
-    videoUrl?: string | null;
-    sets?: number | null;
-    reps?: number | null;
-    plannedWeight?: number | null;
-    orderIndex?: number;
-  }) => {
-    const response = await api.put(`/workouts/${workoutId}/exercises/${exerciseId}`, data);
+  update: async (
+    workoutId: number,
+    exerciseId: number,
+    data: {
+      name?: string;
+      description?: string | null;
+      videoUrl?: string | null;
+      sets?: number | null;
+      reps?: number | null;
+      plannedWeight?: number | null;
+      orderIndex?: number;
+    },
+  ) => {
+    const response = await api.put(
+      `/workouts/${workoutId}/exercises/${exerciseId}`,
+      data,
+    );
     return response.data;
   },
 
-  reorder: async (workoutId: number, exercises: { id: number; orderIndex: number }[]) => {
+  reorder: async (
+    workoutId: number,
+    exercises: { id: number; orderIndex: number }[],
+  ) => {
     await api.patch(`/workouts/${workoutId}/exercises/reorder`, { exercises });
   },
 
@@ -155,7 +169,7 @@ export const exercisesApi = {
 // Training Logs API
 export const trainingLogsApi = {
   start: async (workoutId: number) => {
-    const response = await api.post('/training-logs/start', { workoutId });
+    const response = await api.post("/training-logs/start", { workoutId });
     return response.data;
   },
 
@@ -167,21 +181,30 @@ export const trainingLogsApi = {
       reps?: number | null;
       plannedWeight?: number | null;
       addToWorkout: boolean;
-    }
+    },
   ) => {
-    const response = await api.post(`/training-logs/${trainingLogId}/exercise-logs`, data);
+    const response = await api.post(
+      `/training-logs/${trainingLogId}/exercise-logs`,
+      data,
+    );
     return response.data;
   },
 
   // Renamed endpoint: /exercises/ → /exercise-logs/
-  updateExerciseLog: async (exerciseLogId: number, data: {
-    setsCompleted?: number;
-    repsCompleted?: number;
-    weightUsed?: number | null;
-    completed?: boolean;
-    notes?: string;
-  }) => {
-    const response = await api.put(`/training-logs/exercise-logs/${exerciseLogId}`, data);
+  updateExerciseLog: async (
+    exerciseLogId: number,
+    data: {
+      setsCompleted?: number;
+      repsCompleted?: number;
+      weightUsed?: number | null;
+      completed?: boolean;
+      notes?: string;
+    },
+  ) => {
+    const response = await api.put(
+      `/training-logs/exercise-logs/${exerciseLogId}`,
+      data,
+    );
     return response.data;
   },
 
@@ -191,12 +214,12 @@ export const trainingLogsApi = {
   },
 
   getAll: async () => {
-    const response = await api.get('/training-logs');
+    const response = await api.get("/training-logs");
     return response.data;
   },
 
   getActive: async () => {
-    const response = await api.get('/training-logs/active');
+    const response = await api.get("/training-logs/active");
     return response.data;
   },
 

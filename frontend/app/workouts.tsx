@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { confirm } from '@/utils/confirm';
+import SwipeableRow from '@/components/SwipeableRow';
 
 export default function WorkoutsScreen() {
   const { splitId, splitName } = useLocalSearchParams<{ splitId: string; splitName: string }>();
@@ -14,41 +15,44 @@ export default function WorkoutsScreen() {
   };
 
   const renderWorkoutItem = ({ item, index }: { item: any; index: number }) => (
-    <TouchableOpacity
-      className="bg-[#131313] rounded-md mb-2 px-5 py-5 flex-row items-center gap-3"
-      onPress={() =>
-        router.push({ pathname: '/workout-detail' as any, params: { workoutId: item.id.toString(), workoutName: item.name, splitId } })
-      }
-      activeOpacity={0.85}
+    <SwipeableRow
+      rightActions={[
+        {
+          icon: 'pencil-outline',
+          color: '#cafd00',
+          backgroundColor: '#1a2200',
+          label: 'EDIT',
+          onPress: () =>
+            router.push({ pathname: '/edit-workout' as any, params: { workoutId: item.id.toString(), splitId, currentName: item.name } }),
+        },
+        {
+          icon: 'trash-outline',
+          color: '#ff734a',
+          backgroundColor: '#2a1410',
+          label: 'DELETE',
+          onPress: () => handleDelete(item.id, item.name),
+        },
+      ]}
     >
-      <Text className="text-[#1a1a1a] text-[28px] font-bold tracking-tighter min-w-[36px]">
-        {String(index + 1).padStart(2, '0')}
-      </Text>
-      <View className="flex-1">
-        <Text className="text-[#f5f5f5] text-lg font-bold tracking-tight mb-1">{item.name}</Text>
-        <Text className="text-[#4a4a4a] text-[9px] tracking-[2px]">
-          {item.exerciseCount ?? 0} {item.exerciseCount === 1 ? 'EXERCISE' : 'EXERCISES'}
+      <TouchableOpacity
+        className="bg-[#131313] rounded-md px-5 py-5 flex-row items-center gap-3"
+        onPress={() =>
+          router.push({ pathname: '/workout-detail' as any, params: { workoutId: item.id.toString(), workoutName: item.name, splitId } })
+        }
+        activeOpacity={0.85}
+      >
+        <Text className="text-[#1a1a1a] text-[28px] font-bold tracking-tighter min-w-[36px]">
+          {String(index + 1).padStart(2, '0')}
         </Text>
-      </View>
-      <View className="flex-row items-center gap-3">
-        <TouchableOpacity
-          onPress={(e) => {
-            e.stopPropagation();
-            router.push({ pathname: '/edit-workout' as any, params: { workoutId: item.id.toString(), splitId, currentName: item.name } });
-          }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="pencil-outline" size={18} color="#4a4a4a" />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={(e) => { e.stopPropagation(); handleDelete(item.id, item.name); }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Ionicons name="trash-outline" size={18} color="#ff734a" />
-        </TouchableOpacity>
+        <View className="flex-1">
+          <Text className="text-[#f5f5f5] text-lg font-bold tracking-tight mb-1">{item.name}</Text>
+          <Text className="text-[#7a7a7a] text-[9px] tracking-[2px]">
+            {item.exerciseCount ?? 0} {item.exerciseCount === 1 ? 'EXERCISE' : 'EXERCISES'}
+          </Text>
+        </View>
         <Ionicons name="chevron-forward" size={18} color="#262626" />
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </SwipeableRow>
   );
 
   return (
@@ -71,10 +75,10 @@ export default function WorkoutsScreen() {
             }
             className="mt-5"
           >
-            <Ionicons name="pencil-outline" size={18} color="#4a4a4a" />
+            <Ionicons name="pencil-outline" size={18} color="#7a7a7a" />
           </TouchableOpacity>
         </View>
-        <Text className="text-[#4a4a4a] text-xs">Select a day to view exercises and start training</Text>
+        <Text className="text-[#7a7a7a] text-xs">Select a day to view exercises and start training</Text>
       </View>
 
       {isLoading ? (
