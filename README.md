@@ -4,16 +4,6 @@ TrainingApp is a full-stack fitness tracking app for planning workouts, running 
 
 It was built as a portfolio project to demonstrate end-to-end product development: mobile/web frontend, secure backend API, relational data modeling, authentication, and analytics-oriented UX.
 
-## Portfolio Summary
-
-This project solves a practical problem: many gym apps are either too simple or overloaded. TrainingApp focuses on a clean workflow:
-
-1. Create a training split and workouts.
-2. Add exercises with planned sets/reps/weight.
-3. Start a live training session and log actual performance.
-4. Review history and dashboard stats (streak, volume, session counts, time trained).
-
-
 ## Main Features
 
 - User registration/login with token-based auth.
