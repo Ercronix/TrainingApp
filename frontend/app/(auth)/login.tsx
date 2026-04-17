@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
+import { getErrorMessage } from '@/utils/errorHandler';
 
 export default function LoginScreen() {
     const [username, setUsername] = useState('');
@@ -27,12 +28,8 @@ export default function LoginScreen() {
 
             router.replace('/(tabs)');
 
-        } catch (error: any) {
-            console.error('Login error:', error);
-            Alert.alert(
-                'Login Failed',
-                error.response?.data || 'Invalid username or password'
-            );
+        } catch (error: unknown) {
+            Alert.alert('Login Failed', getErrorMessage(error));
         } finally {
             setLoading(false);
         }

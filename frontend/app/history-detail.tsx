@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { useHistory } from '@/hooks/useHistory';
 import { confirm } from '@/utils/confirm';
+import { ExerciseLog } from '@/types';
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return '—';
@@ -33,7 +34,7 @@ export default function HistoryDetailScreen() {
       () => deleteLog.mutate(Number(trainingLogId), { onSuccess: () => router.back() }), 'Delete');
   };
 
-  const renderExerciseItem = ({ item, index }: { item: any; index: number }) => (
+  const renderExerciseItem = ({ item, index }: { item: ExerciseLog; index: number }) => (
     <View className={`rounded-md mb-2 overflow-hidden relative ${item.completed ? 'bg-[#0d1408]' : 'bg-[#131313]'}`}>
       {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#cafd00]" />}
       <View className="flex-row items-start px-5 py-4 gap-3">
@@ -71,7 +72,7 @@ export default function HistoryDetailScreen() {
     );
   }
 
-  const completedCount = training?.exercises?.filter((e: any) => e.completed).length ?? 0;
+  const completedCount = training?.exercises?.filter((e: ExerciseLog) => e.completed).length ?? 0;
   const totalCount = training?.exercises?.length ?? 0;
   const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 

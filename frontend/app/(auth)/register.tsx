@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { authApi } from '@/services/api';
+import { getErrorMessage } from '@/utils/errorHandler';
 
 export default function RegisterScreen() {
     const [username, setUsername] = useState('');
@@ -37,12 +38,8 @@ export default function RegisterScreen() {
                 ]
             );
 
-        } catch (error: any) {
-            console.error('Register error:', error);
-            Alert.alert(
-                'Registration Failed',
-                error.response?.data || 'Please try again'
-            );
+        } catch (error: unknown) {
+            Alert.alert('Registration Failed', getErrorMessage(error));
         } finally {
             setLoading(false);
         }

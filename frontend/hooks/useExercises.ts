@@ -3,6 +3,7 @@ import { exercisesApi } from '@/services/api';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
+import { Exercise, CreateExerciseRequest } from '@/types';
 
 export function useExercises(workoutId: string) {
   const queryClient = useQueryClient();
@@ -15,7 +16,7 @@ export function useExercises(workoutId: string) {
   });
 
   const createExercise = useMutation({
-    mutationFn: (data: any) => exercisesApi.create(Number(workoutId), data),
+    mutationFn: (data: CreateExerciseRequest) => exercisesApi.create(Number(workoutId), data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
     },
@@ -40,7 +41,7 @@ export function useExercises(workoutId: string) {
     onMutate: async (newOrder) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData(queryKey);
-      queryClient.setQueryData(queryKey, (old: any[]) => {
+      queryClient.setQueryData(queryKey, (old: Exercise[]) => {
         if (!old) return old;
         const indexMap = new Map(newOrder.map((e) => [e.id, e.orderIndex]));
         return [...old]

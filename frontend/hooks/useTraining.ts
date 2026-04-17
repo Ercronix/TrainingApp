@@ -3,6 +3,7 @@ import { trainingLogsApi } from '@/services/api';
 import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { QUERY_KEYS } from '@/constants/queryKeys';
+import { UpdateExerciseLogRequest } from '@/types';
 
 export function useTraining(trainingLogId: string) {
   const queryClient = useQueryClient();
@@ -14,7 +15,7 @@ export function useTraining(trainingLogId: string) {
   });
 
   const updateExerciseLog = useMutation({
-    mutationFn: ({ exerciseLogId, data }: { exerciseLogId: number; data: any }) =>
+    mutationFn: ({ exerciseLogId, data }: { exerciseLogId: number; data: UpdateExerciseLogRequest }) =>
       trainingLogsApi.updateExerciseLog(exerciseLogId, data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.training(trainingLogId) });

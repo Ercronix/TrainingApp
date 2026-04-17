@@ -68,6 +68,43 @@ export interface ExerciseLog {
   notes: string | null;
 }
 
+export interface Workout {
+  id: number;
+  name: string;
+  exerciseCount?: number;
+}
+
+export interface Exercise {
+  id: number;
+  name: string;
+  description?: string | null;
+  videoUrl?: string | null;
+  videoId?: string | null;
+  sets?: number | null;
+  reps?: number | null;
+  plannedWeight?: number | null;
+  orderIndex: number;
+  lastUsedWeight?: number | null;
+}
+
+export interface UpdateExerciseLogRequest {
+  setsCompleted?: number;
+  repsCompleted?: number;
+  weightUsed?: number | null;
+  completed?: boolean;
+  notes?: string;
+}
+
+export interface CreateExerciseRequest {
+  name: string;
+  description?: string | null;
+  videoUrl?: string | null;
+  videoId?: string | null;
+  sets?: number | null;
+  reps?: number | null;
+  plannedWeight?: number | null;
+}
+
 export interface DashboardStats {
   streak: {
     current: number;

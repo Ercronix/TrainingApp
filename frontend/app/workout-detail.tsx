@@ -7,6 +7,7 @@ import { useExercises } from '@/hooks/useExercises';
 import { useStartTraining } from '@/hooks/useStartTraining';
 import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
+import { Exercise } from '@/types';
 
 export default function WorkoutDetailScreen() {
   const { workoutId, workoutName, splitId } = useLocalSearchParams<{
@@ -21,11 +22,11 @@ export default function WorkoutDetailScreen() {
     confirm('Delete Exercise', `Delete "${name}"?`, () => deleteExercise.mutate(id), 'Delete');
   };
 
-  const handleDragEnd = ({ data }: { data: any[] }) => {
+  const handleDragEnd = ({ data }: { data: Exercise[] }) => {
     reorderExercises.mutate(data.map((item, index) => ({ id: item.id, orderIndex: index })));
   };
 
-  const renderExerciseItem = ({ item, drag, isActive }: RenderItemParams<any>) => (
+  const renderExerciseItem = ({ item, drag, isActive }: RenderItemParams<Exercise>) => (
     <ScaleDecorator>
       <SwipeableRow
         enabled={!reorderMode}

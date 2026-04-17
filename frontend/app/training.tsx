@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
+import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--:--';
@@ -32,8 +33,8 @@ export default function TrainingScreen() {
     const exercises = training?.exercises;
     if (!exercises || exercises.length === 0) return;
     setExerciseOrder((prev) => {
-      if (prev.length === 0) return exercises.map((e: any) => e.id);
-      const ids = exercises.map((e: any) => e.id);
+      if (prev.length === 0) return exercises.map((e: ExerciseLog) => e.id);
+      const ids = exercises.map((e: ExerciseLog) => e.id);
       const idSet = new Set(ids);
       const next = prev.filter((id) => idSet.has(id));
       const nextSet = new Set(next);
@@ -45,14 +46,14 @@ export default function TrainingScreen() {
   const orderedExercises = useMemo(() => {
     const exercises = training?.exercises ?? [];
     if (exerciseOrder.length === 0) return exercises;
-    const byId = new Map<number, any>(exercises.map((e: any) => [e.id, e]));
+    const byId = new Map<number, ExerciseLog>(exercises.map((e: ExerciseLog) => [e.id, e]));
     const orderSet = new Set(exerciseOrder);
-    return exerciseOrder.map((id) => byId.get(id)).filter(Boolean).concat(exercises.filter((e: any) => !orderSet.has(e.id)));
+    return exerciseOrder.map((id) => byId.get(id)).filter((e): e is ExerciseLog => e !== undefined).concat(exercises.filter((e: ExerciseLog) => !orderSet.has(e.id)));
   }, [training?.exercises, exerciseOrder]);
 
-  const toggleExercise = (exerciseLog: any) => {
+  const toggleExercise = (exerciseLog: ExerciseLog) => {
     const completing = !exerciseLog.completed;
-    const data: any = { completed: completing };
+    const data: UpdateExerciseLogRequest = { completed: completing };
     if (completing) {
       if (!exerciseLog.setsCompleted || exerciseLog.setsCompleted === 0) data.setsCompleted = exerciseLog.plannedSets ?? 0;
       if (!exerciseLog.repsCompleted || exerciseLog.repsCompleted === 0) data.repsCompleted = exerciseLog.plannedReps ?? 0;
@@ -62,7 +63,7 @@ export default function TrainingScreen() {
   };
 
   const handleComplete = () => {
-    const completedCount = training?.exercises.filter((e: any) => e.completed).length || 0;
+    const completedCount = training?.exercises.filter((e: ExerciseLog) => e.completed).length || 0;
     const totalCount = training?.exercises.length || 0;
     const doComplete = () =>
       completeTraining.mutate(undefined, {
@@ -75,7 +76,7 @@ export default function TrainingScreen() {
     }
   };
 
-  const renderExerciseItem = ({ item }: { item: any }) => (
+  const renderExerciseItem = ({ item }: { item: ExerciseLog }) => (
     <View className={`rounded-md mb-2 flex-row overflow-hidden relative ${item.completed ? 'bg-[#0d1408]' : 'bg-[#131313]'}`}>
       {/* Done stripe */}
       {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#cafd00]" />}
@@ -152,7 +153,7 @@ export default function TrainingScreen() {
     );
   }
 
-  const completedCount = training?.exercises.filter((e: any) => e.completed).length || 0;
+  const completedCount = training?.exercises.filter((e: ExerciseLog) => e.completed).length || 0;
   const totalCount = training?.exercises.length || 0;
   const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 

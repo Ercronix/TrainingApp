@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
+import { Workout } from '@/types';
 
 export default function WorkoutsScreen() {
   const { splitId, splitName } = useLocalSearchParams<{ splitId: string; splitName: string }>();
@@ -14,7 +15,7 @@ export default function WorkoutsScreen() {
     confirm('Delete Workout', `Delete "${name}" and all its exercises?`, () => deleteWorkout.mutate(id), 'Delete');
   };
 
-  const renderWorkoutItem = ({ item, index }: { item: any; index: number }) => (
+  const renderWorkoutItem = ({ item, index }: { item: Workout; index: number }) => (
     <SwipeableRow
       rightActions={[
         {
