@@ -3,6 +3,8 @@ package de.mornhinweg.trainingbackend.service;
 import de.mornhinweg.trainingbackend.dto.AuthResponse;
 import de.mornhinweg.trainingbackend.dto.LoginRequest;
 import de.mornhinweg.trainingbackend.dto.RegisterRequest;
+import de.mornhinweg.trainingbackend.exception.ConflictException;
+import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.repository.UserRepository;
 import de.mornhinweg.trainingbackend.security.JwtUtil;
@@ -27,11 +29,11 @@ public class AuthService {
 
   public AuthResponse register(RegisterRequest request) {
     if (userRepository.existsByUsername(request.getUsername())) {
-      throw new RuntimeException("Username is already taken");
+      throw new ConflictException("Username is already taken");
     }
 
     if (userRepository.existsByEmail(request.getEmail())) {
-      throw new RuntimeException("Email is already in use");
+      throw new ConflictException("Email is already in use");
     }
 
     User user = User.builder()
@@ -67,7 +69,7 @@ public class AuthService {
     );
 
     User user = userRepository.findByUsername(request.getUsername())
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     UserDetails userDetails = (UserDetails) authentication.getPrincipal();
     String token = jwtUtil.generateToken(userDetails);
@@ -83,7 +85,7 @@ public class AuthService {
 
   public AuthResponse getMe(String username) {
     User user = userRepository.findByUsername(username)
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     return AuthResponse.builder()
         .type("Bearer")

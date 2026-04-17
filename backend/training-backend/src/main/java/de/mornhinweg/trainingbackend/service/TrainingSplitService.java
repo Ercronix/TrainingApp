@@ -3,6 +3,7 @@ package de.mornhinweg.trainingbackend.service;
 import de.mornhinweg.trainingbackend.dto.split.CreateSplitRequest;
 import de.mornhinweg.trainingbackend.dto.split.SplitResponse;
 import de.mornhinweg.trainingbackend.dto.split.UpdateSplitRequest;
+import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.model.TrainingSplit;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.repository.TrainingSplitRepository;
@@ -50,7 +51,7 @@ public class TrainingSplitService {
     User user = getCurrentUser(authentication);
 
     TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Split not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
 
     split.setName(request.getName());
 
@@ -63,7 +64,7 @@ public class TrainingSplitService {
     User user = getCurrentUser(authentication);
 
     TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Split not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
 
     trainingSplitRepository.delete(split);
   }
@@ -77,7 +78,7 @@ public class TrainingSplitService {
     trainingSplitRepository.saveAll(allSplits);
 
     TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Split not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
 
     split.setIsActive(true);
     TrainingSplit activatedSplit = trainingSplitRepository.save(split);
@@ -89,7 +90,7 @@ public class TrainingSplitService {
     User user = getCurrentUser(authentication);
 
     TrainingSplit activeSplit = trainingSplitRepository.findByUserIdAndIsActiveTrue(user.getId())
-        .orElseThrow(() -> new RuntimeException("No active split found"));
+        .orElseThrow(() -> new ResourceNotFoundException("No active split found"));
 
     return toResponse(activeSplit);
   }
@@ -97,7 +98,7 @@ public class TrainingSplitService {
   private User getCurrentUser(Authentication authentication) {
     String username = authentication.getName();
     return userRepository.findByUsername(username)
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   private SplitResponse toResponse(TrainingSplit split) {

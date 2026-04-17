@@ -1,6 +1,9 @@
 package de.mornhinweg.trainingbackend.service;
 
 import de.mornhinweg.trainingbackend.dto.training.*;
+import de.mornhinweg.trainingbackend.exception.BadRequestException;
+import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
+import de.mornhinweg.trainingbackend.exception.UnauthorizedException;
 import de.mornhinweg.trainingbackend.model.*;
 import de.mornhinweg.trainingbackend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +32,11 @@ public class TrainingLogService {
 
     // Fetch the specific workout day the user wants to train
     Workout workout = workoutRepository.findById(request.getWorkoutId())
-        .orElseThrow(() -> new RuntimeException("Workout not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
 
     // Verify the workout belongs to this user
     if (!workout.getSplit().getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Unauthorized");
+      throw new UnauthorizedException("Access denied");
     }
 
     TrainingSplit split = workout.getSplit();
@@ -64,7 +67,7 @@ public class TrainingLogService {
     }
 
     trainingLog = trainingLogRepository.findById(trainingLog.getId())
-        .orElseThrow(() -> new RuntimeException("Training log not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
 
     return toResponse(trainingLog);
   }
@@ -74,10 +77,10 @@ public class TrainingLogService {
     User user = getCurrentUser(authentication);
 
     ExerciseLog exerciseLog = exerciseLogRepository.findById(exerciseLogId)
-        .orElseThrow(() -> new RuntimeException("Exercise log not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Exercise log not found"));
 
     if (!exerciseLog.getTrainingLog().getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Unauthorized");
+      throw new UnauthorizedException("Access denied");
     }
 
     if (request.getSetsCompleted() != null) exerciseLog.setSetsCompleted(request.getSetsCompleted());
@@ -95,10 +98,10 @@ public class TrainingLogService {
     User user = getCurrentUser(authentication);
 
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Training log not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
 
     if (trainingLog.isCompleted()) {
-      throw new RuntimeException("Training is already completed");
+      throw new BadRequestException("Training is already completed");
     }
 
     Workout workout = trainingLog.getWorkout();
@@ -139,7 +142,7 @@ public class TrainingLogService {
     User user = getCurrentUser(authentication);
 
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Training log not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
 
     trainingLog.setCompletedAt(LocalDateTime.now());
     trainingLog.setDurationSeconds(
@@ -179,21 +182,21 @@ public class TrainingLogService {
   public TrainingLogResponse getTraining(Long trainingLogId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Training log not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
     return toResponse(trainingLog);
   }
 
   private User getCurrentUser(Authentication authentication) {
     String username = authentication.getName();
     return userRepository.findByUsername(username)
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   @Transactional
   public void deleteTraining(Long trainingLogId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Training log not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
     trainingLogRepository.delete(trainingLog);
   }
 

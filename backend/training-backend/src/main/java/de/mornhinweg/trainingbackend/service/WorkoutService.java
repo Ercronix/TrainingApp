@@ -3,6 +3,8 @@ package de.mornhinweg.trainingbackend.service;
 import de.mornhinweg.trainingbackend.dto.workout.CreateWorkoutRequest;
 import de.mornhinweg.trainingbackend.dto.workout.UpdateWorkoutRequest;
 import de.mornhinweg.trainingbackend.dto.workout.WorkoutResponse;
+import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
+import de.mornhinweg.trainingbackend.exception.UnauthorizedException;
 import de.mornhinweg.trainingbackend.model.TrainingSplit;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.model.Workout;
@@ -30,7 +32,7 @@ public class WorkoutService {
   public List<WorkoutResponse> getWorkoutsBySplit(Long splitId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Split not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
     return workoutRepository.findBySplitIdOrderByOrderIndexAsc(splitId)
         .stream().map(this::toResponse).collect(Collectors.toList());
   }
@@ -39,7 +41,7 @@ public class WorkoutService {
   public WorkoutResponse createWorkout(Long splitId, CreateWorkoutRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
     TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
-        .orElseThrow(() -> new RuntimeException("Split not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
     int nextOrderIndex = split.getWorkouts().size();
     Workout workout = Workout.builder()
         .split(split)
@@ -52,9 +54,9 @@ public class WorkoutService {
   public WorkoutResponse getWorkout(Long workoutId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Workout workout = workoutRepository.findById(workoutId)
-        .orElseThrow(() -> new RuntimeException("Workout not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
     if (!workout.getSplit().getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Unauthorized");
+      throw new UnauthorizedException("Access denied");
     }
     return toResponse(workout);
   }
@@ -63,9 +65,9 @@ public class WorkoutService {
   public WorkoutResponse updateWorkout(Long workoutId, UpdateWorkoutRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Workout workout = workoutRepository.findById(workoutId)
-        .orElseThrow(() -> new RuntimeException("Workout not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
     if (!workout.getSplit().getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Unauthorized");
+      throw new UnauthorizedException("Access denied");
     }
     workout.setName(request.getName());
     return toResponse(workoutRepository.save(workout));
@@ -75,9 +77,9 @@ public class WorkoutService {
   public void deleteWorkout(Long workoutId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Workout workout = workoutRepository.findById(workoutId)
-        .orElseThrow(() -> new RuntimeException("Workout not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
     if (!workout.getSplit().getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Unauthorized");
+      throw new UnauthorizedException("Access denied");
     }
     workoutRepository.delete(workout);
   }
@@ -85,7 +87,7 @@ public class WorkoutService {
   private User getCurrentUser(Authentication authentication) {
     String username = authentication.getName();
     return userRepository.findByUsername(username)
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   private WorkoutResponse toResponse(Workout workout) {

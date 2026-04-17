@@ -40,14 +40,7 @@ public class WorkoutController {
   public ResponseEntity<WorkoutResponse> getWorkout(
       @PathVariable Long id,
       Authentication authentication) {
-    try {
-      return ResponseEntity.ok(workoutService.getWorkout(id, authentication));
-    } catch (RuntimeException e) {
-      if (e.getMessage().equals("Unauthorized")) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-      }
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
+    return ResponseEntity.ok(workoutService.getWorkout(id, authentication));
   }
 
   @PutMapping("/{id}")
@@ -55,25 +48,14 @@ public class WorkoutController {
       @PathVariable Long id,
       @Valid @RequestBody UpdateWorkoutRequest request,
       Authentication authentication) {
-    try {
-      return ResponseEntity.ok(workoutService.updateWorkout(id, request, authentication));
-    } catch (RuntimeException e) {
-      if (e.getMessage().equals("Unauthorized")) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-      }
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
+    return ResponseEntity.ok(workoutService.updateWorkout(id, request, authentication));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteWorkout(
       @PathVariable Long id,
       Authentication authentication) {
-    try {
-      workoutService.deleteWorkout(id, authentication);
-      return ResponseEntity.noContent().build();
-    } catch (RuntimeException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
+    workoutService.deleteWorkout(id, authentication);
+    return ResponseEntity.noContent().build();
   }
 }

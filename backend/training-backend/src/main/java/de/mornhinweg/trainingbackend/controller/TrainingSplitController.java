@@ -22,26 +22,19 @@ public class TrainingSplitController {
 
   @GetMapping
   public ResponseEntity<List<SplitResponse>> getAllSplits(Authentication authentication) {
-    List<SplitResponse> splits = trainingSplitService.getAllSplits(authentication);
-    return ResponseEntity.ok(splits);
+    return ResponseEntity.ok(trainingSplitService.getAllSplits(authentication));
   }
 
   @GetMapping("/active")
   public ResponseEntity<SplitResponse> getActiveSplit(Authentication authentication) {
-    try {
-      SplitResponse split = trainingSplitService.getActiveSplit(authentication);
-      return ResponseEntity.ok(split);
-    } catch (RuntimeException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
+    return ResponseEntity.ok(trainingSplitService.getActiveSplit(authentication));
   }
 
   @PostMapping
   public ResponseEntity<SplitResponse> createSplit(
       @Valid @RequestBody CreateSplitRequest request,
       Authentication authentication) {
-    SplitResponse split = trainingSplitService.createSplit(request, authentication);
-    return ResponseEntity.status(HttpStatus.CREATED).body(split);
+    return ResponseEntity.status(HttpStatus.CREATED).body(trainingSplitService.createSplit(request, authentication));
   }
 
   @PutMapping("/{id}")
@@ -49,35 +42,21 @@ public class TrainingSplitController {
       @PathVariable Long id,
       @Valid @RequestBody UpdateSplitRequest request,
       Authentication authentication) {
-    try {
-      SplitResponse split = trainingSplitService.updateSplit(id, request, authentication);
-      return ResponseEntity.ok(split);
-    } catch (RuntimeException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
+    return ResponseEntity.ok(trainingSplitService.updateSplit(id, request, authentication));
   }
 
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteSplit(
       @PathVariable Long id,
       Authentication authentication) {
-    try {
-      trainingSplitService.deleteSplit(id, authentication);
-      return ResponseEntity.noContent().build();
-    } catch (RuntimeException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
+    trainingSplitService.deleteSplit(id, authentication);
+    return ResponseEntity.noContent().build();
   }
 
   @PutMapping("/{id}/activate")
   public ResponseEntity<SplitResponse> activateSplit(
       @PathVariable Long id,
       Authentication authentication) {
-    try {
-      SplitResponse split = trainingSplitService.activateSplit(id, authentication);
-      return ResponseEntity.ok(split);
-    } catch (RuntimeException e) {
-      return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-    }
+    return ResponseEntity.ok(trainingSplitService.activateSplit(id, authentication));
   }
 }

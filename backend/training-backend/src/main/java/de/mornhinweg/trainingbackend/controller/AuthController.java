@@ -20,28 +20,17 @@ public class AuthController {
   private final AuthService authService;
 
   @PostMapping("/register")
-  public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-    try {
-      AuthResponse response = authService.register(request);
-      return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    } catch (RuntimeException e) {
-      return ResponseEntity.badRequest().body(e.getMessage());
-    }
+  public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(request));
   }
 
   @PostMapping("/login")
-  public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-    try {
-      AuthResponse response = authService.login(request);
-      return ResponseEntity.ok(response);
-    } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-          .body("Invalid username or password");
-    }
+  public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+    return ResponseEntity.ok(authService.login(request));
   }
 
   @GetMapping("/me")
-  public ResponseEntity<?> me(@AuthenticationPrincipal UserDetails userDetails) {
+  public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal UserDetails userDetails) {
     return ResponseEntity.ok(authService.getMe(userDetails.getUsername()));
   }
 }

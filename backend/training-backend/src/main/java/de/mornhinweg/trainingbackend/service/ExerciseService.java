@@ -1,6 +1,8 @@
 package de.mornhinweg.trainingbackend.service;
 
 import de.mornhinweg.trainingbackend.dto.exercise.*;
+import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
+import de.mornhinweg.trainingbackend.exception.UnauthorizedException;
 import de.mornhinweg.trainingbackend.model.Exercise;
 import de.mornhinweg.trainingbackend.model.ExerciseLog;
 import de.mornhinweg.trainingbackend.model.User;
@@ -104,18 +106,18 @@ public class ExerciseService {
 
   private Workout getOwnedWorkout(Long workoutId, User user) {
     Workout workout = workoutRepository.findById(workoutId)
-        .orElseThrow(() -> new RuntimeException("Workout not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
     if (!workout.getSplit().getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Unauthorized");
+      throw new UnauthorizedException("Access denied");
     }
     return workout;
   }
 
   private Exercise getOwnedExercise(Long exerciseId, User user) {
     Exercise exercise = exerciseRepository.findById(exerciseId)
-        .orElseThrow(() -> new RuntimeException("Exercise not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Exercise not found"));
     if (!exercise.getWorkout().getSplit().getUser().getId().equals(user.getId())) {
-      throw new RuntimeException("Unauthorized");
+      throw new UnauthorizedException("Access denied");
     }
     return exercise;
   }
@@ -123,7 +125,7 @@ public class ExerciseService {
   private User getCurrentUser(Authentication authentication) {
     String username = authentication.getName();
     return userRepository.findByUsername(username)
-        .orElseThrow(() -> new RuntimeException("User not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   public ExerciseProgressResponse getProgress(Long exerciseId, Authentication authentication) {
