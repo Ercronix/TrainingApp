@@ -63,9 +63,9 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 Create `backend/.env`:
 
 ```env
-POSTGRES_DB=training_db
-POSTGRES_USER=training_user
-POSTGRES_PASSWORD=EuNnqQ6PWENrtmAli05IUg==
+POSTGRES_DB= ""
+POSTGRES_USER= ""
+POSTGRES_PASSWORD= ""
 ```
 
 Then run:
