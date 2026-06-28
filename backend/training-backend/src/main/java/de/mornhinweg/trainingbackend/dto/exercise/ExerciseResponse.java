@@ -14,6 +14,7 @@ public class ExerciseResponse {
   private String videoId;
   private Integer sets;
   private Integer reps;
+  private String repUnit;
   private BigDecimal plannedWeight;
   private BigDecimal lastUsedWeight;
   private LocalDateTime lastTrainedAt;

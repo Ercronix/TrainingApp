@@ -53,7 +53,7 @@ export default function SplitsScreen() {
           item.isActive ? 'bg-[#1a1a1a]' : 'bg-[#131313]'
         }`}
         onPress={() =>
-          router.push({ pathname: '/workouts', params: { splitId: item.id.toString(), splitName: item.name } })
+          router.push({ pathname: '/workouts', params: { splitId: item.id.toString(), splitName: item.name, currentBlock: item.currentBlock?.toString() || '1' } })
         }
         activeOpacity={0.85}
       >
@@ -70,9 +70,14 @@ export default function SplitsScreen() {
         {/* Name + meta */}
         <View className="flex-1">
           <Text className="text-[#f5f5f5] text-lg font-bold tracking-tight mb-1">{item.name}</Text>
-          <Text className="text-[#7a7a7a] text-[10px] tracking-widest">
-            {item.workoutCount} {item.workoutCount === 1 ? 'WORKOUT' : 'WORKOUTS'}
-          </Text>
+          <View className="flex-row items-center gap-3">
+            <Text className="text-[#7a7a7a] text-[10px] tracking-widest">
+              {item.workoutCount} {item.workoutCount === 1 ? 'WORKOUT' : 'WORKOUTS'}
+            </Text>
+            {item.currentBlock && (
+              <Text className="text-[#cafd00] text-[9px] tracking-[2px]">BLOCK {item.currentBlock}/3</Text>
+            )}
+          </View>
         </View>
 
         {/* Actions */}

@@ -6,10 +6,10 @@ import { Ionicons } from '@expo/vector-icons';
 
 export default function LogExerciseModal() {
   const {
-    exerciseLogId, exerciseName, plannedSets, plannedReps, plannedWeight, trainingLogId,
+    exerciseLogId, exerciseName, plannedSets, plannedReps, plannedWeight, trainingLogId, repUnit,
   } = useLocalSearchParams<{
     exerciseLogId: string; exerciseName: string; plannedSets: string;
-    plannedReps: string; plannedWeight: string; trainingLogId: string;
+    plannedReps: string; plannedWeight: string; trainingLogId: string; repUnit: string;
   }>();
 
   const [sets, setSets] = useState('');
@@ -37,7 +37,7 @@ export default function LogExerciseModal() {
         {plannedSets && plannedReps && (
           <View className="bg-[#cafd00]/10 rounded-sm px-3 py-2 mb-6 self-start">
             <Text className="text-[#cafd00] text-[11px] tracking-widest">
-              TARGET: {plannedSets} × {plannedReps}{plannedWeight ? ` @ ${plannedWeight} kg` : ''}
+              TARGET: {plannedSets} × {plannedReps} {repUnit === 'seconds' ? 'sec' : 'reps'}{plannedWeight ? ` @ ${plannedWeight} kg` : ''}
             </Text>
           </View>
         )}
@@ -53,7 +53,7 @@ export default function LogExerciseModal() {
           keyboardAppearance="dark"
         />
 
-        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">REPS PER SET</Text>
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">{repUnit === 'seconds' ? 'SECONDS PER SET' : 'REPS PER SET'}</Text>
         <TextInput
           className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-2xl font-bold tracking-tight mb-5"
           placeholder={plannedReps || '10'}

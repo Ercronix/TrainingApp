@@ -41,6 +41,10 @@ public class Exercise {
   @Column
   private Integer reps;
 
+  @Column(name = "rep_unit", nullable = false, length = 10)
+  @Builder.Default
+  private String repUnit = "reps";
+
   @Column(name = "planned_weight", precision = 5, scale = 2)
   private BigDecimal plannedWeight;
 

@@ -17,11 +17,12 @@ export function useEditExercise(workoutId: string, exerciseId: string) {
   const router = useRouter();
 
   const mutation = useMutation({
-    mutationFn: (form: EditExerciseForm) =>
+    mutationFn: ({ form, repUnit }: { form: EditExerciseForm; repUnit?: string }) =>
       exercisesApi.update(Number(workoutId), Number(exerciseId), {
         name: form.name.trim(),
         sets: form.sets ? parseInt(form.sets) : null,
         reps: form.reps ? parseInt(form.reps) : null,
+        repUnit,
         plannedWeight: form.plannedWeight ? parseFloat(form.plannedWeight) : null,
       }),
     onSuccess: () => {
@@ -33,12 +34,12 @@ export function useEditExercise(workoutId: string, exerciseId: string) {
     },
   });
 
-  const save = (form: EditExerciseForm) => {
+  const save = (form: EditExerciseForm, repUnit?: string) => {
     if (!form.name.trim()) {
       alert('Error', 'Please enter an exercise name');
       return;
     }
-    mutation.mutate(form);
+    mutation.mutate({ form, repUnit });
   };
 
   return { save, isPending: mutation.isPending };

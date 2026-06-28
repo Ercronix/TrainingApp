@@ -9,6 +9,7 @@ export default function CreateExerciseModal() {
   const router = useRouter();
   const { createExercise } = useExercises(workoutId);
   const [form, setForm] = useState({ name: '', sets: '', reps: '', weight: '', videoUrl: '', description: '' });
+  const [repUnit, setRepUnit] = useState<'reps' | 'seconds'>('reps');
   const updateField = (field: keyof typeof form) => (value: string) => setForm(prev => ({ ...prev, [field]: value }));
   const isPending = createExercise.isPending;
 
@@ -18,6 +19,7 @@ export default function CreateExerciseModal() {
       name: form.name.trim(),
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
+      repUnit,
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       videoUrl: form.videoUrl.trim() || null,
       description: form.description.trim() || null,
@@ -51,7 +53,7 @@ export default function CreateExerciseModal() {
           editable={!isPending}
         />
 
-        <View className="flex-row gap-3 mb-5">
+        <View className="flex-row gap-3 mb-3">
           <View className="flex-1">
             <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">SETS</Text>
             <TextInput
@@ -66,10 +68,10 @@ export default function CreateExerciseModal() {
             />
           </View>
           <View className="flex-1">
-            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">REPS</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">{repUnit === 'seconds' ? 'SECONDS' : 'REPS'}</Text>
             <TextInput
               className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-lg font-bold tracking-tight"
-              placeholder="10"
+              placeholder={repUnit === 'seconds' ? '30' : '10'}
               placeholderTextColor="#2a2a2a"
               value={form.reps}
               onChangeText={updateField('reps')}
@@ -78,6 +80,23 @@ export default function CreateExerciseModal() {
               editable={!isPending}
             />
           </View>
+        </View>
+
+        <View className="flex-row gap-3 mb-5">
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded items-center ${repUnit === 'reps' ? 'bg-[#cafd00]' : 'bg-[#131313]'}`}
+            onPress={() => setRepUnit('reps')}
+            disabled={isPending}
+          >
+            <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'reps' ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>REPS</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded items-center ${repUnit === 'seconds' ? 'bg-[#cafd00]' : 'bg-[#131313]'}`}
+            onPress={() => setRepUnit('seconds')}
+            disabled={isPending}
+          >
+            <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'seconds' ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>SECONDS</Text>
+          </TouchableOpacity>
         </View>
 
         <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>

@@ -7,7 +7,7 @@ import SwipeableRow from '@/components/SwipeableRow';
 import { Workout } from '@/types';
 
 export default function WorkoutsScreen() {
-  const { splitId, splitName } = useLocalSearchParams<{ splitId: string; splitName: string }>();
+  const { splitId, splitName, currentBlock } = useLocalSearchParams<{ splitId: string; splitName: string; currentBlock: string }>();
   const router = useRouter();
   const { workouts, isLoading, isRefetching, refetch, deleteWorkout } = useWorkouts(splitId);
 
@@ -72,7 +72,7 @@ export default function WorkoutsScreen() {
           </View>
           <TouchableOpacity
             onPress={() =>
-              router.push({ pathname: '/edit-split' as any, params: { splitId, currentName: splitName } })
+              router.push({ pathname: '/edit-split' as any, params: { splitId, currentName: splitName, currentBlock: currentBlock || '1' } })
             }
             className="mt-5"
           >

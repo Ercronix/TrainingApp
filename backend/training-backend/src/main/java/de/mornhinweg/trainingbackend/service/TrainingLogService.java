@@ -234,6 +234,7 @@ public class TrainingLogService {
         .weightUsed(exerciseLog.getWeightUsed())
         .completed(exerciseLog.getCompleted())
         .notes(exerciseLog.getNotes())
+        .repUnit(exercise.getRepUnit())
         .build();
   }
 }

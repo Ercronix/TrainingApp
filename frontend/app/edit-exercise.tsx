@@ -5,10 +5,10 @@ import { useEditExercise } from '@/hooks/useEditExercise';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function EditExerciseModal() {
-  const { workoutId, exerciseId, currentName, currentSets, currentReps, currentWeight } =
+  const { workoutId, exerciseId, currentName, currentSets, currentReps, currentWeight, currentRepUnit } =
     useLocalSearchParams<{
       workoutId: string; exerciseId: string; currentName: string;
-      currentSets: string; currentReps: string; currentWeight: string;
+      currentSets: string; currentReps: string; currentWeight: string; currentRepUnit: string;
     }>();
 
   const router = useRouter();
@@ -16,6 +16,9 @@ export default function EditExerciseModal() {
     name: currentName || '', sets: currentSets || '',
     reps: currentReps || '', plannedWeight: currentWeight || '',
   });
+  const [repUnit, setRepUnit] = useState<'reps' | 'seconds'>(
+    currentRepUnit === 'seconds' ? 'seconds' : 'reps'
+  );
   const { save, isPending } = useEditExercise(workoutId, exerciseId);
   const updateField = (field: keyof typeof form) => (value: string) => setForm(prev => ({ ...prev, [field]: value }));
 
@@ -44,7 +47,7 @@ export default function EditExerciseModal() {
           editable={!isPending}
         />
 
-        <View className="flex-row gap-3 mb-5">
+        <View className="flex-row gap-3 mb-3">
           <View className="flex-1">
             <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">SETS</Text>
             <TextInput
@@ -59,18 +62,35 @@ export default function EditExerciseModal() {
             />
           </View>
           <View className="flex-1">
-            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">REPS</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">{repUnit === 'seconds' ? 'SECONDS' : 'REPS'}</Text>
             <TextInput
               className="bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-lg font-bold tracking-tight"
               value={form.reps}
               onChangeText={updateField('reps')}
               keyboardType="numeric"
-              placeholder="10"
+              placeholder={repUnit === 'seconds' ? '30' : '10'}
               placeholderTextColor="#2a2a2a"
               keyboardAppearance="dark"
               editable={!isPending}
             />
           </View>
+        </View>
+
+        <View className="flex-row gap-3 mb-5">
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded items-center ${repUnit === 'reps' ? 'bg-[#cafd00]' : 'bg-[#131313]'}`}
+            onPress={() => setRepUnit('reps')}
+            disabled={isPending}
+          >
+            <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'reps' ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>REPS</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`flex-1 py-3 rounded items-center ${repUnit === 'seconds' ? 'bg-[#cafd00]' : 'bg-[#131313]'}`}
+            onPress={() => setRepUnit('seconds')}
+            disabled={isPending}
+          >
+            <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'seconds' ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>SECONDS</Text>
+          </TouchableOpacity>
         </View>
 
         <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>
@@ -88,7 +108,7 @@ export default function EditExerciseModal() {
         <TouchableOpacity
           className={`bg-[#cafd00] rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
           style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
-          onPress={() => save(form)}
+          onPress={() => save(form, repUnit)}
           disabled={isPending}
           activeOpacity={0.85}
         >

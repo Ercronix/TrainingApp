@@ -12,5 +12,6 @@ public class CreateExerciseRequest {
   private String videoId;
   private Integer sets;
   private Integer reps;
+  private String repUnit;
   private BigDecimal plannedWeight;
 }

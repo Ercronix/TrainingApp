@@ -68,8 +68,8 @@ export const splitsApi = {
     return response.data;
   },
 
-  update: async (id: number, name: string): Promise<TrainingSplit> => {
-    const response = await api.put(`/splits/${id}`, { name });
+  update: async (id: number, data: { name: string; currentBlock?: number }): Promise<TrainingSplit> => {
+    const response = await api.put(`/splits/${id}`, data);
     return response.data;
   },
 

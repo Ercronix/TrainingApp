@@ -18,4 +18,5 @@ public class ExerciseLogResponse {
   private BigDecimal weightUsed;
   private Boolean completed;
   private String notes;
+  private String repUnit;
 }

@@ -53,6 +53,7 @@ public class ExerciseService {
         .videoId(request.getVideoId())
         .sets(request.getSets())
         .reps(request.getReps())
+        .repUnit(request.getRepUnit() != null ? request.getRepUnit() : "reps")
         .plannedWeight(request.getPlannedWeight())
         .orderIndex(nextOrderIndex)
         .temporary(false)
@@ -70,6 +71,7 @@ public class ExerciseService {
     if (request.getVideoId() != null) exercise.setVideoId(request.getVideoId());
     if (request.getSets() != null) exercise.setSets(request.getSets());
     if (request.getReps() != null) exercise.setReps(request.getReps());
+    if (request.getRepUnit() != null) exercise.setRepUnit(request.getRepUnit());
     if (request.getPlannedWeight() != null) exercise.setPlannedWeight(request.getPlannedWeight());
     if (request.getOrderIndex() != null) exercise.setOrderIndex(request.getOrderIndex());
     return toResponse(exerciseRepository.save(exercise));
@@ -161,6 +163,7 @@ public class ExerciseService {
         .videoId(exercise.getVideoId())
         .sets(exercise.getSets())
         .reps(exercise.getReps())
+        .repUnit(exercise.getRepUnit())
         .plannedWeight(exercise.getPlannedWeight())
         .lastUsedWeight(exercise.getLastUsedWeight())
         .lastTrainedAt(exercise.getLastTrainedAt())

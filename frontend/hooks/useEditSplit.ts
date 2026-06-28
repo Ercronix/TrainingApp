@@ -10,7 +10,8 @@ export function useEditSplit(splitId: string) {
   const router = useRouter();
 
   const mutation = useMutation({
-    mutationFn: (name: string) => splitsApi.update(Number(splitId), name),
+    mutationFn: (data: { name: string; currentBlock?: number }) =>
+      splitsApi.update(Number(splitId), data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.splits });
       router.back();
@@ -20,12 +21,12 @@ export function useEditSplit(splitId: string) {
     },
   });
 
-  const save = (name: string) => {
+  const save = (name: string, currentBlock?: number) => {
     if (!name.trim()) {
       alert('Error', 'Please enter a name');
       return;
     }
-    mutation.mutate(name.trim());
+    mutation.mutate({ name: name.trim(), currentBlock });
   };
 
   return { save, isPending: mutation.isPending };

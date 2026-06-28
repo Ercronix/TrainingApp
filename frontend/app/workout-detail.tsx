@@ -43,6 +43,7 @@ export default function WorkoutDetailScreen() {
                   workoutId, exerciseId: item.id.toString(),
                   currentName: item.name, currentSets: item.sets?.toString() || '',
                   currentReps: item.reps?.toString() || '', currentWeight: item.plannedWeight?.toString() || '',
+                  currentRepUnit: item.repUnit || 'reps',
                 },
               }),
           },
@@ -79,7 +80,7 @@ export default function WorkoutDetailScreen() {
               <Text className="text-[#f5f5f5] text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
               {item.sets && item.reps && (
                 <Text className="text-[#7a7a7a] text-xs">
-                  {item.sets} × {item.reps} reps{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+                  {item.sets} × {item.reps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
                 </Text>
               )}
               {item.lastUsedWeight && (

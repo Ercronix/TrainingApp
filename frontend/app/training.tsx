@@ -103,12 +103,12 @@ export default function TrainingScreen() {
           </Text>
           {item.plannedSets && item.plannedReps && (
             <Text className="text-[#7a7a7a] text-xs">
-              {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+              {item.plannedSets} × {item.plannedReps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
             </Text>
           )}
           {item.completed && (
             <Text className="text-[#cafd00] text-[11px] mt-1">
-              ✓ {item.setsCompleted}×{item.repsCompleted}{item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
+              ✓ {item.setsCompleted}×{item.repsCompleted}{item.repUnit === 'seconds' ? 's' : ''}{item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
             </Text>
           )}
         </View>
@@ -135,6 +135,7 @@ export default function TrainingScreen() {
               exerciseLogId: item.id.toString(), exerciseName: item.exerciseName,
               plannedSets: item.plannedSets?.toString() || '', plannedReps: item.plannedReps?.toString() || '',
               plannedWeight: item.plannedWeight?.toString() || '', trainingLogId,
+              repUnit: item.repUnit || 'reps',
             },
           })
         }

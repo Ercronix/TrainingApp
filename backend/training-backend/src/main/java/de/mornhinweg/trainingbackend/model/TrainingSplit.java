@@ -31,6 +31,10 @@ public class TrainingSplit {
   @Builder.Default
   private Boolean isActive = false;
 
+  @Column(name = "current_block", nullable = false)
+  @Builder.Default
+  private Integer currentBlock = 1;
+
   @OneToMany(mappedBy = "split", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("orderIndex ASC")
   @Builder.Default

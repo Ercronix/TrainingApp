@@ -29,6 +29,7 @@ export interface TrainingSplit {
     id: number;
     name: string;
     isActive: boolean;
+    currentBlock: number;
     workoutCount: number;
     createdAt: string;
     updatedAt: string;
@@ -66,6 +67,7 @@ export interface ExerciseLog {
   weightUsed: number | null;
   completed: boolean;
   notes: string | null;
+  repUnit: 'reps' | 'seconds' | null;
 }
 
 export interface Workout {
@@ -82,6 +84,7 @@ export interface Exercise {
   videoId?: string | null;
   sets?: number | null;
   reps?: number | null;
+  repUnit?: 'reps' | 'seconds' | null;
   plannedWeight?: number | null;
   orderIndex: number;
   lastUsedWeight?: number | null;
@@ -102,6 +105,7 @@ export interface CreateExerciseRequest {
   videoId?: string | null;
   sets?: number | null;
   reps?: number | null;
+  repUnit?: string;
   plannedWeight?: number | null;
 }
 

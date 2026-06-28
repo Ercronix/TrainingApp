@@ -54,6 +54,11 @@ public class TrainingSplitService {
         .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
 
     split.setName(request.getName());
+    if (request.getCurrentBlock() != null) {
+      if (request.getCurrentBlock() < 1 || request.getCurrentBlock() > 3)
+        throw new RuntimeException("Block must be 1, 2, or 3");
+      split.setCurrentBlock(request.getCurrentBlock());
+    }
 
     TrainingSplit updatedSplit = trainingSplitRepository.save(split);
     return toResponse(updatedSplit);
@@ -106,6 +111,7 @@ public class TrainingSplitService {
         .id(split.getId())
         .name(split.getName())
         .isActive(split.getIsActive())
+        .currentBlock(split.getCurrentBlock())
         .workoutCount(split.getWorkouts().size())
         .createdAt(split.getCreatedAt())
         .updatedAt(split.getUpdatedAt())

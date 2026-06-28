@@ -5,9 +5,10 @@ import { useEditSplit } from '@/hooks/useEditSplit';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function EditSplitModal() {
-  const { splitId, currentName } = useLocalSearchParams<{ splitId: string; currentName: string }>();
+  const { splitId, currentName, currentBlock } = useLocalSearchParams<{ splitId: string; currentName: string; currentBlock: string }>();
   const router = useRouter();
   const [name, setName] = useState(currentName || '');
+  const [block, setBlock] = useState<number>(parseInt(currentBlock || '1') || 1);
   const { save, isPending } = useEditSplit(splitId);
 
   return (
@@ -35,10 +36,27 @@ export default function EditSplitModal() {
           editable={!isPending}
         />
 
+        <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">TRAINING BLOCK</Text>
+        <View className="flex-row gap-3 mb-6">
+          {[1, 2, 3].map((b) => (
+            <TouchableOpacity
+              key={b}
+              className={`flex-1 py-4 rounded items-center ${block === b ? 'bg-[#cafd00]' : 'bg-[#131313]'}`}
+              onPress={() => setBlock(b)}
+              disabled={isPending}
+            >
+              <Text className={`text-sm font-bold tracking-[1px] ${block === b ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>{b}</Text>
+              <Text className={`text-[8px] tracking-[1px] mt-1 ${block === b ? 'text-[#0e0e0e]' : 'text-[#3a3a3a]'}`}>
+                {b === 1 ? 'HYPERTROPHY' : b === 2 ? 'STRENGTH' : 'POWER'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         <TouchableOpacity
           className={`bg-[#cafd00] rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
           style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
-          onPress={() => save(name)}
+          onPress={() => save(name, block)}
           disabled={isPending}
           activeOpacity={0.85}
         >

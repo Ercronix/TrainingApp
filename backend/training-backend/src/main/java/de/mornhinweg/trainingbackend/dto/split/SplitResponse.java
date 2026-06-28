@@ -16,6 +16,7 @@ public class SplitResponse {
   private Long id;
   private String name;
   private Boolean isActive;
+  private Integer currentBlock;
   private Integer workoutCount;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
