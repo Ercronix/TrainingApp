@@ -1,0 +1,2 @@
+ALTER TABLE exercises
+    ADD COLUMN rep_unit VARCHAR(10) NOT NULL DEFAULT 'reps';
