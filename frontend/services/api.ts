@@ -37,8 +37,11 @@ export const authApi = {
     return response.data;
   },
 
-  register: async (data: RegisterRequest): Promise<string> => {
+  register: async (data: RegisterRequest): Promise<AuthResponse> => {
     const response = await api.post("/auth/register", data);
+    if (response.data.token) {
+      await storage.setItem("authToken", response.data.token);
+    }
     return response.data;
   },
 

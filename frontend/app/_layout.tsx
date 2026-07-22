@@ -9,8 +9,8 @@ const queryClient = new QueryClient();
 
 export default function RootLayout() {
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#020617' }}>
-      <StatusBar style="light" backgroundColor="#020617" />
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0e0e0e' }}>
+      <StatusBar style="light" backgroundColor="#0e0e0e" />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Stack screenOptions={{ headerShown: false }}>

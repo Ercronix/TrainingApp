@@ -1,23 +1,30 @@
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
 import { getErrorMessage } from '@/utils/errorHandler';
 
+type FieldErrors = { username?: string; password?: string; general?: string };
+
 export default function LoginScreen() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<FieldErrors>({});
 
     const router = useRouter();
     const setUser = useAuthStore((state) => state.setUser);
 
     const handleLogin = async () => {
-        if (!username || !password) {
-            Alert.alert('Error', 'Please fill in all fields');
+        const newErrors: FieldErrors = {};
+        if (!username) newErrors.username = 'Username is required';
+        if (!password) newErrors.password = 'Password is required';
+        if (newErrors.username || newErrors.password) {
+            setErrors(newErrors);
             return;
         }
+        setErrors({});
 
         try {
             setLoading(true);
@@ -29,56 +36,84 @@ export default function LoginScreen() {
             router.replace('/(tabs)');
 
         } catch (error: unknown) {
-            Alert.alert('Login Failed', getErrorMessage(error));
+            // Backend responds 401 "Invalid username or password" on bad credentials
+            setErrors({ general: getErrorMessage(error) });
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <View className="flex-1 justify-center px-6 bg-slate-950">
-            <Text className="text-3xl font-bold text-slate-100 text-center mb-12">
-                Training App 🏋️
+        <View className="flex-1 justify-center px-6 bg-[#0e0e0e]">
+            <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">WELCOME BACK</Text>
+            <Text className="text-[#f5f5f5] text-[40px] font-bold tracking-tighter leading-[44px] mb-10">
+                SIGN{'\n'}IN
             </Text>
 
-            <Text className="text-base mb-2 text-slate-300">Username</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">USERNAME</Text>
             <TextInput
-                className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-4"
+                className={`bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
                 placeholder="Enter username"
-                placeholderTextColor="#64748B"
+                placeholderTextColor="#2a2a2a"
                 value={username}
-                onChangeText={setUsername}
+                onChangeText={(text) => {
+                    setUsername(text);
+                    if (errors.username || errors.general) setErrors({ ...errors, username: undefined, general: undefined });
+                }}
                 autoCapitalize="none"
                 keyboardAppearance="dark"
                 editable={!loading}
             />
+            {errors.username && (
+                <Text className="text-[#ff734a] text-[9px] tracking-[2px] mb-4">
+                    {errors.username.toUpperCase()}
+                </Text>
+            )}
 
-            <Text className="text-base mb-2 text-slate-300">Password</Text>
+            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">PASSWORD</Text>
             <TextInput
-                className="bg-slate-900 border border-slate-700 text-slate-100 rounded-lg px-4 py-3 text-base mb-6"
+                className={`bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
                 placeholder="Enter password"
-                placeholderTextColor="#64748B"
+                placeholderTextColor="#2a2a2a"
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(text) => {
+                    setPassword(text);
+                    if (errors.password || errors.general) setErrors({ ...errors, password: undefined, general: undefined });
+                }}
                 secureTextEntry
                 keyboardAppearance="dark"
                 editable={!loading}
             />
+            {errors.password && (
+                <Text className="text-[#ff734a] text-[9px] tracking-[2px] mb-8">
+                    {errors.password.toUpperCase()}
+                </Text>
+            )}
+
+            {errors.general && (
+                <View className="bg-[#2a1410] rounded px-4 py-3 mb-4">
+                    <Text className="text-[#ff734a] text-[10px] tracking-[2px] text-center">
+                        {errors.general.toUpperCase()}
+                    </Text>
+                </View>
+            )}
 
             <TouchableOpacity
-                className={`bg-blue-600 rounded-lg py-4 items-center ${loading ? 'opacity-50' : ''}`}
+                className={`bg-[#cafd00] rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
+                style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
                 onPress={handleLogin}
                 disabled={loading}
+                activeOpacity={0.85}
             >
-                <Text className="text-white text-lg font-semibold">
-                    {loading ? 'Logging in...' : 'Login'}
+                <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+                    {loading ? 'SIGNING IN...' : 'SIGN IN'}
                 </Text>
             </TouchableOpacity>
 
             <Link href="/register" asChild>
-                <TouchableOpacity className="mt-4 items-center" disabled={loading}>
-                    <Text className="text-blue-400 text-base">
-                        Don't have an account? Register
+                <TouchableOpacity className="mt-6 items-center" disabled={loading}>
+                    <Text className="text-[#7a7a7a] text-[10px] tracking-[2px]">
+                        NO ACCOUNT? <Text className="text-[#cafd00]">REGISTER</Text>
                     </Text>
                 </TouchableOpacity>
             </Link>
