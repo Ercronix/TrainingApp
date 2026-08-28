@@ -1,0 +1,24 @@
+# ── Stage 1: Build ──────────────────────────────────────────────────────────
+FROM eclipse-temurin:21-jdk-alpine AS build
+WORKDIR /app
+
+# Copy Gradle wrapper and build descriptors first (cache layer for deps)
+COPY backend/training-backend/gradlew gradlew
+COPY backend/training-backend/gradle gradle
+COPY backend/training-backend/settings.gradle settings.gradle
+COPY backend/training-backend/build.gradle build.gradle
+RUN chmod +x gradlew
+
+# Pre-fetch dependencies (re-run only when build.gradle changes)
+RUN ./gradlew dependencies --no-daemon 2>/dev/null || true
+
+# Copy source and build the fat JAR, skip tests
+COPY backend/training-backend/src src
+RUN ./gradlew bootJar --no-daemon -x test
+
+# ── Stage 2: Run ────────────────────────────────────────────────────────────
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY --from=build /app/build/libs/*.jar app.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "app.jar"]
