@@ -38,6 +38,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       # Secrets – override the values hardcoded in application-prod.properties
       JWT_SECRET:            ${JWT_SECRET}
+      JWT_EXPIRATION:        ${JWT_EXPIRATION:-86400000}
       CORS_ALLOWED_ORIGINS:  ${CORS_ALLOWED_ORIGINS}
 
   # ── Expo web frontend (served by Nginx) ─────────────────────────────────────
