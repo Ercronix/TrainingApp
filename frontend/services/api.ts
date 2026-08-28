@@ -7,7 +7,7 @@ import { Platform } from "react-native";
 const API_URL =
   Platform.OS === "web"
     ? (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080/api")
-    : "http://10.39.1.24:8080/api";
+    : "https://training.timmornhinweg.de/api";
 
 const api = axios.create({
   baseURL: API_URL,
