@@ -6,6 +6,7 @@ import { useHistory } from '@/hooks/useHistory';
 import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { TrainingLog } from '@/types';
+import { useThemeColors } from '@/constants/theme';
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return '—';
@@ -41,6 +42,7 @@ function getDateThreshold(filter: DateFilter): Date | null {
 }
 
 export default function HistoryScreen() {
+  const colors = useThemeColors();
   const router = useRouter();
   const { history, isLoading, isRefetching, refetch, deleteLog } = useHistory();
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,15 +88,15 @@ export default function HistoryScreen() {
         rightActions={[
           {
             icon: 'trash-outline',
-            color: '#ff734a',
-            backgroundColor: '#2a1410',
+            color: colors.danger,
+            backgroundColor: colors.surfaceDanger,
             label: 'DELETE',
             onPress: () => handleDelete(item.id, item.workoutName || item.splitName),
           },
         ]}
       >
         <TouchableOpacity
-          className="bg-[#131313] rounded-md p-5"
+          className="bg-surface dark:bg-surface-dark rounded-md p-5"
           onPress={() =>
             router.push({ pathname: '/history-detail' as any, params: { trainingLogId: item.id.toString() } })
           }
@@ -102,37 +104,37 @@ export default function HistoryScreen() {
         >
           {/* Top row */}
           <View className="flex-row items-start mb-4 gap-3">
-            <Text className="text-[#262626] text-xl font-bold tracking-tight min-w-[28px]">
+            <Text className="text-ink-ghost dark:text-ink-ghost-dark text-xl font-bold tracking-tight min-w-[28px]">
               {String(index + 1).padStart(2, '0')}
             </Text>
             <View className="flex-1">
-              <Text className="text-[#f5f5f5] text-lg font-bold tracking-tight mb-0.5">
+              <Text className="text-ink dark:text-ink-dark text-lg font-bold tracking-tight mb-0.5">
                 {item.workoutName || item.splitName}
               </Text>
-              <Text className="text-[#7a7a7a] text-[11px] tracking-wider">
+              <Text className="text-ink-muted dark:text-ink-muted-dark text-[11px] tracking-wider">
                 {item.splitName} · {formatDate(item.startedAt)}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color="#262626" />
+            <Ionicons name="chevron-forward" size={16} color={colors.inkGhost} />
           </View>
 
           {/* Stats row */}
-          <View className="flex-row items-center bg-[#0e0e0e] rounded p-3 mb-3">
+          <View className="flex-row items-center bg-canvas dark:bg-canvas-dark rounded p-3 mb-3">
             <View className="flex-1 items-center">
-              <Text className="text-[#f5f5f5] text-sm font-bold tracking-tight">{formatTime(item.startedAt)}</Text>
-              <Text className="text-[#7a7a7a] text-[8px] tracking-widest mt-0.5">TIME</Text>
+              <Text className="text-ink dark:text-ink-dark text-sm font-bold tracking-tight">{formatTime(item.startedAt)}</Text>
+              <Text className="text-ink-muted dark:text-ink-muted-dark text-[8px] tracking-widest mt-0.5">TIME</Text>
             </View>
-            <View className="w-px h-7 bg-[#1a1a1a]" />
+            <View className="w-px h-7 bg-surface-2 dark:bg-surface-2-dark" />
             <View className="flex-1 items-center">
-              <Text className="text-[#f5f5f5] text-sm font-bold tracking-tight">{formatDuration(item.durationSeconds)}</Text>
-              <Text className="text-[#7a7a7a] text-[8px] tracking-widest mt-0.5">DURATION</Text>
+              <Text className="text-ink dark:text-ink-dark text-sm font-bold tracking-tight">{formatDuration(item.durationSeconds)}</Text>
+              <Text className="text-ink-muted dark:text-ink-muted-dark text-[8px] tracking-widest mt-0.5">DURATION</Text>
             </View>
-            <View className="w-px h-7 bg-[#1a1a1a]" />
+            <View className="w-px h-7 bg-surface-2 dark:bg-surface-2-dark" />
             <View className="flex-1 items-center">
-              <Text className={`text-sm font-bold tracking-tight ${completionRate === 100 ? 'text-[#cafd00]' : 'text-[#f5f5f5]'}`}>
+              <Text className={`text-sm font-bold tracking-tight ${completionRate === 100 ? 'text-accent dark:text-accent-dark' : 'text-ink dark:text-ink-dark'}`}>
                 {completionRate}%
               </Text>
-              <Text className="text-[#7a7a7a] text-[8px] tracking-widest mt-0.5">DONE</Text>
+              <Text className="text-ink-muted dark:text-ink-muted-dark text-[8px] tracking-widest mt-0.5">DONE</Text>
             </View>
           </View>
 
@@ -141,22 +143,22 @@ export default function HistoryScreen() {
             {item.exercises?.slice(0, 4).map((exercise) => (
               <View
                 key={exercise.id}
-                className={`px-2 py-1 rounded-sm ${exercise.completed ? 'bg-[#cafd00]/10' : 'bg-[#1a1a1a]'}`}
+                className={`px-2 py-1 rounded-sm ${exercise.completed ? 'bg-accent-solid/10' : 'bg-surface-2 dark:bg-surface-2-dark'}`}
               >
-                <Text className={`text-[10px] ${exercise.completed ? 'text-[#cafd00]' : 'text-[#7a7a7a]'}`}>
+                <Text className={`text-[10px] ${exercise.completed ? 'text-accent dark:text-accent-dark' : 'text-ink-muted dark:text-ink-muted-dark'}`}>
                   {exercise.exerciseName}
                 </Text>
               </View>
             ))}
             {item.exercises?.length > 4 && (
-              <View className="px-2 py-1 rounded-sm bg-[#1a1a1a]">
-                <Text className="text-[10px] text-[#7a7a7a]">+{item.exercises.length - 4}</Text>
+              <View className="px-2 py-1 rounded-sm bg-surface-2 dark:bg-surface-2-dark">
+                <Text className="text-[10px] text-ink-muted dark:text-ink-muted-dark">+{item.exercises.length - 4}</Text>
               </View>
             )}
           </View>
 
           {item.notes && (
-            <Text className="text-[#3a3a3a] text-xs italic mt-2">"{item.notes}"</Text>
+            <Text className="text-ink-subtle dark:text-ink-subtle-dark text-xs italic mt-2">"{item.notes}"</Text>
           )}
         </TouchableOpacity>
       </SwipeableRow>
@@ -165,8 +167,8 @@ export default function HistoryScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-[#0e0e0e]">
-        <Text className="text-[#cafd00] text-sm font-bold tracking-[4px]">LOADING...</Text>
+      <View className="flex-1 justify-center items-center bg-canvas dark:bg-canvas-dark">
+        <Text className="text-accent dark:text-accent-dark text-sm font-bold tracking-[4px]">LOADING...</Text>
       </View>
     );
   }
@@ -174,14 +176,14 @@ export default function HistoryScreen() {
   const completedSessions = history.filter((l: TrainingLog) => l.isCompleted);
 
   return (
-    <View className="flex-1 bg-[#0e0e0e]">
+    <View className="flex-1 bg-canvas dark:bg-canvas-dark">
       <View className="px-6 pt-16 pb-4">
-        <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">YOUR LOGS</Text>
+        <Text className="text-accent dark:text-accent-dark text-[10px] tracking-[4px] mb-1">YOUR LOGS</Text>
         <View className="flex-row items-end justify-between">
-          <Text className="text-[#f5f5f5] text-[40px] font-bold leading-[42px] tracking-tighter">
+          <Text className="text-ink dark:text-ink-dark text-[40px] font-bold leading-[42px] tracking-tighter">
             TRAINING{'\n'}HISTORY
           </Text>
-          <Text className="text-[#1a1a1a] text-[64px] font-bold tracking-tighter leading-[68px] mb-0.5">
+          <Text className="text-ink-faint dark:text-ink-faint-dark text-[64px] font-bold tracking-tighter leading-[68px] mb-0.5">
             {completedSessions.length}
           </Text>
         </View>
@@ -189,12 +191,12 @@ export default function HistoryScreen() {
 
       {/* Search bar */}
       <View className="px-4 mb-3">
-        <View className="flex-row items-center bg-[#131313] rounded-md px-4 py-3">
-          <Ionicons name="search" size={16} color="#7a7a7a" />
+        <View className="flex-row items-center bg-surface dark:bg-surface-dark rounded-md px-4 py-3">
+          <Ionicons name="search" size={16} color={colors.inkMuted} />
           <TextInput
-            className="flex-1 text-[#f5f5f5] text-sm ml-3"
+            className="flex-1 text-ink dark:text-ink-dark text-sm ml-3"
             placeholder="Search workouts, exercises..."
-            placeholderTextColor="#3a3a3a"
+            placeholderTextColor={colors.inkSubtle}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCorrect={false}
@@ -203,7 +205,7 @@ export default function HistoryScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={16} color="#7a7a7a" />
+              <Ionicons name="close-circle" size={16} color={colors.inkMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -215,12 +217,12 @@ export default function HistoryScreen() {
           <TouchableOpacity
             key={f.key}
             onPress={() => setDateFilter(f.key)}
-            className={`px-4 py-2 rounded-md ${dateFilter === f.key ? 'bg-[#cafd00]' : 'bg-[#131313]'}`}
+            className={`px-4 py-2 rounded-md ${dateFilter === f.key ? 'bg-accent-solid' : 'bg-surface dark:bg-surface-dark'}`}
             activeOpacity={0.8}
           >
             <Text
               className={`text-[10px] font-bold tracking-[2px] ${
-                dateFilter === f.key ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'
+                dateFilter === f.key ? 'text-accent-ink' : 'text-ink-muted dark:text-ink-muted-dark'
               }`}
             >
               {f.label}
@@ -234,14 +236,14 @@ export default function HistoryScreen() {
         renderItem={renderLogItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#cafd00" />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.accent} />}
         ListEmptyComponent={
           <View className="items-center mt-20 gap-3">
-            <Ionicons name={searchQuery || dateFilter !== 'all' ? 'search-outline' : 'barbell-outline'} size={48} color="#262626" />
-            <Text className="text-[#262626] text-xl font-bold tracking-[2px]">
+            <Ionicons name={searchQuery || dateFilter !== 'all' ? 'search-outline' : 'barbell-outline'} size={48} color={colors.inkGhost} />
+            <Text className="text-ink-ghost dark:text-ink-ghost-dark text-xl font-bold tracking-[2px]">
               {searchQuery || dateFilter !== 'all' ? 'NO RESULTS' : 'NO SESSIONS YET'}
             </Text>
-            <Text className="text-[#3a3a3a] text-sm">
+            <Text className="text-ink-subtle dark:text-ink-subtle-dark text-sm">
               {searchQuery || dateFilter !== 'all' ? 'Try a different search or filter' : 'Complete your first training session'}
             </Text>
           </View>

@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '@/constants/theme';
 
 interface RestTimerProps {
   duration: number;
@@ -8,6 +9,7 @@ interface RestTimerProps {
 }
 
 export function RestTimer({ duration, onComplete }: RestTimerProps) {
+  const colors = useThemeColors();
   const [seconds, setSeconds] = useState(duration);
   const [isRunning, setIsRunning] = useState(false);
   const [customDuration, setCustomDuration] = useState(duration);
@@ -61,12 +63,12 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
   ];
 
   return (
-    <View className="bg-[#131313] rounded-md p-4">
+    <View className="bg-surface dark:bg-surface-dark rounded-md p-4">
       <View className="flex-row items-center justify-between mb-3">
         {/* Timer display */}
         <View>
-          <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-1">REST TIMER</Text>
-          <Text className={`text-[40px] font-bold tracking-tighter leading-10 ${isUrgent ? 'text-[#ff734a]' : 'text-[#f5f5f5]'}`}>
+          <Text className="text-ink-muted dark:text-ink-muted-dark text-[9px] tracking-[3px] mb-1">REST TIMER</Text>
+          <Text className={`text-[40px] font-bold tracking-tighter leading-10 ${isUrgent ? 'text-danger dark:text-danger-dark' : 'text-ink dark:text-ink-dark'}`}>
             {formatTime(seconds)}
           </Text>
         </View>
@@ -74,7 +76,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
         {/* Controls */}
         <View className="flex-row gap-2">
           <TouchableOpacity
-            className={`w-12 h-12 rounded-md justify-center items-center ${isRunning ? 'bg-[#1a1a1a]' : 'bg-[#cafd00]'}`}
+            className={`w-12 h-12 rounded-md justify-center items-center ${isRunning ? 'bg-surface-2 dark:bg-surface-2-dark' : 'bg-accent-solid'}`}
             onPress={toggle}
             activeOpacity={0.85}
           >
@@ -86,19 +88,19 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="w-12 h-12 rounded-md justify-center items-center bg-[#1a1a1a]"
+            className="w-12 h-12 rounded-md justify-center items-center bg-surface-2 dark:bg-surface-2-dark"
             onPress={reset}
             activeOpacity={0.85}
           >
-            <Ionicons name="refresh" size={18} color="#7a7a7a" />
+            <Ionicons name="refresh" size={18} color={colors.inkMuted} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Progress bar */}
-      <View className="h-[3px] bg-[#0e0e0e] rounded-full overflow-hidden mb-3">
+      <View className="h-[3px] bg-canvas dark:bg-canvas-dark rounded-full overflow-hidden mb-3">
         <View
-          className={`h-full rounded-full ${isUrgent ? 'bg-[#ff734a]' : 'bg-[#cafd00]'}`}
+          className={`h-full rounded-full ${isUrgent ? 'bg-danger dark:bg-danger-dark' : 'bg-accent-solid'}`}
           style={{ width: `${progress}%` }}
         />
       </View>
@@ -108,11 +110,11 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
         {presets.map(({ label, mins, secs }) => (
           <TouchableOpacity
             key={secs}
-            className={`flex-1 py-2 rounded-sm items-center ${customDuration === secs ? 'bg-[#cafd00]' : 'bg-[#0e0e0e]'}`}
+            className={`flex-1 py-2 rounded-sm items-center ${customDuration === secs ? 'bg-accent-solid' : 'bg-canvas dark:bg-canvas-dark'}`}
             onPress={() => setPreset(mins)}
             activeOpacity={0.85}
           >
-            <Text className={`text-[10px] font-bold tracking-widest ${customDuration === secs ? 'text-[#0e0e0e]' : 'text-[#7a7a7a]'}`}>
+            <Text className={`text-[10px] font-bold tracking-widest ${customDuration === secs ? 'text-accent-ink' : 'text-ink-muted dark:text-ink-muted-dark'}`}>
               {label}
             </Text>
           </TouchableOpacity>

@@ -8,8 +8,10 @@ import { useStartTraining } from '@/hooks/useStartTraining';
 import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { Exercise } from '@/types';
+import { useThemeColors } from '@/constants/theme';
 
 export default function WorkoutDetailScreen() {
+  const colors = useThemeColors();
   const { workoutId, workoutName, splitId } = useLocalSearchParams<{
     workoutId: string; workoutName: string; splitId: string;
   }>();
@@ -33,8 +35,8 @@ export default function WorkoutDetailScreen() {
         rightActions={[
           {
             icon: 'pencil-outline',
-            color: '#cafd00',
-            backgroundColor: '#1a2200',
+            color: colors.accent,
+            backgroundColor: colors.surfaceAccent,
             label: 'EDIT',
             onPress: () =>
               router.push({
@@ -49,15 +51,15 @@ export default function WorkoutDetailScreen() {
           },
           {
             icon: 'trash-outline',
-            color: '#ff734a',
-            backgroundColor: '#2a1410',
+            color: colors.danger,
+            backgroundColor: colors.surfaceDanger,
             label: 'DELETE',
             onPress: () => handleDelete(item.id, item.name),
           },
         ]}
       >
         <TouchableOpacity
-          className={`rounded-md overflow-hidden ${isActive ? 'bg-[#1a1a1a]' : 'bg-[#131313]'}`}
+          className={`rounded-md overflow-hidden ${isActive ? 'bg-surface-2 dark:bg-surface-2-dark' : 'bg-surface dark:bg-surface-dark'}`}
           onPress={() => {
             if (reorderMode) return;
             router.push({
@@ -77,25 +79,25 @@ export default function WorkoutDetailScreen() {
         >
           <View className="flex-row items-center px-5 py-4 gap-3">
             <View className="flex-1">
-              <Text className="text-[#f5f5f5] text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
+              <Text className="text-ink dark:text-ink-dark text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
               {item.sets && item.reps && (
-                <Text className="text-[#7a7a7a] text-xs">
+                <Text className="text-ink-muted dark:text-ink-muted-dark text-xs">
                   {item.sets} × {item.reps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
                 </Text>
               )}
               {item.lastUsedWeight && (
-                <Text className="text-[#cafd00] text-[9px] tracking-[2px] mt-1">LAST: {item.lastUsedWeight} kg</Text>
+                <Text className="text-accent dark:text-accent-dark text-[9px] tracking-[2px] mt-1">LAST: {item.lastUsedWeight} kg</Text>
               )}
             </View>
             <View className="flex-row items-center gap-3">
               {reorderMode ? (
                 <TouchableOpacity onLongPress={drag} delayLongPress={100}>
-                  <Ionicons name="reorder-three-outline" size={24} color="#7a7a7a" />
+                  <Ionicons name="reorder-three-outline" size={24} color={colors.inkMuted} />
                 </TouchableOpacity>
               ) : (
                 <>
-                  {item.videoUrl && <Ionicons name="play-circle" size={18} color="#81ecff" />}
-                  <Ionicons name="chevron-forward" size={18} color="#262626" />
+                  {item.videoUrl && <Ionicons name="play-circle" size={18} color={colors.info} />}
+                  <Ionicons name="chevron-forward" size={18} color={colors.inkGhost} />
                 </>
               )}
             </View>
@@ -106,12 +108,12 @@ export default function WorkoutDetailScreen() {
   );
 
   return (
-    <View className="flex-1 bg-[#0e0e0e]">
+    <View className="flex-1 bg-canvas dark:bg-canvas-dark">
       {/* Header */}
       <View className="px-6 pt-14 pb-5">
         <View className="flex-row justify-between items-center mb-4">
           <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color="#cafd00" />
+            <Ionicons name="arrow-back" size={20} color={colors.accent} />
           </TouchableOpacity>
           <View className="flex-row gap-4 items-center">
             <TouchableOpacity onPress={() => setReorderMode((v) => !v)}>
@@ -127,14 +129,14 @@ export default function WorkoutDetailScreen() {
                   router.push({ pathname: '/edit-workout' as any, params: { workoutId, splitId, currentName: workoutName } })
                 }
               >
-                <Ionicons name="pencil-outline" size={20} color="#7a7a7a" />
+                <Ionicons name="pencil-outline" size={20} color={colors.inkMuted} />
               </TouchableOpacity>
             )}
           </View>
         </View>
-        <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">WORKOUT DAY</Text>
-        <Text className="text-[#f5f5f5] text-[36px] font-bold tracking-tighter mb-1">{workoutName}</Text>
-        <Text className="text-[#7a7a7a] text-[10px] tracking-[2px]">
+        <Text className="text-accent dark:text-accent-dark text-[10px] tracking-[4px] mb-1">WORKOUT DAY</Text>
+        <Text className="text-ink dark:text-ink-dark text-[36px] font-bold tracking-tighter mb-1">{workoutName}</Text>
+        <Text className="text-ink-muted dark:text-ink-muted-dark text-[10px] tracking-[2px]">
           {exercises.length} {exercises.length === 1 ? 'EXERCISE' : 'EXERCISES'}
           {reorderMode ? ' · HOLD TO REORDER' : ''}
         </Text>
@@ -143,14 +145,14 @@ export default function WorkoutDetailScreen() {
       {/* Start Training */}
       {!reorderMode && exercises.length > 0 && (
         <TouchableOpacity
-          className={`mx-4 mb-3 bg-[#cafd00] rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
-          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
+          className={`mx-4 mb-3 bg-accent-solid rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
+          style={{ shadowColor: colors.accentSolid, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
           onPress={() => startTraining(exercises.length)}
           disabled={isStarting}
           activeOpacity={0.85}
         >
-          <Ionicons name="flash" size={18} color="#0e0e0e" />
-          <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+          <Ionicons name="flash" size={18} color={colors.accentInk} />
+          <Text className="text-accent-ink text-sm font-bold tracking-[2px]">
             {isStarting ? 'STARTING...' : 'START TRAINING'}
           </Text>
         </TouchableOpacity>
@@ -158,7 +160,7 @@ export default function WorkoutDetailScreen() {
 
       {isLoading ? (
         <View className="flex-1 justify-center items-center">
-          <Text className="text-[#cafd00] text-sm font-bold tracking-[4px]">LOADING...</Text>
+          <Text className="text-accent dark:text-accent-dark text-sm font-bold tracking-[4px]">LOADING...</Text>
         </View>
       ) : (
         <DraggableFlatList
@@ -169,13 +171,13 @@ export default function WorkoutDetailScreen() {
           activationDistance={reorderMode ? 5 : 999}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
           refreshControl={
-            !reorderMode ? <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#cafd00" /> : undefined
+            !reorderMode ? <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={colors.accent} /> : undefined
           }
           ListEmptyComponent={
             <View className="items-center mt-20 gap-3">
-              <Ionicons name="add-circle-outline" size={48} color="#262626" />
-              <Text className="text-[#262626] text-xl font-bold tracking-[2px]">NO EXERCISES YET</Text>
-              <Text className="text-[#3a3a3a] text-sm">Tap + to add your first exercise</Text>
+              <Ionicons name="add-circle-outline" size={48} color={colors.inkGhost} />
+              <Text className="text-ink-ghost dark:text-ink-ghost-dark text-xl font-bold tracking-[2px]">NO EXERCISES YET</Text>
+              <Text className="text-ink-subtle dark:text-ink-subtle-dark text-sm">Tap + to add your first exercise</Text>
             </View>
           }
         />
@@ -184,11 +186,11 @@ export default function WorkoutDetailScreen() {
       {!reorderMode && (
         <Link href={{ pathname: '/create-exercise' as any, params: { workoutId } }} asChild>
           <TouchableOpacity
-            className="absolute right-6 bottom-8 w-14 h-14 rounded-md bg-[#cafd00] justify-center items-center"
-            style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
+            className="absolute right-6 bottom-8 w-14 h-14 rounded-md bg-accent-solid justify-center items-center"
+            style={{ shadowColor: colors.accentSolid, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
             activeOpacity={0.8}
           >
-            <Text className="text-[#0e0e0e] text-3xl font-bold leading-8">+</Text>
+            <Text className="text-accent-ink text-3xl font-bold leading-8">+</Text>
           </TouchableOpacity>
         </Link>
       )}

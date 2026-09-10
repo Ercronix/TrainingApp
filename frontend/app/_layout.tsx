@@ -4,12 +4,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import "./styles/global.css";
+import { useThemeColors } from '@/constants/theme';
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
+  const colors = useThemeColors();
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#0e0e0e' }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.canvas }}>
       <StatusBar style="light" backgroundColor="#0e0e0e" />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>

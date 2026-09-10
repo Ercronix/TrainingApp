@@ -7,6 +7,7 @@ import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
+import { useThemeColors } from '@/constants/theme';
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--:--';
@@ -17,6 +18,7 @@ function formatElapsed(seconds: number | null): string {
 }
 
 export default function TrainingScreen() {
+  const colors = useThemeColors();
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
   const router = useRouter();
   const { training, isLoading, updateExerciseLog, completeTraining } = useTraining(trainingLogId);
@@ -77,9 +79,9 @@ export default function TrainingScreen() {
   };
 
   const renderExerciseItem = ({ item }: { item: ExerciseLog }) => (
-    <View className={`rounded-md mb-2 flex-row overflow-hidden relative ${item.completed ? 'bg-[#0d1408]' : 'bg-[#131313]'}`}>
+    <View className={`rounded-md mb-2 flex-row overflow-hidden relative ${item.completed ? 'bg-surface-done dark:bg-surface-done-dark' : 'bg-surface dark:bg-surface-dark'}`}>
       {/* Done stripe */}
-      {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#cafd00]" />}
+      {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent-solid" />}
 
       {/* Main tap area */}
       <TouchableOpacity
@@ -98,36 +100,36 @@ export default function TrainingScreen() {
         activeOpacity={0.85}
       >
         <View className="flex-1">
-          <Text className={`text-base font-bold tracking-tight mb-1 ${item.completed ? 'text-[#f5f5f5]' : 'text-[#f5f5f5]'}`}>
+          <Text className={`text-base font-bold tracking-tight mb-1 ${item.completed ? 'text-ink dark:text-ink-dark' : 'text-ink dark:text-ink-dark'}`}>
             {item.exerciseName}
           </Text>
           {item.plannedSets && item.plannedReps && (
-            <Text className="text-[#7a7a7a] text-xs">
+            <Text className="text-ink-muted dark:text-ink-muted-dark text-xs">
               {item.plannedSets} × {item.plannedReps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
             </Text>
           )}
           {item.completed && (
-            <Text className="text-[#cafd00] text-[11px] mt-1">
+            <Text className="text-accent dark:text-accent-dark text-[11px] mt-1">
               ✓ {item.setsCompleted}×{item.repsCompleted}{item.repUnit === 'seconds' ? 's' : ''}{item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
             </Text>
           )}
         </View>
-        <Ionicons name="information-circle-outline" size={18} color="#7a7a7a" />
+        <Ionicons name="information-circle-outline" size={18} color={colors.inkMuted} />
       </TouchableOpacity>
 
       {/* Toggle */}
       <TouchableOpacity
-        className={`w-14 justify-center items-center ${item.completed ? 'bg-[#0d1408]' : 'bg-[#0e0e0e]'}`}
+        className={`w-14 justify-center items-center ${item.completed ? 'bg-surface-done dark:bg-surface-done-dark' : 'bg-canvas dark:bg-canvas-dark'}`}
         onPress={() => toggleExercise(item)}
       >
-        <View className={`w-6 h-6 rounded-full justify-center items-center ${item.completed ? 'bg-[#cafd00]' : 'border-2 border-[#2a2a2a]'}`}>
-          {item.completed && <Ionicons name="checkmark" size={14} color="#0e0e0e" />}
+        <View className={`w-6 h-6 rounded-full justify-center items-center ${item.completed ? 'bg-accent-solid' : 'border-2 border-line dark:border-line-dark'}`}>
+          {item.completed && <Ionicons name="checkmark" size={14} color={colors.accentInk} />}
         </View>
       </TouchableOpacity>
 
       {/* Log */}
       <TouchableOpacity
-        className="w-14 justify-center items-center bg-[#0e0e0e] gap-0.5"
+        className="w-14 justify-center items-center bg-canvas dark:bg-canvas-dark gap-0.5"
         onPress={() =>
           router.push({
             pathname: '/log-exercise' as any,
@@ -141,15 +143,15 @@ export default function TrainingScreen() {
         }
       >
         <Ionicons name="create-outline" size={22} color={item.completed ? '#cafd00' : '#7a7a7a'} />
-        <Text className={`text-[8px] tracking-widest ${item.completed ? 'text-[#cafd00]' : 'text-[#7a7a7a]'}`}>LOG</Text>
+        <Text className={`text-[8px] tracking-widest ${item.completed ? 'text-accent dark:text-accent-dark' : 'text-ink-muted dark:text-ink-muted-dark'}`}>LOG</Text>
       </TouchableOpacity>
     </View>
   );
 
   if (isLoading) {
     return (
-      <View className="flex-1 justify-center items-center bg-[#0e0e0e]">
-        <Text className="text-[#cafd00] text-sm font-bold tracking-[4px]">LOADING...</Text>
+      <View className="flex-1 justify-center items-center bg-canvas dark:bg-canvas-dark">
+        <Text className="text-accent dark:text-accent-dark text-sm font-bold tracking-[4px]">LOADING...</Text>
       </View>
     );
   }
@@ -159,22 +161,22 @@ export default function TrainingScreen() {
   const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <View className="flex-1 bg-[#0e0e0e]">
+    <View className="flex-1 bg-canvas dark:bg-canvas-dark">
       {/* Header */}
       <View className="px-6 pt-14 pb-4">
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Ionicons name="arrow-back" size={20} color="#cafd00" />
+          <Ionicons name="arrow-back" size={20} color={colors.accent} />
         </TouchableOpacity>
-        <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">ACTIVE SESSION</Text>
-        <Text className="text-[#f5f5f5] text-[32px] font-bold tracking-tighter mb-1">{training?.splitName}</Text>
-        <Text className="text-[#7a7a7a] text-[11px] tracking-[2px]">
+        <Text className="text-accent dark:text-accent-dark text-[10px] tracking-[4px] mb-1">ACTIVE SESSION</Text>
+        <Text className="text-ink dark:text-ink-dark text-[32px] font-bold tracking-tighter mb-1">{training?.splitName}</Text>
+        <Text className="text-ink-muted dark:text-ink-muted-dark text-[11px] tracking-[2px]">
           {completedCount}/{totalCount} COMPLETE · {formatElapsed(elapsedSeconds)} ELAPSED
         </Text>
       </View>
 
       {/* Progress bar */}
-      <View className="h-[3px] bg-[#131313] mx-4 mb-3 rounded-full overflow-hidden">
-        <View className="h-full bg-[#cafd00] rounded-full" style={{ width: `${progressPct}%` }} />
+      <View className="h-[3px] bg-surface dark:bg-surface-dark mx-4 mb-3 rounded-full overflow-hidden">
+        <View className="h-full bg-accent-solid rounded-full" style={{ width: `${progressPct}%` }} />
       </View>
 
       <FlatList
@@ -185,11 +187,11 @@ export default function TrainingScreen() {
       />
 
       {/* Bottom dock */}
-      <View className="absolute bottom-0 left-0 right-0 bg-[#0e0e0e] border-t border-[#131313] px-4 pb-8 pt-4">
+      <View className="absolute bottom-0 left-0 right-0 bg-canvas dark:bg-canvas-dark border-t border-surface dark:border-surface-dark px-4 pb-8 pt-4">
         {!training?.isCompleted && (
           <TouchableOpacity
-            className="bg-[#131313] rounded-md py-4 flex-row items-center justify-center gap-2 mb-3"
-            style={{ shadowColor: '#131313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 4 }}
+            className="bg-surface dark:bg-surface-dark rounded-md py-4 flex-row items-center justify-center gap-2 mb-3"
+            style={{ shadowColor: colors.surface, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 4 }}
             onPress={() =>
               router.push({
                 pathname: '/add-exercise' as any,
@@ -198,22 +200,22 @@ export default function TrainingScreen() {
             }
             activeOpacity={0.85}
           >
-            <Ionicons name="add" size={18} color="#cafd00" />
-            <Text className="text-[#f5f5f5] text-sm font-bold tracking-[2px]">ADD EXERCISE</Text>
+            <Ionicons name="add" size={18} color={colors.accent} />
+            <Text className="text-ink dark:text-ink-dark text-sm font-bold tracking-[2px]">ADD EXERCISE</Text>
           </TouchableOpacity>
         )}
         <View className="mb-3">
           <RestTimer duration={120} onComplete={() => alert('Rest Complete!', 'Time for next set!')} />
         </View>
         <TouchableOpacity
-          className={`bg-[#cafd00] rounded-md py-4 flex-row items-center justify-center gap-2 ${completeTraining.isPending ? 'opacity-50' : ''}`}
-          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
+          className={`bg-accent-solid rounded-md py-4 flex-row items-center justify-center gap-2 ${completeTraining.isPending ? 'opacity-50' : ''}`}
+          style={{ shadowColor: colors.accentSolid, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
           onPress={handleComplete}
           disabled={completeTraining.isPending}
           activeOpacity={0.85}
         >
-          <Ionicons name="checkmark-done" size={18} color="#0e0e0e" />
-          <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+          <Ionicons name="checkmark-done" size={18} color={colors.accentInk} />
+          <Text className="text-accent-ink text-sm font-bold tracking-[2px]">
             {completeTraining.isPending ? 'SAVING...' : 'COMPLETE SESSION'}
           </Text>
         </TouchableOpacity>

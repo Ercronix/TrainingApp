@@ -4,10 +4,12 @@ import { Link, useRouter } from 'expo-router';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
 import { getErrorMessage } from '@/utils/errorHandler';
+import { useThemeColors } from '@/constants/theme';
 
 type FieldErrors = { username?: string; email?: string; password?: string; general?: string };
 
 export default function RegisterScreen() {
+  const colors = useThemeColors();
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -59,18 +61,18 @@ export default function RegisterScreen() {
     };
 
     return (
-        <ScrollView className="flex-1 bg-[#0e0e0e]">
+        <ScrollView className="flex-1 bg-canvas dark:bg-canvas-dark">
             <View className="flex-1 justify-center px-6 py-16">
-                <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">GET STARTED</Text>
-                <Text className="text-[#f5f5f5] text-[40px] font-bold tracking-tighter leading-[44px] mb-10">
+                <Text className="text-accent dark:text-accent-dark text-[10px] tracking-[4px] mb-1">GET STARTED</Text>
+                <Text className="text-ink dark:text-ink-dark text-[40px] font-bold tracking-tighter leading-[44px] mb-10">
                     CREATE{'\n'}ACCOUNT
                 </Text>
 
-                <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">USERNAME</Text>
+                <Text className="text-ink-muted dark:text-ink-muted-dark text-[9px] tracking-[3px] mb-2">USERNAME</Text>
                 <TextInput
-                    className={`bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
+                    className={`bg-surface dark:bg-surface-dark rounded px-4 py-4 text-ink dark:text-ink-dark text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
                     placeholder="Enter username"
-                    placeholderTextColor="#2a2a2a"
+                    placeholderTextColor={colors.inkHint}
                     value={username}
                     onChangeText={(text) => {
                         setUsername(text);
@@ -81,16 +83,16 @@ export default function RegisterScreen() {
                     editable={!loading}
                 />
                 {errors.username && (
-                    <Text className="text-[#ff734a] text-[9px] tracking-[2px] mb-4">
+                    <Text className="text-danger dark:text-danger-dark text-[9px] tracking-[2px] mb-4">
                         {errors.username.toUpperCase()}
                     </Text>
                 )}
 
-                <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">EMAIL</Text>
+                <Text className="text-ink-muted dark:text-ink-muted-dark text-[9px] tracking-[3px] mb-2">EMAIL</Text>
                 <TextInput
-                    className={`bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight ${errors.email ? 'mb-2' : 'mb-4'}`}
+                    className={`bg-surface dark:bg-surface-dark rounded px-4 py-4 text-ink dark:text-ink-dark text-xl font-bold tracking-tight ${errors.email ? 'mb-2' : 'mb-4'}`}
                     placeholder="Enter email"
-                    placeholderTextColor="#2a2a2a"
+                    placeholderTextColor={colors.inkHint}
                     value={email}
                     onChangeText={(text) => {
                         setEmail(text);
@@ -102,16 +104,16 @@ export default function RegisterScreen() {
                     editable={!loading}
                 />
                 {errors.email && (
-                    <Text className="text-[#ff734a] text-[9px] tracking-[2px] mb-4">
+                    <Text className="text-danger dark:text-danger-dark text-[9px] tracking-[2px] mb-4">
                         {errors.email.toUpperCase()}
                     </Text>
                 )}
 
-                <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">PASSWORD</Text>
+                <Text className="text-ink-muted dark:text-ink-muted-dark text-[9px] tracking-[3px] mb-2">PASSWORD</Text>
                 <TextInput
-                    className={`bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
+                    className={`bg-surface dark:bg-surface-dark rounded px-4 py-4 text-ink dark:text-ink-dark text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
                     placeholder="Min 6 characters"
-                    placeholderTextColor="#2a2a2a"
+                    placeholderTextColor={colors.inkHint}
                     value={password}
                     onChangeText={(text) => {
                         setPassword(text);
@@ -122,35 +124,35 @@ export default function RegisterScreen() {
                     editable={!loading}
                 />
                 {errors.password && (
-                    <Text className="text-[#ff734a] text-[9px] tracking-[2px] mb-8">
+                    <Text className="text-danger dark:text-danger-dark text-[9px] tracking-[2px] mb-8">
                         {errors.password.toUpperCase()}
                     </Text>
                 )}
 
                 {errors.general && (
-                    <View className="bg-[#2a1410] rounded px-4 py-3 mb-4">
-                        <Text className="text-[#ff734a] text-[10px] tracking-[2px] text-center">
+                    <View className="bg-surface-danger dark:bg-surface-danger-dark rounded px-4 py-3 mb-4">
+                        <Text className="text-danger dark:text-danger-dark text-[10px] tracking-[2px] text-center">
                             {errors.general.toUpperCase()}
                         </Text>
                     </View>
                 )}
 
                 <TouchableOpacity
-                    className={`bg-[#cafd00] rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
-                    style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
+                    className={`bg-accent-solid rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
+                    style={{ shadowColor: colors.accentSolid, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
                     onPress={handleRegister}
                     disabled={loading}
                     activeOpacity={0.85}
                 >
-                    <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+                    <Text className="text-accent-ink text-sm font-bold tracking-[2px]">
                         {loading ? 'CREATING...' : 'CREATE ACCOUNT'}
                     </Text>
                 </TouchableOpacity>
 
                 <Link href="/login" asChild>
                     <TouchableOpacity className="mt-6 items-center" disabled={loading}>
-                        <Text className="text-[#7a7a7a] text-[10px] tracking-[2px]">
-                            HAVE AN ACCOUNT? <Text className="text-[#cafd00]">SIGN IN</Text>
+                        <Text className="text-ink-muted dark:text-ink-muted-dark text-[10px] tracking-[2px]">
+                            HAVE AN ACCOUNT? <Text className="text-accent dark:text-accent-dark">SIGN IN</Text>
                         </Text>
                     </TouchableOpacity>
                 </Link>
