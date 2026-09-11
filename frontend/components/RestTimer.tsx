@@ -15,19 +15,20 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
   const c = useTheme();
 
   useEffect(() => {
-    if (!isRunning || seconds === 0) return;
+    if (!isRunning) return;
+    const endTime = Date.now() + seconds * 1000;
     const timer = setInterval(() => {
-      setSeconds((prev) => {
-        if (prev <= 1) {
-          setIsRunning(false);
-          onComplete?.();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+      const remaining = Math.ceil((endTime - Date.now()) / 1000);
+      if (remaining <= 0) {
+        setSeconds(0);
+        setIsRunning(false);
+        onComplete?.();
+      } else {
+        setSeconds(remaining);
+      }
+    }, 250);
     return () => clearInterval(timer);
-  }, [isRunning, seconds, onComplete]);
+  }, [isRunning]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = () => {
     if (seconds === 0) setSeconds(customDuration);
