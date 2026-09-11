@@ -1,6 +1,7 @@
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWorkouts } from '@/hooks/useWorkouts';
 import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
@@ -11,6 +12,7 @@ export default function WorkoutsScreen() {
   const { splitId, splitName, currentBlock } = useLocalSearchParams<{ splitId: string; splitName: string; currentBlock: string }>();
   const router = useRouter();
   const { workouts, isLoading, isRefetching, refetch, deleteWorkout } = useWorkouts(splitId);
+  const insets = useSafeAreaInsets();
   const c = useTheme();
 
   const handleDelete = (id: number, name: string) => {
@@ -93,7 +95,7 @@ export default function WorkoutsScreen() {
           data={workouts}
           renderItem={renderWorkoutItem}
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 + insets.bottom }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
           ListEmptyComponent={
             <View className="items-center mt-20 gap-3">
@@ -107,8 +109,8 @@ export default function WorkoutsScreen() {
 
       <Link href={{ pathname: '/create-workout', params: { splitId } }} asChild>
         <TouchableOpacity
-          className="absolute right-6 bottom-8 w-14 h-14 rounded-md bg-accent justify-center items-center"
-          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
+          className="absolute right-6 w-14 h-14 rounded-md bg-accent justify-center items-center"
+          style={{ bottom: 32 + insets.bottom, shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
           activeOpacity={0.8}
         >
           <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
