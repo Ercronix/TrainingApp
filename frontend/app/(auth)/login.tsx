@@ -4,6 +4,7 @@ import { Link, useRouter } from 'expo-router';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
 import { getErrorMessage } from '@/utils/errorHandler';
+import { useTheme } from '@/hooks/useTheme';
 
 type FieldErrors = { username?: string; password?: string; general?: string };
 
@@ -15,6 +16,7 @@ export default function LoginScreen() {
 
     const router = useRouter();
     const setUser = useAuthStore((state) => state.setUser);
+    const c = useTheme();
 
     const handleLogin = async () => {
         const newErrors: FieldErrors = {};
@@ -44,17 +46,17 @@ export default function LoginScreen() {
     };
 
     return (
-        <View className="flex-1 justify-center px-6 bg-[#0e0e0e]">
-            <Text className="text-[#cafd00] text-[10px] tracking-[4px] mb-1">WELCOME BACK</Text>
-            <Text className="text-[#f5f5f5] text-[40px] font-bold tracking-tighter leading-[44px] mb-10">
+        <View className="flex-1 justify-center px-6 bg-base">
+            <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">WELCOME BACK</Text>
+            <Text className="text-primary text-[40px] font-bold tracking-tighter leading-[44px] mb-10">
                 SIGN{'\n'}IN
             </Text>
 
-            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">USERNAME</Text>
+            <Text className="text-muted text-[9px] tracking-[3px] mb-2">USERNAME</Text>
             <TextInput
-                className={`bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
+                className={`bg-surface rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
                 placeholder="Enter username"
-                placeholderTextColor="#2a2a2a"
+                placeholderTextColor={c.elevated}
                 value={username}
                 onChangeText={(text) => {
                     setUsername(text);
@@ -65,16 +67,16 @@ export default function LoginScreen() {
                 editable={!loading}
             />
             {errors.username && (
-                <Text className="text-[#ff734a] text-[9px] tracking-[2px] mb-4">
+                <Text className="text-danger text-[9px] tracking-[2px] mb-4">
                     {errors.username.toUpperCase()}
                 </Text>
             )}
 
-            <Text className="text-[#7a7a7a] text-[9px] tracking-[3px] mb-2">PASSWORD</Text>
+            <Text className="text-muted text-[9px] tracking-[3px] mb-2">PASSWORD</Text>
             <TextInput
-                className={`bg-[#131313] rounded px-4 py-4 text-[#f5f5f5] text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
+                className={`bg-surface rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
                 placeholder="Enter password"
-                placeholderTextColor="#2a2a2a"
+                placeholderTextColor={c.elevated}
                 value={password}
                 onChangeText={(text) => {
                     setPassword(text);
@@ -85,35 +87,35 @@ export default function LoginScreen() {
                 editable={!loading}
             />
             {errors.password && (
-                <Text className="text-[#ff734a] text-[9px] tracking-[2px] mb-8">
+                <Text className="text-danger text-[9px] tracking-[2px] mb-8">
                     {errors.password.toUpperCase()}
                 </Text>
             )}
 
             {errors.general && (
-                <View className="bg-[#2a1410] rounded px-4 py-3 mb-4">
-                    <Text className="text-[#ff734a] text-[10px] tracking-[2px] text-center">
+                <View className="bg-danger-muted rounded px-4 py-3 mb-4">
+                    <Text className="text-danger text-[10px] tracking-[2px] text-center">
                         {errors.general.toUpperCase()}
                     </Text>
                 </View>
             )}
 
             <TouchableOpacity
-                className={`bg-[#cafd00] rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
+                className={`bg-accent rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
                 style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.85}
             >
-                <Text className="text-[#0e0e0e] text-sm font-bold tracking-[2px]">
+                <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
                     {loading ? 'SIGNING IN...' : 'SIGN IN'}
                 </Text>
             </TouchableOpacity>
 
             <Link href="/register" asChild>
                 <TouchableOpacity className="mt-6 items-center" disabled={loading}>
-                    <Text className="text-[#7a7a7a] text-[10px] tracking-[2px]">
-                        NO ACCOUNT? <Text className="text-[#cafd00]">REGISTER</Text>
+                    <Text className="text-muted text-[10px] tracking-[2px]">
+                        NO ACCOUNT? <Text className="text-accent-text">REGISTER</Text>
                     </Text>
                 </TouchableOpacity>
             </Link>
