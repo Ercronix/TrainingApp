@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { useHistory } from '@/hooks/useHistory';
+import { useExercises } from '@/hooks/useExercises';
 import { confirm } from '@/utils/confirm';
 import { ExerciseLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
@@ -29,6 +30,7 @@ export default function HistoryDetailScreen() {
   const router = useRouter();
   const { training, isLoading } = useTraining(trainingLogId);
   const { deleteLog } = useHistory();
+  const { exercises } = useExercises(training?.workoutId ? String(training.workoutId) : '');
   const c = useTheme();
 
   const handleDelete = () => {
@@ -36,35 +38,58 @@ export default function HistoryDetailScreen() {
       () => deleteLog.mutate(Number(trainingLogId), { onSuccess: () => router.back() }), 'Delete');
   };
 
-  const renderExerciseItem = ({ item, index }: { item: ExerciseLog; index: number }) => (
-    <View className={`rounded-md mb-2 overflow-hidden relative ${item.completed ? 'bg-surface-done' : 'bg-surface'}`}>
-      {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent" />}
-      <View className="flex-row items-start px-5 py-4 gap-3">
-        <Text className="text-dim text-xl font-bold tracking-tight min-w-[28px]">
-          {String(index + 1).padStart(2, '0')}
-        </Text>
-        <View className="flex-1">
-          <Text className="text-primary text-sm font-bold tracking-tight mb-1">{item.exerciseName}</Text>
-          {item.plannedSets && item.plannedReps && (
-            <Text className="text-muted text-[10px] tracking-widest">
-              PLANNED: {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
-            </Text>
-          )}
-          {item.completed && (
-            <Text className="text-accent-text text-[11px] tracking-wider mt-0.5">
-              ✓ DONE: {item.setsCompleted} × {item.repsCompleted}{item.weightUsed ? ` @ ${item.weightUsed} kg` : ''}
-            </Text>
-          )}
-          {item.notes && (
-            <Text className="text-subtle text-[11px] italic mt-1">"{item.notes}"</Text>
-          )}
+  const renderExerciseItem = ({ item, index }: { item: ExerciseLog; index: number }) => {
+    const liveExercise = exercises.find((e) => e.id === item.exerciseId);
+
+    return (
+      <TouchableOpacity
+        className={`rounded-md mb-2 overflow-hidden relative ${item.completed ? 'bg-surface-done' : 'bg-surface'}`}
+        activeOpacity={0.85}
+        onPress={() =>
+          router.push({
+            pathname: '/exercise-detail' as any,
+            params: {
+              exerciseId: item.exerciseId.toString(),
+              exerciseName: item.exerciseName,
+              description: liveExercise?.description || '',
+              videoUrl: liveExercise?.videoUrl || '',
+              sets: item.plannedSets?.toString() || '',
+              reps: item.plannedReps?.toString() || '',
+              weight: item.plannedWeight?.toString() || '',
+              workoutId: item.workoutId.toString(),
+            },
+          })
+        }
+      >
+        {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent" />}
+        <View className="flex-row items-start px-5 py-4 gap-3">
+          <Text className="text-dim text-xl font-bold tracking-tight min-w-[28px]">
+            {String(index + 1).padStart(2, '0')}
+          </Text>
+          <View className="flex-1">
+            <Text className="text-primary text-sm font-bold tracking-tight mb-1">{item.exerciseName}</Text>
+            {item.plannedSets && item.plannedReps && (
+              <Text className="text-muted text-[10px] tracking-widest">
+                PLANNED: {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+              </Text>
+            )}
+            {item.completed && (
+              <Text className="text-accent-text text-[11px] tracking-wider mt-0.5">
+                ✓ DONE: {item.setsCompleted} × {item.repsCompleted}{item.weightUsed ? ` @ ${item.weightUsed} kg` : ''}
+              </Text>
+            )}
+            {item.notes && (
+              <Text className="text-subtle text-[11px] italic mt-1">"{item.notes}"</Text>
+            )}
+          </View>
+          <View className={`w-5 h-5 rounded-full justify-center items-center mt-0.5 ${item.completed ? 'bg-accent' : 'border border-elevated'}`}>
+            {item.completed && <Ionicons name="checkmark" size={10} color={c.accentFg} />}
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={c.subtle} />
         </View>
-        <View className={`w-5 h-5 rounded-full justify-center items-center mt-0.5 ${item.completed ? 'bg-accent' : 'border border-elevated'}`}>
-          {item.completed && <Ionicons name="checkmark" size={10} color={c.accentFg} />}
-        </View>
-      </View>
-    </View>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoading) {
     return (
