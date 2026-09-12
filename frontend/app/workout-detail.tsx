@@ -171,6 +171,7 @@ export default function WorkoutDetailScreen() {
           keyExtractor={(item) => item.id.toString()}
           onDragEnd={handleDragEnd}
           activationDistance={reorderMode ? 5 : 999}
+          containerStyle={{ flex: 1 }}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 + insets.bottom }}
           refreshControl={
             !reorderMode ? <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} /> : undefined
