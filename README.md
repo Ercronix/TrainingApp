@@ -94,6 +94,34 @@ npm run start
 
 Open on web (`w`) or mobile via Expo QR code.
 
+## Build Android APK
+
+The mobile app always points at the production API, so no extra config is needed before building.
+
+### Option A: EAS Build (cloud, recommended)
+
+```bash
+cd frontend
+npm install -g eas-cli
+eas login
+eas build --platform android --profile preview
+```
+
+The `preview` profile (`frontend/eas.json`) uses internal distribution, which produces an installable `.apk` rather than an `.aab`. EAS prints a download link once the build finishes.
+
+### Option B: Local build (no EAS account)
+
+```bash
+cd frontend
+npx expo prebuild --platform android
+cd android
+JAVA_HOME=/path/to/jdk-21 ./gradlew assembleRelease   # or assembleDebug for an unsigned debug APK
+```
+
+Use the `./gradlew` wrapper, not a system-installed `gradle` — the project pins Gradle 8.14.3, which requires JDK 21 or older (it will fail on newer JDKs like 24+). Set `JAVA_HOME` for the command if your system default Java is newer.
+
+Output APK: `frontend/android/app/build/outputs/apk/release/app-release.apk` (or `.../debug/app-debug.apk` for the debug variant). An unsigned release build will need a signing config before it can be installed; the debug variant installs as-is.
+
 ## Environment Notes
 
 - Frontend API base URL is defined in `frontend/services/api.ts`.
