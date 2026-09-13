@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAddExerciseLog } from '@/hooks/useAddExerciseLog';
@@ -65,7 +65,8 @@ export default function AddExerciseScreen() {
         </View>
       </View>
 
-      <ScrollView className="flex-1 px-6">
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView className="flex-1 px-6" keyboardShouldPersistTaps="handled">
         {/* Scope */}
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">WHERE SHOULD THIS GO?</Text>
         <View className="flex-row mb-6 bg-surface border border-elevated rounded-md overflow-hidden">
@@ -158,6 +159,7 @@ export default function AddExerciseScreen() {
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">{isPending ? 'ADDING...' : 'ADD EXERCISE'}</Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

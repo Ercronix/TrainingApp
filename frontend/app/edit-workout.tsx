@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEditWorkout } from '@/hooks/useEditWorkout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
 export default function EditWorkoutModal() {
   const { workoutId, splitId, currentName } = useLocalSearchParams<{
@@ -24,6 +25,7 @@ export default function EditWorkoutModal() {
         <View className="w-6" />
       </View>
 
+      <KeyboardAvoidingWrapper scroll={false}>
       <View className="flex-1 px-6">
         <Text className="text-primary text-[40px] font-bold tracking-tighter leading-[44px] mb-8">
           RENAME{'\n'}WORKOUT
@@ -51,6 +53,7 @@ export default function EditWorkoutModal() {
           </Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingWrapper>
     </View>
   );
 }

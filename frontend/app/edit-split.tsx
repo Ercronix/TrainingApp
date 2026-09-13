@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useEditSplit } from '@/hooks/useEditSplit';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
 export default function EditSplitModal() {
   const { splitId, currentName, currentBlock } = useLocalSearchParams<{ splitId: string; currentName: string; currentBlock: string }>();
@@ -23,6 +24,7 @@ export default function EditSplitModal() {
         <View className="w-6" />
       </View>
 
+      <KeyboardAvoidingWrapper scroll={false}>
       <View className="flex-1 px-6">
         <Text className="text-primary text-[40px] font-bold tracking-tighter leading-[44px] mb-8">
           RENAME{'\n'}SPLIT
@@ -67,6 +69,7 @@ export default function EditSplitModal() {
           </Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingWrapper>
     </View>
   );
 }

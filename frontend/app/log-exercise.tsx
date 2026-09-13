@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useExerciseLog } from '@/hooks/useExerciseLog';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
 export default function LogExerciseModal() {
   const {
@@ -22,6 +23,7 @@ export default function LogExerciseModal() {
 
   return (
     <View className="flex-1 bg-base">
+      <KeyboardAvoidingWrapper>
       {/* Header */}
       <View className="flex-row justify-between items-center px-6 pt-14 pb-5">
         <TouchableOpacity onPress={() => router.back()}>
@@ -90,6 +92,7 @@ export default function LogExerciseModal() {
           </Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingWrapper>
     </View>
   );
 }

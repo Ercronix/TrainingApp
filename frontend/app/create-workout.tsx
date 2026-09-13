@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useCreateWorkout } from '@/hooks/useCreateWorkout';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
 export default function CreateWorkoutModal() {
   const { splitId } = useLocalSearchParams<{ splitId: string }>();
@@ -22,6 +23,7 @@ export default function CreateWorkoutModal() {
         <View className="w-6" />
       </View>
 
+      <KeyboardAvoidingWrapper scroll={false}>
       <View className="flex-1 px-6">
         <Text className="text-primary text-[40px] font-bold tracking-tighter leading-[44px] mb-2">
           NAME THIS{'\n'}DAY
@@ -52,6 +54,7 @@ export default function CreateWorkoutModal() {
           </Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingWrapper>
     </View>
   );
 }

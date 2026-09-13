@@ -5,6 +5,7 @@ import { authApi } from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { useTheme } from '@/hooks/useTheme';
+import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
 type FieldErrors = { username?: string; password?: string; general?: string };
 
@@ -46,6 +47,7 @@ export default function LoginScreen() {
     };
 
     return (
+        <KeyboardAvoidingWrapper>
         <View className="flex-1 justify-center px-6 bg-base">
             <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">WELCOME BACK</Text>
             <Text className="text-primary text-[40px] font-bold tracking-tighter leading-[44px] mb-10">
@@ -120,5 +122,6 @@ export default function LoginScreen() {
                 </TouchableOpacity>
             </Link>
         </View>
+        </KeyboardAvoidingWrapper>
     );
 }

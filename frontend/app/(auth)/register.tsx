@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { authApi } from '@/services/api';
@@ -61,7 +61,8 @@ export default function RegisterScreen() {
     };
 
     return (
-        <ScrollView className="flex-1 bg-base">
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView className="flex-1 bg-base" keyboardShouldPersistTaps="handled">
             <View className="flex-1 justify-center px-6 py-16">
                 <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">GET STARTED</Text>
                 <Text className="text-primary text-[40px] font-bold tracking-tighter leading-[44px] mb-10">
@@ -158,5 +159,6 @@ export default function RegisterScreen() {
                 </Link>
             </View>
         </ScrollView>
+        </KeyboardAvoidingView>
     );
 }

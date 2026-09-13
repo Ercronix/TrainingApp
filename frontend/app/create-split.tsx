@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useSplits } from '@/hooks/useSplits';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
 export default function CreateSplitModal() {
   const [name, setName] = useState('');
@@ -21,6 +22,7 @@ export default function CreateSplitModal() {
         <View className="w-6" />
       </View>
 
+      <KeyboardAvoidingWrapper scroll={false}>
       <View className="flex-1 px-6">
         <Text className="text-primary text-[40px] font-bold tracking-tighter leading-[44px] mb-8">
           NAME YOUR{'\n'}SPLIT
@@ -53,6 +55,7 @@ export default function CreateSplitModal() {
           </Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingWrapper>
     </View>
   );
 }
