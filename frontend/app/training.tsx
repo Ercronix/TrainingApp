@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { confirm, alert } from '@/utils/confirm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
@@ -20,8 +21,10 @@ function formatElapsed(seconds: number | null): string {
 export default function TrainingScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { training, isLoading, updateExerciseLog, completeTraining } = useTraining(trainingLogId);
   const [exerciseOrder, setExerciseOrder] = useState<number[]>([]);
+  const [dockHeight, setDockHeight] = useState(0);
   const c = useTheme();
   const elapsedSeconds = useElapsedSeconds({
     startedAt: training?.startedAt,
@@ -183,11 +186,15 @@ export default function TrainingScreen() {
         data={orderedExercises}
         renderItem={renderExerciseItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 220 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: dockHeight + 16 }}
       />
 
       {/* Bottom dock */}
-      <View className="absolute bottom-0 left-0 right-0 bg-base border-t border-surface px-4 pb-8 pt-4">
+      <View
+        className="absolute bottom-0 left-0 right-0 bg-base border-t border-surface px-4 pt-4"
+        style={{ paddingBottom: 32 + insets.bottom }}
+        onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
+      >
         {!training?.isCompleted && (
           <TouchableOpacity
             className="bg-surface rounded-md py-4 flex-row items-center justify-center gap-2 mb-3"
