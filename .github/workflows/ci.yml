@@ -52,3 +52,6 @@ jobs:
       - run: ./gradlew test --no-daemon
         env:
           SPRING_DATASOURCE_PASSWORD: ci_test_password
+      - name: Print test failure details
+        if: failure()
+        run: cat build/test-results/test/*.xml
