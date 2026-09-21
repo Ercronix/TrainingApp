@@ -1,6 +1,6 @@
 import axios from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress } from "@/types";
 import { Platform } from "react-native";
 // api.ts
 
@@ -141,7 +141,7 @@ export const exercisesApi = {
     await api.delete(`/workouts/${workoutId}/exercises/${exerciseId}`);
   },
 
-  getProgress: async (exerciseId: number): Promise<unknown> => {
+  getProgress: async (exerciseId: number): Promise<ExerciseProgress> => {
     const response = await api.get(`/exercises/${exerciseId}/progress`);
     return response.data;
   },

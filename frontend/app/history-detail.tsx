@@ -8,7 +8,7 @@ import { confirm } from '@/utils/confirm';
 import { ExerciseLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 
-function formatDuration(seconds: number | null): string {
+function formatDuration(seconds: number | null | undefined): string {
   if (!seconds) return '—';
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;

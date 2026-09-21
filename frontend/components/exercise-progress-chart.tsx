@@ -3,17 +3,10 @@ import { useState } from 'react';
 import { LineChart } from 'react-native-chart-kit';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-
-interface ProgressEntry {
-  date: string;
-  weightUsed: number | null;
-  setsCompleted: number;
-  repsCompleted: number;
-  trainingLogId: number;
-}
+import { ExerciseProgressEntry } from '@/types';
 
 interface Props {
-  entries: ProgressEntry[];
+  entries: ExerciseProgressEntry[];
 }
 
 const CHART_WIDTH = Dimensions.get('window').width - 64;
