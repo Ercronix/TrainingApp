@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import { storage } from '@/services/storage';
 import { useTheme } from '@/hooks/useTheme';
+import { THEMES } from '@/constants/theme';
+import { useThemeStore } from '@/store/themeStore';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuthStore();
@@ -14,11 +16,18 @@ export default function ProfileScreen() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const isDark = colorScheme !== 'light';
   const c = useTheme();
+  const themeId = useThemeStore((s) => s.themeId);
+  const setThemeId = useThemeStore((s) => s.setThemeId);
 
   const toggleTheme = async () => {
     const next = isDark ? 'light' : 'dark';
     setColorScheme(next);
     await storage.setItem('color-scheme', next);
+  };
+
+  const selectTheme = async (id: string) => {
+    setThemeId(id);
+    await storage.setItem('theme-id', id);
   };
 
   const handleLogout = () => {
@@ -79,6 +88,46 @@ export default function ProfileScreen() {
             trackColor={{ false: c.elevated, true: c.accent }}
             thumbColor={isDark ? c.accentFg : c.muted}
           />
+        </View>
+      </View>
+
+      {/* Theme picker */}
+      <View className="mx-4 mb-3 bg-surface rounded-md p-5">
+        <Text className="text-muted text-[10px] tracking-[3px] mb-4">THEME</Text>
+        <View className="flex-row gap-3">
+          {THEMES.map((t) => {
+            const preview = isDark ? t.dark : t.light;
+            const selected = t.id === themeId;
+            return (
+              <TouchableOpacity
+                key={t.id}
+                onPress={() => selectTheme(t.id)}
+                activeOpacity={0.8}
+                className="flex-1 items-center gap-2"
+              >
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    backgroundColor: preview.base,
+                    borderWidth: selected ? 2 : 1,
+                    borderColor: selected ? preview.accent : c.elevated,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: preview.accent }} />
+                </View>
+                <Text
+                  className={`text-[9px] font-bold tracking-widest ${selected ? 'text-accent-text' : 'text-muted'}`}
+                  numberOfLines={1}
+                >
+                  {t.name.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 

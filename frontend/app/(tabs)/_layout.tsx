@@ -4,13 +4,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 import { BlurView } from 'expo-blur';
 import { StyleSheet, View } from 'react-native';
-import { darkColors, lightColors } from '@/constants/theme';
+import { getPalette } from '@/constants/theme';
+import { useThemeStore } from '@/store/themeStore';
 
 export default function TabsLayout() {
     const insets = useSafeAreaInsets();
     const { colorScheme } = useColorScheme();
     const isLight = colorScheme === 'light';
-    const c = isLight ? lightColors : darkColors;
+    const themeId = useThemeStore((s) => s.themeId);
+    const c = getPalette(themeId, isLight ? 'light' : 'dark');
 
     return (
         <Tabs

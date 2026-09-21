@@ -6,7 +6,8 @@ import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { useEffect } from 'react';
 import { useColorScheme } from 'nativewind';
-import { darkTheme, lightTheme, darkColors, lightColors } from '@/constants/theme';
+import { getPalette, getThemeVars } from '@/constants/theme';
+import { useThemeStore } from '@/store/themeStore';
 import { storage } from '@/services/storage';
 import "./styles/global.css";
 
@@ -14,6 +15,8 @@ const queryClient = new QueryClient();
 
 function AppLayout() {
   const { colorScheme, setColorScheme } = useColorScheme();
+  const themeId = useThemeStore((s) => s.themeId);
+  const setThemeId = useThemeStore((s) => s.setThemeId);
 
   useEffect(() => {
     storage.getItem('color-scheme').then((saved) => {
@@ -21,15 +24,18 @@ function AppLayout() {
         setColorScheme(saved);
       }
     });
+    storage.getItem('theme-id').then((saved) => {
+      if (saved) setThemeId(saved);
+    });
   }, []);
 
   const isLight = colorScheme === 'light';
-  const bgColor = isLight ? lightColors.base : darkColors.base;
+  const bgColor = getPalette(themeId, isLight ? 'light' : 'dark').base;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bgColor }}>
       <StatusBar style={isLight ? 'dark' : 'light'} backgroundColor={bgColor} />
-      <View style={[{ flex: 1 }, isLight ? lightTheme : darkTheme]}>
+      <View style={[{ flex: 1 }, getThemeVars(themeId, isLight ? 'light' : 'dark')]}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <Stack screenOptions={{ headerShown: false }}>

@@ -1,7 +1,9 @@
 import { useColorScheme } from 'nativewind';
-import { darkColors, lightColors } from '@/constants/theme';
+import { getPalette } from '@/constants/theme';
+import { useThemeStore } from '@/store/themeStore';
 
 export function useTheme() {
   const { colorScheme } = useColorScheme();
-  return colorScheme === 'light' ? lightColors : darkColors;
+  const themeId = useThemeStore((s) => s.themeId);
+  return getPalette(themeId, colorScheme === 'light' ? 'light' : 'dark');
 }
