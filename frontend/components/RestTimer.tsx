@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { cancelRestTimerNotification, scheduleRestTimerNotification } from '@/utils/restTimerNotifications';
 
 interface RestTimerProps {
   duration: number;
@@ -17,6 +18,9 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
   useEffect(() => {
     if (!isRunning) return;
     const endTime = Date.now() + seconds * 1000;
+    // Local notification as a backstop for when the app is backgrounded or
+    // closed, since the setInterval below only advances while JS is running.
+    scheduleRestTimerNotification(seconds);
     const timer = setInterval(() => {
       const remaining = Math.ceil((endTime - Date.now()) / 1000);
       if (remaining <= 0) {
@@ -27,7 +31,10 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
         setSeconds(remaining);
       }
     }, 250);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+      cancelRestTimerNotification();
+    };
   }, [isRunning]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = () => {
