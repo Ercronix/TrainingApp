@@ -2,12 +2,15 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
+import { BlurView } from 'expo-blur';
+import { StyleSheet, View } from 'react-native';
 import { darkColors, lightColors } from '@/constants/theme';
 
 export default function TabsLayout() {
     const insets = useSafeAreaInsets();
     const { colorScheme } = useColorScheme();
-    const c = colorScheme === 'light' ? lightColors : darkColors;
+    const isLight = colorScheme === 'light';
+    const c = isLight ? lightColors : darkColors;
 
     return (
         <Tabs
@@ -15,12 +18,31 @@ export default function TabsLayout() {
                 tabBarActiveTintColor: c.accent,
                 tabBarInactiveTintColor: c.muted,
                 tabBarStyle: {
-                    backgroundColor: c.base,
+                    position: 'absolute',
+                    left: 16,
+                    right: 16,
+                    bottom: insets.bottom + 12,
+                    height: 64,
                     borderTopWidth: 0,
-                    height: 64 + insets.bottom,
-                    paddingBottom: 5 + insets.bottom,
+                    borderRadius: 24,
+                    borderWidth: 1,
+                    borderColor: c.elevated,
+                    backgroundColor: 'transparent',
+                    paddingBottom: 5,
                     paddingTop: 8,
+                    elevation: 0,
+                    overflow: 'hidden',
                 },
+                tabBarBackground: () => (
+                    <BlurView
+                        intensity={isLight ? 60 : 40}
+                        tint={isLight ? 'light' : 'dark'}
+                        experimentalBlurMethod="dimezisBlurView"
+                        style={StyleSheet.absoluteFill}
+                    >
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: c.surface, opacity: isLight ? 0.55 : 0.45 }]} />
+                    </BlurView>
+                ),
                 tabBarLabelStyle: {
                     fontSize: 10,
                     letterSpacing: 0.5,

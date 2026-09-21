@@ -235,7 +235,7 @@ export default function HistoryScreen() {
         data={filteredHistory}
         renderItem={renderLogItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
         ListEmptyComponent={
           <View className="items-center mt-20 gap-3">

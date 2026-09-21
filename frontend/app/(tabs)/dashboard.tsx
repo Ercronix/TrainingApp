@@ -29,6 +29,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       className="flex-1 bg-base"
+      contentContainerStyle={{ paddingBottom: 140 }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
     >
       {/* Header */}
