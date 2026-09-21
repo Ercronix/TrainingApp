@@ -109,6 +109,20 @@ export interface CreateExerciseRequest {
   plannedWeight?: number | null;
 }
 
+export interface ExerciseProgressEntry {
+  date: string;
+  weightUsed: number | null;
+  setsCompleted: number;
+  repsCompleted: number;
+  trainingLogId: number;
+}
+
+export interface ExerciseProgress {
+  exerciseId: number;
+  exerciseName: string;
+  entries: ExerciseProgressEntry[];
+}
+
 export interface DashboardStats {
   streak: {
     current: number;

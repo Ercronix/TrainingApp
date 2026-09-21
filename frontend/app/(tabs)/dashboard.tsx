@@ -24,6 +24,8 @@ export default function DashboardScreen() {
     );
   }
 
+  const lastSession = stats.lastSession;
+
   return (
     <ScrollView
       className="flex-1 bg-base"
@@ -115,11 +117,11 @@ export default function DashboardScreen() {
       </View>
 
       {/* Last Session */}
-      {stats.lastSession && (
+      {lastSession && (
         <TouchableOpacity
           className="mx-4 mb-3 bg-surface rounded-md p-5"
           onPress={() =>
-            router.push({ pathname: '/history-detail', params: { trainingLogId: stats.lastSession.id.toString() } })
+            router.push({ pathname: '/history-detail', params: { trainingLogId: lastSession.id.toString() } })
           }
           activeOpacity={0.85}
         >
@@ -127,12 +129,12 @@ export default function DashboardScreen() {
           <View className="flex-row justify-between items-center">
             <View className="flex-1 mr-2">
               <Text className="text-primary text-xl font-bold tracking-tight mb-1">
-                {stats.lastSession.workoutName || stats.lastSession.splitName}
+                {lastSession.workoutName || lastSession.splitName}
               </Text>
               <Text className="text-muted text-xs">
-                {new Date(stats.lastSession.startedAt).toLocaleDateString(undefined, {
+                {new Date(lastSession.startedAt).toLocaleDateString(undefined, {
                   weekday: 'long', day: 'numeric', month: 'long',
-                })} · {stats.lastSession.exercises?.length || 0} exercises
+                })} · {lastSession.exercises?.length || 0} exercises
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={c.muted} />
