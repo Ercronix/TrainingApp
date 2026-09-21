@@ -51,7 +51,9 @@ jobs:
           java-version: 21
       - run: ./gradlew test --no-daemon
         env:
+          # application-local.properties (jwt.secret, datasource password, CORS
+          # origins) isn't committed, so CI needs its own values — mirrors how
+          # docker-compose.yml overrides application-prod.properties.
           SPRING_DATASOURCE_PASSWORD: ci_test_password
-      - name: Print test failure details
-        if: failure()
-        run: cat build/test-results/test/*.xml
+          JWT_SECRET: ci-test-only-secret-do-not-use-in-production-0123456789
+          CORS_ALLOWED_ORIGINS: http://localhost
