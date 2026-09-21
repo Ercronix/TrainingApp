@@ -96,7 +96,7 @@ export default function HistoryScreen() {
         ]}
       >
         <TouchableOpacity
-          className="bg-surface rounded-md p-5"
+          className="bg-surface rounded-l-md p-5"
           onPress={() =>
             router.push({ pathname: '/history-detail' as any, params: { trainingLogId: item.id.toString() } })
           }

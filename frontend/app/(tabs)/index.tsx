@@ -51,7 +51,7 @@ export default function SplitsScreen() {
       }
     >
       <TouchableOpacity
-        className={`rounded-md px-5 py-5 flex-row items-center overflow-hidden relative ${
+        className={`px-5 py-5 flex-row items-center overflow-hidden relative ${
           item.isActive ? 'bg-elevated' : 'bg-surface'
         }`}
         onPress={() =>

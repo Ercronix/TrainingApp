@@ -40,7 +40,7 @@ export default function WorkoutsScreen() {
       ]}
     >
       <TouchableOpacity
-        className="bg-surface rounded-md px-5 py-5 flex-row items-center gap-3"
+        className="bg-surface rounded-l-md px-5 py-5 flex-row items-center gap-3"
         onPress={() =>
           router.push({ pathname: '/workout-detail' as any, params: { workoutId: item.id.toString(), workoutName: item.name, splitId } })
         }

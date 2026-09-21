@@ -61,7 +61,7 @@ export default function WorkoutDetailScreen() {
         ]}
       >
         <TouchableOpacity
-          className={`rounded-md overflow-hidden ${isActive ? 'bg-elevated' : 'bg-surface'}`}
+          className={`rounded-l-md overflow-hidden ${isActive ? 'bg-elevated' : 'bg-surface'}`}
           onPress={() => {
             if (reorderMode) return;
             router.push({
