@@ -86,7 +86,7 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
   }
 
   return (
-    <View style={{ position: 'relative', overflow: 'hidden', borderRadius: 6, marginBottom: 8 }}>
+    <View style={{ position: 'relative', overflow: 'hidden', borderRadius: 18, marginBottom: 8 }}>
       {/* Right actions (revealed when swiping left) */}
       {rightActions && rightActions.length > 0 && (
         <View
