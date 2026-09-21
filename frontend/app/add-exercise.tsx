@@ -1,9 +1,10 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAddExerciseLog } from '@/hooks/useAddExerciseLog';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { alert } from '@/utils/confirm';
 
 export default function AddExerciseScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
@@ -36,7 +37,7 @@ export default function AddExerciseScreen() {
 
   const handleAdd = () => {
     if (!form.name.trim()) {
-      Alert.alert('Error', 'Please enter an exercise name');
+      alert('Error', 'Please enter an exercise name');
       return;
     }
 

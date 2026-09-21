@@ -46,7 +46,7 @@ export default function DashboardScreen() {
           <View>
             <Text className="text-muted text-[10px] tracking-[3px] mb-1">CURRENT STREAK</Text>
             <View className="flex-row items-end gap-2">
-              <Text className="text-primary text-[64px] font-bold leading-[68px] tracking-tighter">
+              <Text className="text-primary text-[64px] font-mono-bold leading-[68px] tracking-tighter">
                 {stats.streak.current}
               </Text>
               <Text className="text-muted text-xs tracking-widest mb-2">DAYS</Text>
@@ -94,25 +94,25 @@ export default function DashboardScreen() {
       <View className="flex-row flex-wrap mx-3 mb-3 gap-1">
         <View className="bg-surface rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
           <Ionicons name="barbell-outline" size={20} color={c.accent} />
-          <Text className="text-accent-text text-[28px] font-bold tracking-tighter">{stats.sessions[timeRange]}</Text>
+          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.sessions[timeRange]}</Text>
           <Text className="text-muted text-[9px] tracking-[2px]">SESSIONS</Text>
         </View>
 
         <View className="bg-elevated rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
           <Ionicons name="fitness-outline" size={20} color={c.info} />
-          <Text className="text-info text-[28px] font-bold tracking-tighter">{stats.volume[timeRange]}</Text>
+          <Text className="text-info text-[28px] font-mono-bold tracking-tighter">{stats.volume[timeRange]}</Text>
           <Text className="text-muted text-[9px] tracking-[2px]">KG VOLUME</Text>
         </View>
 
         <View className="bg-surface rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
           <Ionicons name="time-outline" size={20} color={c.danger} />
-          <Text className="text-danger text-[28px] font-bold tracking-tighter">{stats.time[timeRange]}</Text>
+          <Text className="text-danger text-[28px] font-mono-bold tracking-tighter">{stats.time[timeRange]}</Text>
           <Text className="text-muted text-[9px] tracking-[2px]">TIME TRAINED</Text>
         </View>
 
         <View className="bg-elevated rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
           <Ionicons name="trending-up-outline" size={20} color={c.accent} />
-          <Text className="text-accent-text text-[28px] font-bold tracking-tighter">{stats.averageVolume}</Text>
+          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.averageVolume}</Text>
           <Text className="text-muted text-[9px] tracking-[2px]">AVG / SESSION</Text>
         </View>
       </View>

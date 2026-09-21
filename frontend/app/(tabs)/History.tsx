@@ -104,7 +104,7 @@ export default function HistoryScreen() {
         >
           {/* Top row */}
           <View className="flex-row items-start mb-4 gap-3">
-            <Text className="text-subtle text-xl font-bold tracking-tight min-w-[28px]">
+            <Text className="text-subtle text-xl font-mono-bold tracking-tight min-w-[28px]">
               {String(index + 1).padStart(2, '0')}
             </Text>
             <View className="flex-1">

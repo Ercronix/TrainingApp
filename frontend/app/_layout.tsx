@@ -4,19 +4,31 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useColorScheme } from 'nativewind';
+import { useFonts, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
+import * as SplashScreen from 'expo-splash-screen';
 import { getPalette, getThemeVars } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { storage } from '@/services/storage';
+import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
 import "./styles/global.css";
 
 const queryClient = new QueryClient();
+
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 function AppLayout() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const themeId = useThemeStore((s) => s.themeId);
   const setThemeId = useThemeStore((s) => s.setThemeId);
+  const customAccent = useThemeStore((s) => s.customAccent);
+  const setCustomAccent = useThemeStore((s) => s.setCustomAccent);
+
+  const [fontsLoaded] = useFonts({
+    JetBrainsMono_400Regular,
+    JetBrainsMono_700Bold,
+  });
 
   useEffect(() => {
     storage.getItem('color-scheme').then((saved) => {
@@ -27,15 +39,24 @@ function AppLayout() {
     storage.getItem('theme-id').then((saved) => {
       if (saved) setThemeId(saved);
     });
+    storage.getItem('custom-accent').then((saved) => {
+      if (saved) setCustomAccent(saved);
+    });
   }, []);
 
+  const onLayoutRootView = useCallback(() => {
+    if (fontsLoaded) SplashScreen.hideAsync().catch(() => {});
+  }, [fontsLoaded]);
+
+  if (!fontsLoaded) return null;
+
   const isLight = colorScheme === 'light';
-  const bgColor = getPalette(themeId, isLight ? 'light' : 'dark').base;
+  const bgColor = getPalette(themeId, isLight ? 'light' : 'dark', customAccent).base;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: bgColor }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: bgColor }} onLayout={onLayoutRootView}>
       <StatusBar style={isLight ? 'dark' : 'light'} backgroundColor={bgColor} />
-      <View style={[{ flex: 1 }, getThemeVars(themeId, isLight ? 'light' : 'dark')]}>
+      <View style={[{ flex: 1 }, getThemeVars(themeId, isLight ? 'light' : 'dark', customAccent)]}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <Stack screenOptions={{ headerShown: false }}>
@@ -58,6 +79,7 @@ function AppLayout() {
               <Stack.Screen name="training"        options={{ headerShown: false }} />
               <Stack.Screen name="history-detail"  options={{ headerShown: false }} />
             </Stack>
+            <ConfirmDialogHost />
           </AuthProvider>
         </QueryClientProvider>
       </View>

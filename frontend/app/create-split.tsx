@@ -1,10 +1,11 @@
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useSplits } from '@/hooks/useSplits';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
+import { alert } from '@/utils/confirm';
 
 export default function CreateSplitModal() {
   const [name, setName] = useState('');
@@ -44,7 +45,7 @@ export default function CreateSplitModal() {
           className={`bg-accent rounded-md py-5 items-center ${isCreating ? 'opacity-50' : ''}`}
           style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
           onPress={() => {
-            if (!name.trim()) { Alert.alert('Error', 'Please enter a name'); return; }
+            if (!name.trim()) { alert('Error', 'Please enter a name'); return; }
             createSplit.mutate(name.trim(), { onSuccess: () => router.back() });
           }}
           disabled={isCreating}

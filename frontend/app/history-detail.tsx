@@ -63,7 +63,7 @@ export default function HistoryDetailScreen() {
       >
         {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent" />}
         <View className="flex-row items-start px-5 py-4 gap-3">
-          <Text className="text-dim text-xl font-bold tracking-tight min-w-[28px]">
+          <Text className="text-dim text-xl font-mono-bold tracking-tight min-w-[28px]">
             {String(index + 1).padStart(2, '0')}
           </Text>
           <View className="flex-1">
@@ -132,21 +132,21 @@ export default function HistoryDetailScreen() {
       {/* Stats row */}
       <View className="flex-row mx-4 mb-3 bg-surface rounded-md py-4">
         <View className="flex-1 items-center">
-          <Text className="text-primary text-[22px] font-bold tracking-tight mb-0.5">
+          <Text className="text-primary text-[22px] font-mono-bold tracking-tight mb-0.5">
             {formatDuration(training?.durationSeconds)}
           </Text>
           <Text className="text-muted text-[8px] tracking-[2px]">DURATION</Text>
         </View>
         <View className="w-px bg-elevated my-1" />
         <View className="flex-1 items-center">
-          <Text className="text-primary text-[22px] font-bold tracking-tight mb-0.5">
+          <Text className="text-primary text-[22px] font-mono-bold tracking-tight mb-0.5">
             {completedCount}/{totalCount}
           </Text>
           <Text className="text-muted text-[8px] tracking-[2px]">COMPLETED</Text>
         </View>
         <View className="w-px bg-elevated my-1" />
         <View className="flex-1 items-center">
-          <Text className={`text-[22px] font-bold tracking-tight mb-0.5 ${completionRate === 100 ? 'text-accent-text' : 'text-primary'}`}>
+          <Text className={`text-[22px] font-mono-bold tracking-tight mb-0.5 ${completionRate === 100 ? 'text-accent-text' : 'text-primary'}`}>
             {completionRate}%
           </Text>
           <Text className="text-muted text-[8px] tracking-[2px]">RATE</Text>

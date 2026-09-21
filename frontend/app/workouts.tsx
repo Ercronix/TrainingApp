@@ -7,6 +7,7 @@ import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { Workout } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { AnimatedPressable } from '@/components/AnimatedPressable';
 
 export default function WorkoutsScreen() {
   const { splitId, splitName, currentBlock } = useLocalSearchParams<{ splitId: string; splitName: string; currentBlock: string }>();
@@ -46,7 +47,7 @@ export default function WorkoutsScreen() {
         }
         activeOpacity={0.85}
       >
-        <Text className="text-dim text-[28px] font-bold tracking-tighter min-w-[36px]">
+        <Text className="text-dim text-[28px] font-mono-bold tracking-tighter min-w-[36px]">
           {String(index + 1).padStart(2, '0')}
         </Text>
         <View className="flex-1">
@@ -108,13 +109,14 @@ export default function WorkoutsScreen() {
       )}
 
       <Link href={{ pathname: '/create-workout', params: { splitId } }} asChild>
-        <TouchableOpacity
-          className="absolute right-6 w-14 h-14 rounded-md bg-accent justify-center items-center"
-          style={{ bottom: 32 + insets.bottom, shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
+        <AnimatedPressable
+          wrapperStyle={{ position: 'absolute', right: 24, bottom: 32 + insets.bottom }}
+          className="w-14 h-14 rounded-md bg-accent justify-center items-center"
+          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
           activeOpacity={0.8}
         >
           <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
-        </TouchableOpacity>
+        </AnimatedPressable>
       </Link>
     </View>
   );
