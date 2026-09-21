@@ -12,7 +12,8 @@ export default function TabsLayout() {
     const { colorScheme } = useColorScheme();
     const isLight = colorScheme === 'light';
     const themeId = useThemeStore((s) => s.themeId);
-    const c = getPalette(themeId, isLight ? 'light' : 'dark');
+    const customAccent = useThemeStore((s) => s.customAccent);
+    const c = getPalette(themeId, isLight ? 'light' : 'dark', customAccent);
 
     return (
         <Tabs
