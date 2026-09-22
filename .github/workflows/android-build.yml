@@ -35,5 +35,6 @@ jobs:
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
+          packager: npm
 
       - run: eas build --platform android --profile ${{ inputs.profile }} --non-interactive --wait
