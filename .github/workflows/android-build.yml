@@ -34,36 +34,45 @@ jobs:
 
       - run: npm ci
 
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Gradle dependencies are the bulk of a cold build; reuse them between runs
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('frontend/package-lock.json') }}
+          restore-keys: gradle-${{ runner.os }}-
+
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
           packager: npm
 
-      - name: Build on EAS
-        id: eas
+      # --local builds on this runner instead of Expo's servers, skipping the free-tier
+      # build queue (which regularly took ~1h). Signing credentials still come from EAS.
+      - name: Build locally with EAS
+        id: build
         run: |
-          eas build --platform android --profile ${{ inputs.profile }} --non-interactive --wait --json > build.json
-          url=$(jq -r '.[0].artifacts.buildUrl' build.json)
-          version=$(jq -r '.[0].appVersion' build.json)
-          echo "url=$url" >> "$GITHUB_OUTPUT"
+          version=$(jq -r '.expo.version' app.json)
+          ext=${{ inputs.profile == 'production' && 'aab' || 'apk' }}
+          file="trainingapp-${{ inputs.profile }}-${version}-${{ github.run_number }}.${ext}"
+          eas build --platform android --profile ${{ inputs.profile }} --local --non-interactive --output "$file"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Download build artifact
-        id: download
-        run: |
-          url='${{ steps.eas.outputs.url }}'
-          file="trainingapp-${{ inputs.profile }}-${{ steps.eas.outputs.version }}-${{ github.run_number }}.${url##*.}"
-          curl -fsSL "$url" -o "$file"
           echo "file=frontend/$file" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="android-${{ inputs.profile }}-v${{ steps.eas.outputs.version }}-${{ github.run_number }}"
-          gh release create "$tag" "${GITHUB_WORKSPACE}/${{ steps.download.outputs.file }}" \
+          tag="android-${{ inputs.profile }}-v${{ steps.build.outputs.version }}-${{ github.run_number }}"
+          gh release create "$tag" "${GITHUB_WORKSPACE}/${{ steps.build.outputs.file }}" \
             --target "${{ github.sha }}" \
-            --title "Android ${{ inputs.profile }} ${{ steps.eas.outputs.version }} (build ${{ github.run_number }})" \
-            --notes "EAS build: ${{ steps.eas.outputs.url }}" \
+            --title "Android ${{ inputs.profile }} ${{ steps.build.outputs.version }} (build ${{ github.run_number }})" \
+            --notes "Built from ${{ github.sha }} with the \`${{ inputs.profile }}\` EAS profile." \
             ${{ inputs.profile != 'production' && '--prerelease' || '' }}
