@@ -1,5 +1,6 @@
 package de.mornhinweg.trainingbackend.security;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +40,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       jwt = authorizationHeader.substring(7);  // "Bearer " entfernen
       try {
         username = jwtUtil.extractUsername(jwt);  // Username aus Token
+      } catch (ExpiredJwtException e) {
+        // Expected once access tokens age out; the client refreshes on the resulting 401
+        logger.debug("JWT expired");
       } catch (Exception e) {
         logger.error("Error extracting username from JWT", e);
       }

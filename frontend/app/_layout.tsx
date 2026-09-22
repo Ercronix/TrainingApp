@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 import { AuthProvider } from '@/providers/AuthProvider';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
@@ -12,9 +12,8 @@ import { getPalette, getThemeVars } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { storage } from '@/services/storage';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
+import { queryClient, persister, CACHE_MAX_AGE } from '@/services/queryClient';
 import "./styles/global.css";
-
-const queryClient = new QueryClient();
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -57,7 +56,12 @@ function AppLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bgColor }} onLayout={onLayoutRootView}>
       <StatusBar style={isLight ? 'dark' : 'light'} backgroundColor={bgColor} />
       <View style={[{ flex: 1 }, getThemeVars(themeId, isLight ? 'light' : 'dark', customAccent)]}>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister, maxAge: CACHE_MAX_AGE }}
+          // Replay edits made offline (restored from storage) once we're back
+          onSuccess={() => { void queryClient.resumePausedMutations(); }}
+        >
           <AuthProvider>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -81,7 +85,7 @@ function AppLayout() {
             </Stack>
             <ConfirmDialogHost />
           </AuthProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </View>
     </GestureHandlerRootView>
   );
