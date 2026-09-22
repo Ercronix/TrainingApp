@@ -69,7 +69,7 @@ public class TrainingLogService {
     trainingLog = trainingLogRepository.findById(trainingLog.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
 
-    return toResponse(trainingLog);
+    return toResponse(trainingLog, true);
   }
 
   @Transactional
@@ -90,7 +90,7 @@ public class TrainingLogService {
     if (request.getNotes() != null) exerciseLog.setNotes(request.getNotes());
 
     exerciseLog = exerciseLogRepository.save(exerciseLog);
-    return toExerciseLogResponse(exerciseLog);
+    return toExerciseLogResponse(exerciseLog, true);
   }
 
   @Transactional
@@ -134,7 +134,7 @@ public class TrainingLogService {
         .build();
     exerciseLog = exerciseLogRepository.save(exerciseLog);
 
-    return toExerciseLogResponse(exerciseLog);
+    return toExerciseLogResponse(exerciseLog, true);
   }
 
   @Transactional
@@ -164,26 +164,26 @@ public class TrainingLogService {
       }
     }
 
-    return toResponse(trainingLog);
+    return toResponse(trainingLog, true);
   }
 
   public List<TrainingLogResponse> getAllTrainings(Authentication authentication) {
     User user = getCurrentUser(authentication);
     return trainingLogRepository.findByUserIdOrderByStartedAtDesc(user.getId())
-        .stream().map(this::toResponse).collect(Collectors.toList());
+        .stream().map(log -> toResponse(log, false)).collect(Collectors.toList());
   }
 
   public List<TrainingLogResponse> getActiveTrainings(Authentication authentication) {
     User user = getCurrentUser(authentication);
     return trainingLogRepository.findByUserIdAndCompletedAtIsNullOrderByStartedAtDesc(user.getId())
-        .stream().map(this::toResponse).collect(Collectors.toList());
+        .stream().map(log -> toResponse(log, true)).collect(Collectors.toList());
   }
 
   public TrainingLogResponse getTraining(Long trainingLogId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
-    return toResponse(trainingLog);
+    return toResponse(trainingLog, true);
   }
 
   private User getCurrentUser(Authentication authentication) {
@@ -200,7 +200,7 @@ public class TrainingLogService {
     trainingLogRepository.delete(trainingLog);
   }
 
-  private TrainingLogResponse toResponse(TrainingLog trainingLog) {
+  private TrainingLogResponse toResponse(TrainingLog trainingLog, boolean includePrevious) {
     return TrainingLogResponse.builder()
         .id(trainingLog.getId())
         .splitId(trainingLog.getSplit().getId())
@@ -212,14 +212,17 @@ public class TrainingLogService {
         .durationSeconds(trainingLog.getDurationSeconds())
         .notes(trainingLog.getNotes())
         .exercises(trainingLog.getExerciseLogs().stream()
-            .map(this::toExerciseLogResponse)
+            .map(el -> toExerciseLogResponse(el, includePrevious))
             .collect(Collectors.toList()))
         .isCompleted(trainingLog.isCompleted())
         .build();
   }
 
-  private ExerciseLogResponse toExerciseLogResponse(ExerciseLog exerciseLog) {
+  private ExerciseLogResponse toExerciseLogResponse(ExerciseLog exerciseLog, boolean includePrevious) {
     Exercise exercise = exerciseLog.getExercise();
+    ExerciseLog previous = includePrevious
+        ? exerciseLogRepository.findPreviousCompleted(exercise.getId(), exerciseLog.getTrainingLog().getId()).orElse(null)
+        : null;
     return ExerciseLogResponse.builder()
         .id(exerciseLog.getId())
         .exerciseId(exercise.getId())
@@ -235,6 +238,9 @@ public class TrainingLogService {
         .completed(exerciseLog.getCompleted())
         .notes(exerciseLog.getNotes())
         .repUnit(exercise.getRepUnit())
+        .previousSets(previous != null ? previous.getSetsCompleted() : null)
+        .previousReps(previous != null ? previous.getRepsCompleted() : null)
+        .previousWeight(previous != null ? previous.getWeightUsed() : null)
         .build();
   }
 }

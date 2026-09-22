@@ -19,4 +19,9 @@ public class ExerciseLogResponse {
   private Boolean completed;
   private String notes;
   private String repUnit;
+
+  // What was done for this exercise in the most recent completed session (null if never trained)
+  private Integer previousSets;
+  private Integer previousReps;
+  private BigDecimal previousWeight;
 }

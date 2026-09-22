@@ -1,41 +1,31 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Alert } from 'react-native';
-import { trainingLogsApi } from '@/services/api';
-import { QUERY_KEYS } from '@/constants/queryKeys';
-import { getErrorMessage } from '@/utils/errorHandler';
+import { alert } from '@/utils/confirm';
+import { useUpdateExerciseLog } from './useUpdateExerciseLog';
+import { useExerciseProgress } from './useExerciseProgress';
+import { detectPersonalRecord, getPersonalRecords } from '@/utils/strength';
 
-export interface ExerciseLogDto {
-  setsCompleted: number;
-  repsCompleted: number;
-  weightUsed: number | null;
-  completed: boolean;
-}
-
-export function useExerciseLog(exerciseLogId: string, trainingLogId: string) {
-  const queryClient = useQueryClient();
+export function useExerciseLog(exerciseLogId: string, trainingLogId: string, exerciseId?: string) {
   const router = useRouter();
-
-  const mutation = useMutation({
-    mutationFn: (data: ExerciseLogDto) =>
-      trainingLogsApi.updateExerciseLog(Number(exerciseLogId), data),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.training(trainingLogId) });
-      Alert.alert('Success', 'Exercise updated!');
-      router.back();
-    },
-    onError: (error: unknown) => {
-      Alert.alert('Error', getErrorMessage(error));
-    },
-  });
+  const mutation = useUpdateExerciseLog(trainingLogId);
+  const { progress } = useExerciseProgress(exerciseId ?? '');
 
   const saveExercise = (sets: string, reps: string, weight: string) => {
+    const setsCompleted = sets ? parseInt(sets) : 0;
+    const repsCompleted = reps ? parseInt(reps) : 0;
+    const weightUsed = weight ? parseFloat(weight.replace(',', '.')) : null;
+
     mutation.mutate({
-      setsCompleted: sets ? parseInt(sets) : 0,
-      repsCompleted: reps ? parseInt(reps) : 0,
-      weightUsed: weight ? parseFloat(weight) : null,
-      completed: true,
+      exerciseLogId: Number(exerciseLogId),
+      data: { setsCompleted, repsCompleted, weightUsed, completed: true },
     });
+
+    // Optimistic: don't wait for the server (it may be unreachable at the gym)
+    router.back();
+
+    const record = progress && weightUsed != null
+      ? detectPersonalRecord(getPersonalRecords(progress.entries), weightUsed, repsCompleted)
+      : null;
+    if (record) alert('New personal record! 🏆', record);
   };
 
   return { saveExercise, isPending: mutation.isPending };

@@ -1,7 +1,9 @@
 import { View, Text, TouchableOpacity, Switch, TextInput, ScrollView } from 'react-native';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { authApi } from '@/services/api';
+import { authApi, trainingLogsApi } from '@/services/api';
+import { trainingLogsToCsv, shareCsv } from '@/utils/exportCsv';
+import { getErrorMessage } from '@/utils/errorHandler';
 import { useRouter } from 'expo-router';
 import { confirm, alert } from '@/utils/confirm';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +36,7 @@ export default function ProfileScreen() {
   const customAccent = useThemeStore((s) => s.customAccent);
   const setCustomAccent = useThemeStore((s) => s.setCustomAccent);
   const [accentInput, setAccentInput] = useState(customAccent ?? '');
+  const [exporting, setExporting] = useState(false);
 
   const toggleTheme = async () => {
     const next = isDark ? 'light' : 'dark';
@@ -60,6 +63,22 @@ export default function ProfileScreen() {
     setCustomAccent(null);
     setAccentInput('');
     await storage.removeItem('custom-accent');
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const logs = await trainingLogsApi.getAll();
+      if (!logs.some((l) => l.isCompleted)) {
+        alert('Nothing to export', 'Complete a training session first.');
+        return;
+      }
+      await shareCsv(trainingLogsToCsv(logs), `training-history-${new Date().toISOString().slice(0, 10)}.csv`);
+    } catch (error) {
+      alert('Export failed', getErrorMessage(error));
+    } finally {
+      setExporting(false);
+    }
   };
 
   const handleLogout = () => {
@@ -221,6 +240,19 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Export */}
+      <TouchableOpacity
+        className={`mx-4 mb-3 bg-surface rounded-md py-5 flex-row items-center justify-center gap-2 ${exporting ? 'opacity-50' : ''}`}
+        onPress={handleExport}
+        disabled={exporting}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="download-outline" size={18} color={c.accent} />
+        <Text className="text-primary text-sm font-bold tracking-[2px]">
+          {exporting ? 'EXPORTING...' : 'EXPORT HISTORY (CSV)'}
+        </Text>
+      </TouchableOpacity>
 
       {/* Logout */}
       <TouchableOpacity

@@ -11,6 +11,7 @@ export interface RegisterRequest {
 
 export interface AuthResponse {
     token: string;
+    refreshToken?: string;
     type: string;
     userId: number;
     username: string;
@@ -68,6 +69,10 @@ export interface ExerciseLog {
   completed: boolean;
   notes: string | null;
   repUnit: 'reps' | 'seconds' | null;
+  // Most recent completed session for this exercise (null if never trained)
+  previousSets: number | null;
+  previousReps: number | null;
+  previousWeight: number | null;
 }
 
 export interface Workout {

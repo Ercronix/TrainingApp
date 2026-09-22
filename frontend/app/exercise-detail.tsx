@@ -7,6 +7,7 @@ import { useExerciseDetail } from '@/hooks/useExerciseDetail';
 import { useExerciseProgress } from '@/hooks/useExerciseProgress';
 import { ExerciseProgressChart } from '@/components/exercise-progress-chart';
 import { useTheme } from '@/hooks/useTheme';
+import { getPersonalRecords, formatKg } from '@/utils/strength';
 
 export default function ExerciseDetailScreen() {
   const {
@@ -25,6 +26,7 @@ export default function ExerciseDetailScreen() {
   const [editingDescription, setEditingDescription] = useState(false);
   const { progress, isLoading: progressLoading } = useExerciseProgress(exerciseId);
   const c = useTheme();
+  const records = getPersonalRecords(progress?.entries ?? []);
 
   const getYouTubeId = (url: string) => {
     if (!url) return null;
@@ -65,6 +67,29 @@ export default function ExerciseDetailScreen() {
                   <Text className="text-muted text-[9px] tracking-[2px] mt-1">KG TARGET</Text>
                 </View>
               )}
+            </View>
+          </View>
+        )}
+
+        {/* Records */}
+        {records.bestWeight != null && (
+          <View className="bg-surface rounded-md p-5 mb-2">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-3">PERSONAL RECORDS</Text>
+            <View className="flex-row gap-6">
+              <View>
+                <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{formatKg(records.bestWeight)}</Text>
+                <Text className="text-muted text-[9px] tracking-[2px] mt-1">KG HEAVIEST</Text>
+              </View>
+              {records.bestOneRepMax != null && (
+                <View>
+                  <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{formatKg(records.bestOneRepMax)}</Text>
+                  <Text className="text-muted text-[9px] tracking-[2px] mt-1">KG EST. 1RM</Text>
+                </View>
+              )}
+              <View>
+                <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{records.sessions}</Text>
+                <Text className="text-muted text-[9px] tracking-[2px] mt-1">SESSIONS</Text>
+              </View>
             </View>
           </View>
         )}

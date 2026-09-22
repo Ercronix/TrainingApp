@@ -9,6 +9,7 @@ import { RestTimer } from '@/components/RestTimer';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { useIsOnline } from '@/hooks/useIsOnline';
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--:--';
@@ -26,6 +27,7 @@ export default function TrainingScreen() {
   const [exerciseOrder, setExerciseOrder] = useState<number[]>([]);
   const [dockHeight, setDockHeight] = useState(0);
   const c = useTheme();
+  const isOnline = useIsOnline();
   const elapsedSeconds = useElapsedSeconds({
     startedAt: training?.startedAt,
     completedAt: training?.completedAt,
@@ -68,6 +70,10 @@ export default function TrainingScreen() {
   };
 
   const handleComplete = () => {
+    if (!isOnline) {
+      alert('Offline', 'Reconnect to finish the session. Your logged exercises are kept and will sync.');
+      return;
+    }
     const completedCount = training?.exercises.filter((e: ExerciseLog) => e.completed).length || 0;
     const totalCount = training?.exercises.length || 0;
     const doComplete = () =>
@@ -111,6 +117,11 @@ export default function TrainingScreen() {
               {item.plannedSets} × {item.plannedReps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
             </Text>
           )}
+          {!item.completed && item.previousSets != null && item.previousReps != null && (
+            <Text className="text-subtle text-[11px] mt-1">
+              Last: {item.previousSets}×{item.previousReps}{item.repUnit === 'seconds' ? 's' : ''}{item.previousWeight != null ? ` @ ${item.previousWeight} kg` : ''}
+            </Text>
+          )}
           {item.completed && (
             <Text className="text-accent-text text-[11px] mt-1">
               ✓ {item.setsCompleted}×{item.repsCompleted}{item.repUnit === 'seconds' ? 's' : ''}{item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
@@ -137,10 +148,15 @@ export default function TrainingScreen() {
           router.push({
             pathname: '/log-exercise' as any,
             params: {
-              exerciseLogId: item.id.toString(), exerciseName: item.exerciseName,
+              exerciseLogId: item.id.toString(), exerciseId: item.exerciseId?.toString() ?? '',
+              exerciseName: item.exerciseName,
               plannedSets: item.plannedSets?.toString() || '', plannedReps: item.plannedReps?.toString() || '',
               plannedWeight: item.plannedWeight?.toString() || '', trainingLogId,
               repUnit: item.repUnit || 'reps',
+              setsCompleted: item.setsCompleted?.toString() || '', repsCompleted: item.repsCompleted?.toString() || '',
+              weightUsed: item.weightUsed?.toString() || '',
+              previousSets: item.previousSets?.toString() || '', previousReps: item.previousReps?.toString() || '',
+              previousWeight: item.previousWeight?.toString() || '',
             },
           })
         }
@@ -175,6 +191,12 @@ export default function TrainingScreen() {
         <Text className="text-muted text-[11px] tracking-[2px]">
           {completedCount}/{totalCount} COMPLETE · {formatElapsed(elapsedSeconds)} ELAPSED
         </Text>
+        {!isOnline && (
+          <View className="flex-row items-center gap-2 mt-3 bg-surface rounded-sm px-3 py-2 self-start">
+            <Ionicons name="cloud-offline-outline" size={14} color={c.muted} />
+            <Text className="text-muted text-[10px] tracking-[2px]">OFFLINE · CHANGES SYNC WHEN BACK ONLINE</Text>
+          </View>
+        )}
       </View>
 
       {/* Progress bar */}

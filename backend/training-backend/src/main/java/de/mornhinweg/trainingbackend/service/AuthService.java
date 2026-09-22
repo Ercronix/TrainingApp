@@ -12,11 +12,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +24,7 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final JwtUtil jwtUtil;
   private final AuthenticationManager authenticationManager;
+  private final RefreshTokenService refreshTokenService;
 
   public AuthResponse register(RegisterRequest request) {
     if (userRepository.existsByUsername(request.getUsername())) {
@@ -43,21 +42,7 @@ public class AuthService {
         .build();
 
     User savedUser = userRepository.save(user);
-
-    UserDetails userDetails = new org.springframework.security.core.userdetails.User(
-        savedUser.getUsername(),
-        savedUser.getPassword(),
-        new ArrayList<>()
-    );
-    String token = jwtUtil.generateToken(userDetails);
-
-    return AuthResponse.builder()
-        .token(token)
-        .type("Bearer")
-        .userId(savedUser.getId())
-        .username(savedUser.getUsername())
-        .email(savedUser.getEmail())
-        .build();
+    return issueTokens(savedUser);
   }
 
   public AuthResponse login(LoginRequest request) {
@@ -68,19 +53,19 @@ public class AuthService {
         )
     );
 
-    User user = userRepository.findByUsername(request.getUsername())
+    User user = userRepository.findByUsername(authentication.getName())
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-    String token = jwtUtil.generateToken(userDetails);
+    return issueTokens(user);
+  }
 
-    return AuthResponse.builder()
-        .token(token)
-        .type("Bearer")
-        .userId(user.getId())
-        .username(user.getUsername())
-        .email(user.getEmail())
-        .build();
+  /** Exchanges a refresh token for a new access token + rotated refresh token. */
+  public AuthResponse refresh(String refreshToken) {
+    return issueTokens(refreshTokenService.consume(refreshToken));
+  }
+
+  public void logout(String refreshToken) {
+    refreshTokenService.revoke(refreshToken);
   }
 
   public AuthResponse getMe(String username) {
@@ -88,6 +73,17 @@ public class AuthService {
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
     return AuthResponse.builder()
+        .type("Bearer")
+        .userId(user.getId())
+        .username(user.getUsername())
+        .email(user.getEmail())
+        .build();
+  }
+
+  private AuthResponse issueTokens(User user) {
+    return AuthResponse.builder()
+        .token(jwtUtil.generateToken(user.getUsername()))
+        .refreshToken(refreshTokenService.issue(user))
         .type("Bearer")
         .userId(user.getId())
         .username(user.getUsername())

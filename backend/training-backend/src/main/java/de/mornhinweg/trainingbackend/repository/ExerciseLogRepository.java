@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> {
@@ -24,4 +25,17 @@ public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> 
       ORDER BY tl.completedAt ASC
       """)
   List<ExerciseLog> findCompletedByExerciseIdOrderByDate(@Param("exerciseId") Long exerciseId);
+
+  @Query("""
+      SELECT el FROM ExerciseLog el
+      JOIN el.trainingLog tl
+      WHERE el.exercise.id = :exerciseId
+        AND el.completed = true
+        AND tl.completedAt IS NOT NULL
+        AND tl.id <> :excludeTrainingLogId
+      ORDER BY tl.completedAt DESC
+      LIMIT 1
+      """)
+  Optional<ExerciseLog> findPreviousCompleted(@Param("exerciseId") Long exerciseId,
+                                              @Param("excludeTrainingLogId") Long excludeTrainingLogId);
 }

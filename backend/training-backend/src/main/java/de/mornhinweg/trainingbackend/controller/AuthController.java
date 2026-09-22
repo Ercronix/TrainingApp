@@ -2,6 +2,7 @@ package de.mornhinweg.trainingbackend.controller;
 
 import de.mornhinweg.trainingbackend.dto.AuthResponse;
 import de.mornhinweg.trainingbackend.dto.LoginRequest;
+import de.mornhinweg.trainingbackend.dto.RefreshTokenRequest;
 import de.mornhinweg.trainingbackend.dto.RegisterRequest;
 import de.mornhinweg.trainingbackend.service.AuthService;
 import jakarta.validation.Valid;
@@ -27,6 +28,17 @@ public class AuthController {
   @PostMapping("/login")
   public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
     return ResponseEntity.ok(authService.login(request));
+  }
+
+  @PostMapping("/refresh")
+  public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
+  }
+
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+    authService.logout(request.getRefreshToken());
+    return ResponseEntity.noContent().build();
   }
 
   @GetMapping("/me")
