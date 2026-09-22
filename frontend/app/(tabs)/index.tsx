@@ -1,10 +1,12 @@
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { TrainingSplit } from '@/types';
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSplits } from '@/hooks/useSplits';
 import SwipeableRow from '@/components/SwipeableRow';
 import { useTheme } from '@/hooks/useTheme';
+import { confirm } from '@/utils/confirm';
+import { AnimatedPressable } from '@/components/AnimatedPressable';
 
 export default function SplitsScreen() {
   const router = useRouter();
@@ -12,17 +14,11 @@ export default function SplitsScreen() {
   const c = useTheme();
 
   const handleActivate = (id: number, name: string) => {
-    Alert.alert('Activate Split', `Set "${name}" as active split?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Activate', onPress: () => activateSplit.mutate(id) },
-    ]);
+    confirm('Activate Split', `Set "${name}" as active split?`, () => activateSplit.mutate(id), 'Activate');
   };
 
   const handleDelete = (id: number, name: string) => {
-    Alert.alert('Delete Split', `Delete "${name}"? This will also delete all its workouts.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deleteSplit.mutate(id) },
-    ]);
+    confirm('Delete Split', `Delete "${name}"? This will also delete all its workouts.`, () => deleteSplit.mutate(id), 'Delete');
   };
 
   const renderSplitItem = ({ item, index }: { item: TrainingSplit; index: number }) => (
@@ -51,7 +47,7 @@ export default function SplitsScreen() {
       }
     >
       <TouchableOpacity
-        className={`rounded-md px-5 py-5 flex-row items-center overflow-hidden relative ${
+        className={`px-5 py-5 flex-row items-center overflow-hidden relative ${
           item.isActive ? 'bg-elevated' : 'bg-surface'
         }`}
         onPress={() =>
@@ -65,7 +61,7 @@ export default function SplitsScreen() {
         )}
 
         {/* Index number */}
-        <Text className="text-subtle text-[32px] font-bold tracking-tighter mr-4 leading-9">
+        <Text className="text-subtle text-[32px] font-mono-bold tracking-tighter mr-4 leading-9">
           {String(index + 1).padStart(2, '0')}
         </Text>
 
@@ -117,7 +113,7 @@ export default function SplitsScreen() {
         data={splits}
         renderItem={renderSplitItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />
         }
@@ -132,13 +128,14 @@ export default function SplitsScreen() {
 
       {/* FAB */}
       <Link href="/create-split" asChild>
-        <TouchableOpacity
-          className="absolute right-6 bottom-20 w-14 h-14 rounded-md bg-accent justify-center items-center"
+        <AnimatedPressable
+          wrapperClassName="absolute right-6 bottom-20"
+          className="w-14 h-14 rounded-md bg-accent justify-center items-center"
           style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
           activeOpacity={0.8}
         >
           <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
-        </TouchableOpacity>
+        </AnimatedPressable>
       </Link>
     </View>
   );

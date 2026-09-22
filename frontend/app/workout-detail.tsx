@@ -10,6 +10,7 @@ import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { Exercise } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { AnimatedPressable } from '@/components/AnimatedPressable';
 
 export default function WorkoutDetailScreen() {
   const { workoutId, workoutName, splitId } = useLocalSearchParams<{
@@ -61,7 +62,7 @@ export default function WorkoutDetailScreen() {
         ]}
       >
         <TouchableOpacity
-          className={`rounded-md overflow-hidden ${isActive ? 'bg-elevated' : 'bg-surface'}`}
+          className={`rounded-l-md overflow-hidden ${isActive ? 'bg-elevated' : 'bg-surface'}`}
           onPress={() => {
             if (reorderMode) return;
             router.push({
@@ -188,13 +189,14 @@ export default function WorkoutDetailScreen() {
 
       {!reorderMode && (
         <Link href={{ pathname: '/create-exercise' as any, params: { workoutId } }} asChild>
-          <TouchableOpacity
-            className="absolute right-6 w-14 h-14 rounded-md bg-accent justify-center items-center"
-            style={{ bottom: 32 + insets.bottom, shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
+          <AnimatedPressable
+            wrapperStyle={{ position: 'absolute', right: 24, bottom: 32 + insets.bottom }}
+            className="w-14 h-14 rounded-md bg-accent justify-center items-center"
+            style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
             activeOpacity={0.8}
           >
             <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
-          </TouchableOpacity>
+          </AnimatedPressable>
         </Link>
       )}
     </View>

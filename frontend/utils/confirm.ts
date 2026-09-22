@@ -1,8 +1,8 @@
-import { Alert, Platform } from 'react-native';
+import { useDialogStore } from '@/store/dialogStore';
 
 /**
- * Cross-platform confirmation dialog.
- * Uses window.confirm on web, Alert.alert on iOS/Android.
+ * Themed confirmation dialog (replaces the native Alert/window.confirm so it
+ * matches the app's active theme, with a blurred backdrop).
  */
 export function confirm(
   title: string,
@@ -11,25 +11,25 @@ export function confirm(
   confirmText = 'OK',
   cancelText = 'Cancel'
 ) {
-  if (Platform.OS === 'web') {
-    if (window.confirm(`${title}\n\n${message}`)) {
-      onConfirm();
-    }
-  } else {
-    Alert.alert(title, message, [
-      { text: cancelText, style: 'cancel' },
-      { text: confirmText, onPress: onConfirm },
-    ]);
-  }
+  useDialogStore.getState().show({
+    title,
+    message,
+    confirmText,
+    cancelText,
+    onConfirm,
+    showCancel: true,
+    destructive: confirmText.toLowerCase() === 'delete',
+  });
 }
 
 /**
- * Cross-platform simple alert (no cancel button).
+ * Themed simple alert (no cancel button).
  */
 export function alert(title: string, message?: string) {
-  if (Platform.OS === 'web') {
-    window.alert(message ? `${title}\n\n${message}` : title);
-  } else {
-    Alert.alert(title, message);
-  }
+  useDialogStore.getState().show({
+    title,
+    message,
+    confirmText: 'OK',
+    showCancel: false,
+  });
 }

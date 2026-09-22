@@ -19,6 +19,7 @@ interface SwipeableRowProps {
 
 const ACTION_WIDTH = 72;
 const SWIPE_THRESHOLD = 40;
+const CLIP_RADIUS = 18;
 
 export default function SwipeableRow({ children, rightActions, leftActions, enabled = true }: SwipeableRowProps) {
   const translateX = useRef(new Animated.Value(0)).current;
@@ -86,7 +87,7 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
   }
 
   return (
-    <View style={{ position: 'relative', overflow: 'hidden', borderRadius: 6, marginBottom: 8 }}>
+    <View style={{ position: 'relative', overflow: 'hidden', borderRadius: CLIP_RADIUS, marginBottom: 8 }}>
       {/* Right actions (revealed when swiping left) */}
       {rightActions && rightActions.length > 0 && (
         <View
@@ -109,6 +110,10 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
                 backgroundColor: action.backgroundColor,
                 justifyContent: 'center',
                 alignItems: 'center',
+                ...(index === rightActions.length - 1 && {
+                  borderTopRightRadius: CLIP_RADIUS,
+                  borderBottomRightRadius: CLIP_RADIUS,
+                }),
               }}
             >
               <Ionicons name={action.icon} size={20} color={action.color} />
@@ -144,6 +149,10 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
                 backgroundColor: action.backgroundColor,
                 justifyContent: 'center',
                 alignItems: 'center',
+                ...(index === 0 && {
+                  borderTopLeftRadius: CLIP_RADIUS,
+                  borderBottomLeftRadius: CLIP_RADIUS,
+                }),
               }}
             >
               <Ionicons name={action.icon} size={20} color={action.color} />

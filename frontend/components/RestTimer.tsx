@@ -76,7 +76,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
         {/* Timer display */}
         <View>
           <Text className="text-muted text-[9px] tracking-[3px] mb-1">REST TIMER</Text>
-          <Text className={`text-[40px] font-bold tracking-tighter leading-10 ${isUrgent ? 'text-danger' : 'text-primary'}`}>
+          <Text className={`text-[40px] font-mono-bold tracking-tighter leading-10 ${isUrgent ? 'text-danger' : 'text-primary'}`}>
             {formatTime(seconds)}
           </Text>
         </View>

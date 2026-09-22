@@ -1,9 +1,10 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useExercises } from '@/hooks/useExercises';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { alert } from '@/utils/confirm';
 
 export default function CreateExerciseModal() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
@@ -16,7 +17,7 @@ export default function CreateExerciseModal() {
   const c = useTheme();
 
   const handleCreate = () => {
-    if (!form.name.trim()) { Alert.alert('Error', 'Please enter an exercise name'); return; }
+    if (!form.name.trim()) { alert('Error', 'Please enter an exercise name'); return; }
     createExercise.mutate({
       name: form.name.trim(),
       sets: form.sets ? parseInt(form.sets) : null,

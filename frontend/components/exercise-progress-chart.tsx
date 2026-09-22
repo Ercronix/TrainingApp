@@ -45,17 +45,17 @@ export function ExerciseProgressChart({ entries }: Props) {
       {/* Stats row */}
       <View className="flex-row bg-base rounded-sm mb-4">
         <View className="flex-1 items-center py-3">
-          <Text className="text-accent-text text-xl font-bold tracking-tight">{personalBest} kg</Text>
+          <Text className="text-accent-text text-xl font-mono-bold tracking-tight">{personalBest} kg</Text>
           <Text className="text-muted text-[8px] tracking-[2px] mt-0.5">PERSONAL BEST</Text>
         </View>
         <View className="w-px bg-surface my-2" />
         <View className="flex-1 items-center py-3">
-          <Text className="text-primary text-xl font-bold tracking-tight">{lastWeight} kg</Text>
+          <Text className="text-primary text-xl font-mono-bold tracking-tight">{lastWeight} kg</Text>
           <Text className="text-muted text-[8px] tracking-[2px] mt-0.5">LAST SESSION</Text>
         </View>
         <View className="w-px bg-surface my-2" />
         <View className="flex-1 items-center py-3">
-          <Text className={`text-xl font-bold tracking-tight ${
+          <Text className={`text-xl font-mono-bold tracking-tight ${
             trend > 0 ? 'text-accent-text' : trend < 0 ? 'text-danger' : 'text-primary'
           }`}>
             {trend > 0 ? '+' : ''}{trend.toFixed(1)} kg

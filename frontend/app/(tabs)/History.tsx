@@ -96,7 +96,7 @@ export default function HistoryScreen() {
         ]}
       >
         <TouchableOpacity
-          className="bg-surface rounded-md p-5"
+          className="bg-surface rounded-l-md p-5"
           onPress={() =>
             router.push({ pathname: '/history-detail' as any, params: { trainingLogId: item.id.toString() } })
           }
@@ -104,7 +104,7 @@ export default function HistoryScreen() {
         >
           {/* Top row */}
           <View className="flex-row items-start mb-4 gap-3">
-            <Text className="text-subtle text-xl font-bold tracking-tight min-w-[28px]">
+            <Text className="text-subtle text-xl font-mono-bold tracking-tight min-w-[28px]">
               {String(index + 1).padStart(2, '0')}
             </Text>
             <View className="flex-1">
@@ -235,7 +235,7 @@ export default function HistoryScreen() {
         data={filteredHistory}
         renderItem={renderLogItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
         ListEmptyComponent={
           <View className="items-center mt-20 gap-3">

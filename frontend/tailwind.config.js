@@ -8,6 +8,15 @@ module.exports = {
   darkMode: 'class',
   theme: {
     extend: {
+      borderRadius: {
+        sm: '10px',
+        md: '18px',
+        lg: '24px',
+      },
+      fontFamily: {
+        mono: ['JetBrainsMono_400Regular'],
+        'mono-bold': ['JetBrainsMono_700Bold'],
+      },
       colors: {
         accent:         'var(--color-accent)',
         'accent-fg':    'var(--color-accent-fg)',
