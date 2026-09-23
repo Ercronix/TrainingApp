@@ -6,7 +6,7 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 
 ## Main Features
 
-- User registration/login with token-based auth.
+- User registration/login with JWT access tokens and rotating refresh tokens.
 - Training split management (create, update, activate, delete).
 - Workout management per split.
 - Exercise management per workout, including reordering.
@@ -14,6 +14,7 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
   - start session
   - update exercise completion, reps, sets, weight, notes
   - complete or delete session
+- Offline support: cached data stays available, and exercise log edits made offline sync once the connection returns.
 - History view with search + date filters.
 - Dashboard metrics:
   - streak tracking
@@ -47,8 +48,9 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 - `frontend/`: client app (mobile + web).
 - `backend/training-backend/`: REST API, auth, business logic, persistence.
 - `backend/docker-compose.yml`: local PostgreSQL container setup.
+- `docker-compose.yml` (repo root): production deployment (PostgreSQL, backend, Expo web build behind Nginx).
 - JWT-protected API routes (`/api/**`, except `/api/auth/**`).
-- Flyway migrations manage schema evolution (`V1` to `V9`).
+- Flyway migrations manage schema evolution (`V1` to `V12`).
 
 ## Run Locally
 
@@ -98,7 +100,13 @@ Open on web (`w`) or mobile via Expo QR code.
 
 The mobile app always points at the production API, so no extra config is needed before building.
 
-### Option A: EAS Build (cloud, recommended)
+All EAS build profiles in `frontend/eas.json` (`development`, `preview`, `production`) produce an installable `.apk` rather than an `.aab`.
+
+### Option A: GitHub Actions (recommended)
+
+Run the **Android Build** workflow from the Actions tab and pick a profile. It builds on the Actions runner with `eas build --local` (signing credentials come from EAS through the `EXPO_TOKEN` repository secret) and attaches the `.apk` to a new GitHub release. Non-production builds are marked as pre-releases.
+
+### Option B: EAS Build (cloud)
 
 ```bash
 cd frontend
@@ -107,9 +115,9 @@ eas login
 eas build --platform android --profile preview
 ```
 
-The `preview` profile (`frontend/eas.json`) uses internal distribution, which produces an installable `.apk` rather than an `.aab`. EAS prints a download link once the build finishes.
+EAS prints a download link once the build finishes.
 
-### Option B: Local build (no EAS account)
+### Option C: Local build (no EAS account)
 
 ```bash
 cd frontend
@@ -124,17 +132,26 @@ Output APK: `frontend/android/app/build/outputs/apk/release/app-release.apk` (or
 
 ## Environment Notes
 
-- Frontend API base URL is defined in `frontend/services/api.ts`.
-- For real mobile device testing, update the non-web API URL to your machine's LAN IP.
-- Backend uses Spring profile `local` by default.
+- Frontend API base URL is defined in `frontend/services/api.ts`. On web it comes from `EXPO_PUBLIC_API_URL` (default `http://localhost:8080/api`); native builds use the production URL.
+- For real mobile device testing against a local backend, update the non-web API URL to your machine's LAN IP.
+- Backend uses Spring profile `local` by default, which reads the gitignored `application-local.properties` (JWT secret, datasource password, CORS origins).
+
+## Tests and CI
+
+```bash
+(cd frontend && npx tsc --noEmit)                  # frontend typecheck
+(cd backend/training-backend && ./gradlew test)    # backend tests (need a running PostgreSQL)
+```
+
+The CI workflow (`.github/workflows/ci.yml`) runs both on every push and pull request to `main`.
 
 ## API Overview
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
+- `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`
 - `GET /api/auth/me`
-- `GET/POST/PUT/DELETE /api/splits`
-- `GET/POST/PUT/DELETE /api/workouts`
+- `GET/POST/PUT/DELETE /api/splits`, `GET /api/splits/active`, `PUT /api/splits/{id}/activate`
+- `GET/POST /api/workouts/split/{splitId}`, `GET/PUT/DELETE /api/workouts/{id}`
 - `GET/POST/PUT/PATCH/DELETE /api/workouts/{workoutId}/exercises`
 - `GET /api/exercises/{exerciseId}/progress`
-- `POST/GET/PUT/DELETE /api/training-logs`
+- `POST /api/training-logs/start`, `GET /api/training-logs`, `GET /api/training-logs/active`, `GET/DELETE /api/training-logs/{id}`, `PUT /api/training-logs/{id}/complete`
+- `POST /api/training-logs/{trainingLogId}/exercise-logs`, `PUT /api/training-logs/exercise-logs/{exerciseLogId}`
