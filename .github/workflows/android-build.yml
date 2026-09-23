@@ -60,8 +60,7 @@ jobs:
         id: build
         run: |
           version=$(jq -r '.expo.version' app.json)
-          ext=${{ inputs.profile == 'production' && 'aab' || 'apk' }}
-          file="trainingapp-${{ inputs.profile }}-${version}-${{ github.run_number }}.${ext}"
+          file="trainingapp-${{ inputs.profile }}-${version}-${{ github.run_number }}.apk"
           eas build --platform android --profile ${{ inputs.profile }} --local --non-interactive --output "$file"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "file=frontend/$file" >> "$GITHUB_OUTPUT"
