@@ -1,25 +1,19 @@
-package de.mornhinweg.trainingbackend.dto.exercise;
+package de.mornhinweg.trainingbackend.dto.library;
 
 import lombok.*;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class ExerciseResponse {
+public class LibraryExerciseResponse {
   private Long id;
-  private Long workoutId;
-  private Long libraryExerciseId;
   private String name;
   private String description;
   private String videoUrl;
   private String videoId;
-  private Integer sets;
-  private Integer reps;
   private String repUnit;
-  private BigDecimal plannedWeight;
-  private BigDecimal lastUsedWeight;
+  // Number of workouts (templates, not one-off session exercises) that use this entry
+  private long workoutCount;
   private LocalDateTime lastTrainedAt;
-  private Integer orderIndex;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
 }

@@ -23,27 +23,15 @@ public class Exercise {
   @JoinColumn(name = "workout_id", nullable = false)
   private Workout workout;
 
-  @Column(nullable = false, length = 100)
-  private String name;
-
-  @Column(columnDefinition = "TEXT")
-  private String description;
-
-  @Column(name = "video_url", length = 500)
-  private String videoUrl;
-
-  @Column(name = "video_id", length = 50)
-  private String videoId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "library_exercise_id", nullable = false)
+  private LibraryExercise libraryExercise;
 
   @Column
   private Integer sets;
 
   @Column
   private Integer reps;
-
-  @Column(name = "rep_unit", nullable = false, length = 10)
-  @Builder.Default
-  private String repUnit = "reps";
 
   @Column(name = "planned_weight", precision = 5, scale = 2)
   private BigDecimal plannedWeight;

@@ -51,6 +51,7 @@ export default function HistoryDetailScreen() {
             params: {
               exerciseId: item.exerciseId.toString(),
               exerciseName: item.exerciseName,
+              libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
               description: liveExercise?.description || '',
               videoUrl: liveExercise?.videoUrl || '',
               sets: item.plannedSets?.toString() || '',

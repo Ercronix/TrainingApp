@@ -57,6 +57,7 @@ export interface TrainingLog {
 export interface ExerciseLog {
   id: number;
   exerciseId: number;
+  libraryExerciseId: number;
   exerciseName: string;
   workoutId: number;
   workoutName: string;
@@ -83,6 +84,7 @@ export interface Workout {
 
 export interface Exercise {
   id: number;
+  libraryExerciseId: number;
   name: string;
   description?: string | null;
   videoUrl?: string | null;
@@ -103,8 +105,31 @@ export interface UpdateExerciseLogRequest {
   notes?: string;
 }
 
-export interface CreateExerciseRequest {
+// An exercise in the user's library. Workout exercises link to one and add their own plan
+// (sets/reps/weight), so name, notes, video and rep unit are shared by every workout using it.
+export interface LibraryExercise {
+  id: number;
   name: string;
+  description: string | null;
+  videoUrl: string | null;
+  videoId: string | null;
+  repUnit: 'reps' | 'seconds';
+  workoutCount: number;
+  lastTrainedAt: string | null;
+}
+
+export interface UpdateLibraryExerciseRequest {
+  name?: string;
+  description?: string | null;
+  videoUrl?: string | null;
+  repUnit?: 'reps' | 'seconds';
+}
+
+export interface CreateExerciseRequest {
+  // Either an existing library entry, or a name that is matched against the library
+  // (ignoring case) and added to it when new
+  libraryExerciseId?: number;
+  name?: string;
   description?: string | null;
   videoUrl?: string | null;
   videoId?: string | null;
@@ -120,10 +145,13 @@ export interface ExerciseProgressEntry {
   setsCompleted: number;
   repsCompleted: number;
   trainingLogId: number;
+  workoutName: string;
 }
 
+// Covers every workout that uses the same library exercise
 export interface ExerciseProgress {
-  exerciseId: number;
+  exerciseId: number | null;
+  libraryExerciseId: number;
   exerciseName: string;
   entries: ExerciseProgressEntry[];
 }

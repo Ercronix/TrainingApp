@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -233,6 +233,28 @@ export const exercisesApi = {
   },
 };
 
+// Exercise library — the user's movements, shared by every workout that uses them
+export const libraryApi = {
+  getAll: async (): Promise<LibraryExercise[]> => {
+    const response = await api.get("/library-exercises");
+    return response.data;
+  },
+
+  update: async (id: number, data: UpdateLibraryExerciseRequest): Promise<LibraryExercise> => {
+    const response = await api.put(`/library-exercises/${id}`, data);
+    return response.data;
+  },
+
+  delete: async (id: number): Promise<void> => {
+    await api.delete(`/library-exercises/${id}`);
+  },
+
+  getProgress: async (id: number): Promise<ExerciseProgress> => {
+    const response = await api.get(`/library-exercises/${id}/progress`);
+    return response.data;
+  },
+};
+
 // Training Logs API
 export const trainingLogsApi = {
   start: async (workoutId: number): Promise<TrainingLog> => {
@@ -243,7 +265,8 @@ export const trainingLogsApi = {
   addExerciseLog: async (
     trainingLogId: number,
     data: {
-      name: string;
+      libraryExerciseId?: number;
+      name?: string;
       sets?: number | null;
       reps?: number | null;
       plannedWeight?: number | null;

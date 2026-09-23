@@ -5,23 +5,14 @@ import { useAddExerciseLog } from '@/hooks/useAddExerciseLog';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { alert } from '@/utils/confirm';
+import { useLibrary } from '@/hooks/useLibrary';
+import { LibrarySuggestions, findLibraryMatch } from '@/components/LibrarySuggestions';
 
 export default function AddExerciseScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
   const router = useRouter();
   const { addExerciseLog, isPending } = useAddExerciseLog(trainingLogId);
   const c = useTheme();
-
-  if (!trainingLogId) {
-    return (
-      <View className="flex-1 justify-center items-center bg-base p-6">
-        <Text className="text-muted text-base mb-4">Missing training session.</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-accent-text text-base">Go Back</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   const [form, setForm] = useState({
     name: '',
@@ -35,6 +26,20 @@ export default function AddExerciseScreen() {
   const updateField = (field: keyof typeof form) => (value: string) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  const { library } = useLibrary();
+  const libraryMatch = findLibraryMatch(library, form.name);
+
+  if (!trainingLogId) {
+    return (
+      <View className="flex-1 justify-center items-center bg-base p-6">
+        <Text className="text-muted text-base mb-4">Missing training session.</Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text className="text-accent-text text-base">Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const handleAdd = () => {
     if (!form.name.trim()) {
       alert('Error', 'Please enter an exercise name');
@@ -42,7 +47,7 @@ export default function AddExerciseScreen() {
     }
 
     addExerciseLog.mutate({
-      name: form.name.trim(),
+      ...(libraryMatch ? { libraryExerciseId: libraryMatch.id } : { name: form.name.trim() }),
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
@@ -109,6 +114,13 @@ export default function AddExerciseScreen() {
           keyboardAppearance="dark"
           editable={!isPending}
         />
+        {libraryMatch && (
+          <View className="flex-row items-center gap-2 -mt-2 mb-4">
+            <Ionicons name="library-outline" size={14} color={c.accent} />
+            <Text className="text-muted text-[10px] tracking-widest flex-1">IN YOUR LIBRARY · HISTORY IS SHARED</Text>
+          </View>
+        )}
+        <LibrarySuggestions library={library} query={form.name} onSelect={(entry) => updateField('name')(entry.name)} />
 
         {/* Sets */}
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">SETS</Text>

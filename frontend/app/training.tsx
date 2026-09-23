@@ -100,6 +100,7 @@ export default function TrainingScreen() {
             pathname: '/exercise-detail' as any,
             params: {
               exerciseId: item.exerciseId?.toString() ?? '', exerciseName: item.exerciseName,
+              libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
               description: '', videoUrl: '',
               sets: item.plannedSets?.toString() || '', reps: item.plannedReps?.toString() || '',
               weight: item.plannedWeight?.toString() || '', workoutId: item.workoutId?.toString() ?? '',

@@ -19,23 +19,25 @@ public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> 
   @Query("""
       SELECT el FROM ExerciseLog el
       JOIN FETCH el.trainingLog tl
-      WHERE el.exercise.id = :exerciseId
+      JOIN FETCH el.exercise e
+      JOIN FETCH e.workout
+      WHERE e.libraryExercise.id = :libraryExerciseId
         AND el.completed = true
         AND tl.completedAt IS NOT NULL
       ORDER BY tl.completedAt ASC
       """)
-  List<ExerciseLog> findCompletedByExerciseIdOrderByDate(@Param("exerciseId") Long exerciseId);
+  List<ExerciseLog> findCompletedByLibraryExerciseIdOrderByDate(@Param("libraryExerciseId") Long libraryExerciseId);
 
   @Query("""
       SELECT el FROM ExerciseLog el
       JOIN el.trainingLog tl
-      WHERE el.exercise.id = :exerciseId
+      WHERE el.exercise.libraryExercise.id = :libraryExerciseId
         AND el.completed = true
         AND tl.completedAt IS NOT NULL
         AND tl.id <> :excludeTrainingLogId
       ORDER BY tl.completedAt DESC
       LIMIT 1
       """)
-  Optional<ExerciseLog> findPreviousCompleted(@Param("exerciseId") Long exerciseId,
+  Optional<ExerciseLog> findPreviousCompleted(@Param("libraryExerciseId") Long libraryExerciseId,
                                               @Param("excludeTrainingLogId") Long excludeTrainingLogId);
 }

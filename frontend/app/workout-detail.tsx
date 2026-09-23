@@ -69,6 +69,7 @@ export default function WorkoutDetailScreen() {
               pathname: '/exercise-detail' as any,
               params: {
                 exerciseId: item.id.toString(), exerciseName: item.name,
+                libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
                 description: item.description || '', videoUrl: item.videoUrl || '',
                 sets: item.sets?.toString() || '', reps: item.reps?.toString() || '',
                 weight: item.plannedWeight?.toString() || '', workoutId,

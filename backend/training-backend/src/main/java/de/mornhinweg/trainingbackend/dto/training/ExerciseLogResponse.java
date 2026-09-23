@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 public class ExerciseLogResponse {
   private Long id;
   private Long exerciseId;
+  private Long libraryExerciseId;
   private String exerciseName;
   private Long workoutId;
   private String workoutName;

@@ -5,6 +5,9 @@ import { useExercises } from '@/hooks/useExercises';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { alert } from '@/utils/confirm';
+import { useLibrary } from '@/hooks/useLibrary';
+import { LibrarySuggestions, findLibraryMatch } from '@/components/LibrarySuggestions';
+import { LibraryExercise } from '@/types';
 
 export default function CreateExerciseModal() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
@@ -15,11 +18,41 @@ export default function CreateExerciseModal() {
   const updateField = (field: keyof typeof form) => (value: string) => setForm(prev => ({ ...prev, [field]: value }));
   const isPending = createExercise.isPending;
   const c = useTheme();
+  const { library } = useLibrary();
+  const libraryMatch = findLibraryMatch(library, form.name);
+
+  // An existing library entry brings its shared details along
+  const applyEntry = (entry: LibraryExercise) => {
+    setForm(prev => ({
+      ...prev,
+      name: entry.name,
+      videoUrl: prev.videoUrl || entry.videoUrl || '',
+      description: prev.description || entry.description || '',
+    }));
+    setRepUnit(entry.repUnit === 'seconds' ? 'seconds' : 'reps');
+  };
+
+  const handleNameChange = (name: string) => {
+    const match = findLibraryMatch(library, name);
+    if (match && match.id !== libraryMatch?.id) {
+      applyEntry({ ...match, name });
+    } else if (!match && libraryMatch) {
+      // Typed away from a library name: drop the details it filled in
+      setForm(prev => ({
+        ...prev,
+        name,
+        videoUrl: prev.videoUrl === (libraryMatch.videoUrl ?? '') ? '' : prev.videoUrl,
+        description: prev.description === (libraryMatch.description ?? '') ? '' : prev.description,
+      }));
+    } else {
+      updateField('name')(name);
+    }
+  };
 
   const handleCreate = () => {
     if (!form.name.trim()) { alert('Error', 'Please enter an exercise name'); return; }
     createExercise.mutate({
-      name: form.name.trim(),
+      ...(libraryMatch ? { libraryExerciseId: libraryMatch.id } : { name: form.name.trim() }),
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
       repUnit,
@@ -51,11 +84,20 @@ export default function CreateExerciseModal() {
           placeholder="Bench Press, Squat..."
           placeholderTextColor={c.elevated}
           value={form.name}
-          onChangeText={updateField('name')}
+          onChangeText={handleNameChange}
           autoFocus
           keyboardAppearance="dark"
           editable={!isPending}
         />
+        {libraryMatch && (
+          <View className="flex-row items-center gap-2 -mt-3 mb-5">
+            <Ionicons name="library-outline" size={14} color={c.accent} />
+            <Text className="text-muted text-[10px] tracking-widest flex-1">
+              IN YOUR LIBRARY · NOTES, VIDEO AND HISTORY ARE SHARED
+            </Text>
+          </View>
+        )}
+        <LibrarySuggestions library={library} query={form.name} onSelect={applyEntry} />
 
         <View className="flex-row gap-3 mb-3">
           <View className="flex-1">

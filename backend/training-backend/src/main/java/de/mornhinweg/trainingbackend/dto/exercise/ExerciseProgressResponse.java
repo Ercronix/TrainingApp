@@ -8,7 +8,9 @@ import java.util.List;
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ExerciseProgressResponse {
 
+  // Null when the progress was requested for a library entry rather than a workout exercise
   private Long exerciseId;
+  private Long libraryExerciseId;
   private String exerciseName;
   private List<ProgressEntry> entries;
 
@@ -19,5 +21,7 @@ public class ExerciseProgressResponse {
     private Integer setsCompleted;
     private Integer repsCompleted;
     private Long trainingLogId;
+    // Progress covers every workout that uses the library entry
+    private String workoutName;
   }
 }
