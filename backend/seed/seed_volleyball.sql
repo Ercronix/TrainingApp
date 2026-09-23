@@ -1,5 +1,5 @@
 -- Volleyball Off-Season Training Plan seed script
--- Usage: psql -U <db_user> -d <db_name> -f seed_volleyball.sql
+-- Usage: psql -U <db_user> -d <db_name> -f backend/seed/seed_volleyball.sql
 --
 -- Before running: set v_user_id to your actual user ID.
 -- Find it with:  SELECT id, username FROM users;

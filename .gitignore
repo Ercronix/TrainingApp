@@ -25,3 +25,7 @@ application-prod.properties
 .env.local
 *.key
 *.pem
+
+# Claude Code (local worktrees and per-user settings)
+.claude/worktrees/
+.claude/settings.local.json
