@@ -20,6 +20,7 @@ export function useTraining(trainingLogId: string) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['history'] });
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeTraining });
     },
     onError: (error: unknown) => {
       alert('Error', getErrorMessage(error));

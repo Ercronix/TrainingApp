@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useHistory } from '@/hooks/useHistory';
+import { isInProgress } from '@/hooks/useActiveTraining';
 import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { TrainingLog } from '@/types';
@@ -98,7 +99,11 @@ export default function HistoryScreen() {
         <TouchableOpacity
           className="bg-surface rounded-l-md p-5"
           onPress={() =>
-            router.push({ pathname: '/history-detail' as any, params: { trainingLogId: item.id.toString() } })
+            // Sessions still in progress reopen in the training screen so they can be continued
+            router.push({
+              pathname: isInProgress(item) ? '/training' : '/history-detail' as any,
+              params: { trainingLogId: item.id.toString() },
+            })
           }
           activeOpacity={0.85}
         >

@@ -12,6 +12,7 @@ import { getPalette, getThemeVars } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { storage } from '@/services/storage';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
+import { ActiveTrainingBanner } from '@/components/ActiveTrainingBanner';
 import { queryClient, persister, CACHE_MAX_AGE } from '@/services/queryClient';
 import "./styles/global.css";
 
@@ -85,6 +86,7 @@ function AppLayout() {
               <Stack.Screen name="library"         options={{ headerShown: false }} />
               <Stack.Screen name="one-rep-max"     options={{ headerShown: false }} />
             </Stack>
+            <ActiveTrainingBanner />
             <ConfirmDialogHost />
           </AuthProvider>
         </PersistQueryClientProvider>
