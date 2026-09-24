@@ -5,9 +5,10 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons } from '@expo/vector-icons';
 import { useExerciseDetail } from '@/hooks/useExerciseDetail';
 import { useExerciseProgress } from '@/hooks/useExerciseProgress';
-import { ExerciseProgressChart } from '@/components/exercise-progress-chart';
+import { ExerciseAnalytics } from '@/components/ExerciseAnalytics';
+import { OneRepMaxCalculator } from '@/components/OneRepMaxCalculator';
 import { useTheme } from '@/hooks/useTheme';
-import { getPersonalRecords, formatKg } from '@/utils/strength';
+import { estimateOneRepMax } from '@/utils/strength';
 import { useLibrary } from '@/hooks/useLibrary';
 import { confirm } from '@/utils/confirm';
 
@@ -25,7 +26,7 @@ export default function ExerciseDetailScreen() {
 
   const router = useRouter();
   const { saveVideo, saveDescription, saveName, isPending } = useExerciseDetail(workoutId, exerciseId, libraryExerciseId);
-  const { deleteEntry } = useLibrary();
+  const { library, deleteEntry } = useLibrary();
   const [name, setName] = useState(exerciseName || '');
   const [editingName, setEditingName] = useState(false);
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl || '');
@@ -34,7 +35,15 @@ export default function ExerciseDetailScreen() {
   const [editingDescription, setEditingDescription] = useState(false);
   const { progress, isLoading: progressLoading } = useExerciseProgress(exerciseId, libraryExerciseId);
   const c = useTheme();
-  const records = getPersonalRecords(progress?.entries ?? []);
+  const libraryId = progress?.libraryExerciseId ?? (libraryExerciseId ? Number(libraryExerciseId) : null);
+  const timed = library.find((l) => l.id === libraryId)?.repUnit === 'seconds';
+  // Seed the calculator with the set behind the best estimated 1RM
+  const bestSet = timed ? undefined : (progress?.entries ?? []).reduce<{ weight: number; reps: number } | undefined>((best, e) => {
+    const weight = Number(e.weightUsed ?? 0);
+    if (weight <= 0 || e.repsCompleted <= 0) return best;
+    return !best || estimateOneRepMax(weight, e.repsCompleted) > estimateOneRepMax(best.weight, best.reps)
+      ? { weight, reps: e.repsCompleted } : best;
+  }, undefined);
 
   const getYouTubeId = (url: string) => {
     if (!url) return null;
@@ -108,29 +117,6 @@ export default function ExerciseDetailScreen() {
           </View>
         )}
 
-        {/* Records */}
-        {records.bestWeight != null && (
-          <View className="bg-surface rounded-md p-5 mb-2">
-            <Text className="text-muted text-[9px] tracking-[3px] mb-3">PERSONAL RECORDS</Text>
-            <View className="flex-row gap-6">
-              <View>
-                <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{formatKg(records.bestWeight)}</Text>
-                <Text className="text-muted text-[9px] tracking-[2px] mt-1">KG HEAVIEST</Text>
-              </View>
-              {records.bestOneRepMax != null && (
-                <View>
-                  <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{formatKg(records.bestOneRepMax)}</Text>
-                  <Text className="text-muted text-[9px] tracking-[2px] mt-1">KG EST. 1RM</Text>
-                </View>
-              )}
-              <View>
-                <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{records.sessions}</Text>
-                <Text className="text-muted text-[9px] tracking-[2px] mt-1">SESSIONS</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
         {/* Video */}
         <View className="bg-surface rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
@@ -178,17 +164,25 @@ export default function ExerciseDetailScreen() {
           )}
         </View>
 
-        {/* Progress Chart */}
-        <View className="bg-surface rounded-md p-5 mb-2">
-          <Text className="text-muted text-[9px] tracking-[3px] mb-3">WEIGHT PROGRESS</Text>
-          {progressLoading ? (
-            <View className="items-center py-6">
-              <Text className="text-elevated text-[10px] tracking-[3px]">LOADING...</Text>
-            </View>
-          ) : (
-            <ExerciseProgressChart entries={progress?.entries ?? []} />
-          )}
-        </View>
+        {/* Statistics */}
+        {progressLoading ? (
+          <View className="bg-surface rounded-md p-5 mb-2 items-center py-6">
+            <Text className="text-muted text-[10px] tracking-[3px]">LOADING...</Text>
+          </View>
+        ) : (
+          <ExerciseAnalytics entries={progress?.entries ?? []} timed={timed} />
+        )}
+
+        {!timed && !progressLoading && (
+          <View className="bg-surface rounded-md p-5 mb-2">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-3">1RM CALCULATOR</Text>
+            <OneRepMaxCalculator
+              key={bestSet ? `${bestSet.weight}x${bestSet.reps}` : 'empty'}
+              initialWeight={bestSet?.weight}
+              initialReps={bestSet?.reps}
+            />
+          </View>
+        )}
 
         {/* Description */}
         <View className="bg-surface rounded-md p-5 mb-2">

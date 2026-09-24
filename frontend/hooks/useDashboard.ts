@@ -1,4 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { computeTrainingAnalytics } from '@/utils/stats';
 import { trainingLogsApi } from '@/services/api';
 import { TrainingLog, ExerciseLog, DashboardStats } from '@/types';
 
@@ -72,7 +74,8 @@ function calculateVolume(exercises?: ExerciseLog[]): number {
   if (!exercises) return 0;
   
   return exercises.reduce((total, ex) => {
-    if (ex.completed && ex.weightUsed && ex.setsCompleted && ex.repsCompleted) {
+    // Timed exercises log seconds, which don't make tonnage
+    if (ex.completed && ex.repUnit !== 'seconds' && ex.weightUsed && ex.setsCompleted && ex.repsCompleted) {
       return total + (ex.weightUsed * ex.setsCompleted * ex.repsCompleted);
     }
     return total;
@@ -101,8 +104,8 @@ export function useDashboard() {
     queryFn: trainingLogsApi.getAll,
   });
 
-  const stats: DashboardStats = query.data 
-    ? calculateStats(query.data) 
+  const stats: DashboardStats = useMemo(() => query.data
+    ? calculateStats(query.data)
     : {
         streak: { current: 0, longest: 0, last7Days: Array(7).fill(false) },
         sessions: { week: 0, month: 0, year: 0 },
@@ -112,10 +115,12 @@ export function useDashboard() {
         lastSession: null,
         mostActiveDay: 'Monday',
         sessionsByDay: {},
-      };
+      }, [query.data]);
+  const analytics = useMemo(() => computeTrainingAnalytics(query.data ?? []), [query.data]);
 
   return {
     stats,
+    analytics,
     isLoading: query.isLoading,
     isRefetching: query.isRefetching,
     refetch: query.refetch,
