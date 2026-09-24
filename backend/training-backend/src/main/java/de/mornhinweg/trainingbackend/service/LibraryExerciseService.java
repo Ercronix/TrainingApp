@@ -4,6 +4,7 @@ import de.mornhinweg.trainingbackend.dto.exercise.ExerciseProgressResponse;
 import de.mornhinweg.trainingbackend.dto.library.CreateLibraryExerciseRequest;
 import de.mornhinweg.trainingbackend.dto.library.LibraryExerciseResponse;
 import de.mornhinweg.trainingbackend.dto.library.UpdateLibraryExerciseRequest;
+import de.mornhinweg.trainingbackend.dto.training.SetLogResponse;
 import de.mornhinweg.trainingbackend.exception.BadRequestException;
 import de.mornhinweg.trainingbackend.exception.ConflictException;
 import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
@@ -164,6 +165,7 @@ public class LibraryExerciseService {
             .weightUsed(log.getWeightUsed())
             .setsCompleted(log.getSetsCompleted())
             .repsCompleted(log.getRepsCompleted())
+            .sets(SetLogResponse.fromAll(log.getSetLogs()))
             .trainingLogId(log.getTrainingLog().getId())
             .workoutName(log.getExercise().getWorkout().getName())
             .build())

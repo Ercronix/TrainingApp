@@ -1,9 +1,10 @@
 import { Platform, Share } from 'react-native';
-import { TrainingLog } from '@/types';
+import { SetLog, TrainingLog } from '@/types';
+import { setsOf } from './sets';
 
 const HEADER = [
   'date', 'split', 'workout', 'exercise', 'completed',
-  'sets', 'reps', 'unit', 'weight_kg', 'notes', 'session_duration_min',
+  'set', 'warmup', 'reps', 'unit', 'weight_kg', 'rpe', 'notes', 'session_duration_min',
 ];
 
 function escapeCsv(value: unknown): string {
@@ -12,25 +13,31 @@ function escapeCsv(value: unknown): string {
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-/** One row per exercise per completed session, oldest first. */
+/** One row per logged set (or per exercise without sets) of each completed session, oldest first. */
 export function trainingLogsToCsv(logs: TrainingLog[]): string {
   const rows = logs
     .filter((log) => log.isCompleted)
     .sort((a, b) => a.startedAt.localeCompare(b.startedAt))
     .flatMap((log) =>
-      log.exercises.map((e) => [
-        log.startedAt.slice(0, 10),
-        log.splitName,
-        log.workoutName,
-        e.exerciseName,
-        e.completed ? 'yes' : 'no',
-        e.setsCompleted,
-        e.repsCompleted,
-        e.repUnit ?? 'reps',
-        e.weightUsed,
-        e.notes,
-        log.durationSeconds != null ? Math.round(log.durationSeconds / 60) : '',
-      ]),
+      log.exercises.flatMap((e) => {
+        const sets = setsOf(e);
+        const row = (set: SetLog | null, index: number) => [
+          log.startedAt.slice(0, 10),
+          log.splitName,
+          log.workoutName,
+          e.exerciseName,
+          e.completed ? 'yes' : 'no',
+          set ? index + 1 : '',
+          set ? (set.warmup ? 'yes' : 'no') : '',
+          set?.reps,
+          e.repUnit ?? 'reps',
+          set?.weight,
+          set?.rpe,
+          e.notes,
+          log.durationSeconds != null ? Math.round(log.durationSeconds / 60) : '',
+        ];
+        return sets.length > 0 ? sets.map(row) : [row(null, 0)];
+      }),
     );
   return [HEADER, ...rows].map((row) => row.map(escapeCsv).join(',')).join('\n');
 }
