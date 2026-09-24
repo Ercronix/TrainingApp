@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { trainingLogsApi } from '@/services/api';
 import { TrainingLog, ExerciseLog, DashboardStats } from '@/types';
+import { setsOf, setVolume } from '@/utils/sets';
 
 function formatTime(minutes: number): string {
   if (minutes < 60) return `${Math.round(minutes)}m`;
@@ -71,12 +72,7 @@ function calculateStreak(logs: TrainingLog[]): { current: number; longest: numbe
 function calculateVolume(exercises?: ExerciseLog[]): number {
   if (!exercises) return 0;
   
-  return exercises.reduce((total, ex) => {
-    if (ex.completed && ex.weightUsed && ex.setsCompleted && ex.repsCompleted) {
-      return total + (ex.weightUsed * ex.setsCompleted * ex.repsCompleted);
-    }
-    return total;
-  }, 0);
+  return exercises.reduce((total, ex) => (ex.completed ? total + setVolume(setsOf(ex)) : total), 0);
 }
 
 function calculateTimeRange(date: Date, range: 'week' | 'month' | 'year'): boolean {

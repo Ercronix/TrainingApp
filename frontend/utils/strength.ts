@@ -17,11 +17,18 @@ export function getPersonalRecords(entries: ExerciseProgressEntry[]): PersonalRe
   let bestWeight: number | null = null;
   let bestOneRepMax: number | null = null;
   for (const e of entries) {
-    const weight = Number(e.weightUsed ?? 0);
-    if (weight <= 0) continue;
-    bestWeight = Math.max(bestWeight ?? 0, weight);
-    const e1rm = estimateOneRepMax(weight, e.repsCompleted);
-    if (e1rm > 0) bestOneRepMax = Math.max(bestOneRepMax ?? 0, e1rm);
+    // Every working set counts (e.g. a lighter set for more reps can be the best 1RM).
+    // Entries cached before per-set logging only have the heaviest set.
+    const sets = e.sets
+      ? e.sets.filter((s) => !s.warmup)
+      : [{ weight: e.weightUsed, reps: e.repsCompleted }];
+    for (const set of sets) {
+      const weight = Number(set.weight ?? 0);
+      if (weight <= 0) continue;
+      bestWeight = Math.max(bestWeight ?? 0, weight);
+      const e1rm = estimateOneRepMax(weight, set.reps);
+      if (e1rm > 0) bestOneRepMax = Math.max(bestOneRepMax ?? 0, e1rm);
+    }
   }
   return { bestWeight, bestOneRepMax, sessions: entries.length };
 }

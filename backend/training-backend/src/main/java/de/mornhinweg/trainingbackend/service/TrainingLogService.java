@@ -11,8 +11,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,9 +86,25 @@ public class TrainingLogService {
       throw new UnauthorizedException("Access denied");
     }
 
-    if (request.getSetsCompleted() != null) exerciseLog.setSetsCompleted(request.getSetsCompleted());
-    if (request.getRepsCompleted() != null) exerciseLog.setRepsCompleted(request.getRepsCompleted());
-    if (request.getWeightUsed() != null) exerciseLog.setWeightUsed(request.getWeightUsed());
+    if (request.getSets() != null) {
+      exerciseLog.replaceSets(request.getSets().stream()
+          .map(s -> SetLog.builder()
+              .reps(s.getReps())
+              .weight(s.getWeight())
+              .rpe(s.getRpe())
+              .warmup(Boolean.TRUE.equals(s.getWarmup()))
+              .build())
+          .toList());
+    } else if (request.getSetsCompleted() != null || request.getRepsCompleted() != null || request.getWeightUsed() != null) {
+      // A plain sets × reps @ weight becomes that many identical working sets
+      int sets = request.getSetsCompleted() != null ? request.getSetsCompleted() : exerciseLog.getSetsCompleted();
+      int reps = request.getRepsCompleted() != null ? request.getRepsCompleted() : exerciseLog.getRepsCompleted();
+      BigDecimal weight = request.getWeightUsed() != null ? request.getWeightUsed() : exerciseLog.getWeightUsed();
+      if (sets < 0 || sets > 50 || reps < 0) {
+        throw new BadRequestException("Invalid sets or reps");
+      }
+      exerciseLog.replaceSets(Collections.nCopies(sets, SetLog.builder().reps(reps).weight(weight).build()));
+    }
     if (request.getCompleted() != null) exerciseLog.setCompleted(request.getCompleted());
     if (request.getNotes() != null) exerciseLog.setNotes(request.getNotes());
 
@@ -239,12 +257,14 @@ public class TrainingLogService {
         .setsCompleted(exerciseLog.getSetsCompleted())
         .repsCompleted(exerciseLog.getRepsCompleted())
         .weightUsed(exerciseLog.getWeightUsed())
+        .sets(SetLogResponse.fromAll(exerciseLog.getSetLogs()))
         .completed(exerciseLog.getCompleted())
         .notes(exerciseLog.getNotes())
         .repUnit(libraryExercise.getRepUnit())
         .previousSets(previous != null ? previous.getSetsCompleted() : null)
         .previousReps(previous != null ? previous.getRepsCompleted() : null)
         .previousWeight(previous != null ? previous.getWeightUsed() : null)
+        .previousSetLogs(previous != null ? SetLogResponse.fromAll(previous.getSetLogs()) : null)
         .build();
   }
 }
