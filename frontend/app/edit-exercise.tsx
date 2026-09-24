@@ -17,9 +17,8 @@ export default function EditExerciseModal() {
     name: currentName || '', sets: currentSets || '',
     reps: currentReps || '', plannedWeight: currentWeight || '',
   });
-  const [repUnit, setRepUnit] = useState<'reps' | 'seconds'>(
-    currentRepUnit === 'seconds' ? 'seconds' : 'reps'
-  );
+  const initialRepUnit = currentRepUnit === 'seconds' ? 'seconds' : 'reps';
+  const [repUnit, setRepUnit] = useState<'reps' | 'seconds'>(initialRepUnit);
   const { save, isPending } = useEditExercise(workoutId, exerciseId);
   const updateField = (field: keyof typeof form) => (value: string) => setForm(prev => ({ ...prev, [field]: value }));
   const c = useTheme();
@@ -111,7 +110,7 @@ export default function EditExerciseModal() {
         <TouchableOpacity
           className={`bg-accent rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
           style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
-          onPress={() => save(form, repUnit)}
+          onPress={() => save(form, repUnit === initialRepUnit ? undefined : repUnit)}
           disabled={isPending}
           activeOpacity={0.85}
         >

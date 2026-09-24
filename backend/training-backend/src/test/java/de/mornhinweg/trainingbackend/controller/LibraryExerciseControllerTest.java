@@ -87,6 +87,38 @@ class LibraryExerciseControllerTest {
   }
 
   @Test
+  void renamingAnUnsharedExerciseRenamesItsEntry() throws Exception {
+    String created = createExercise(workoutA, "{\"name\":\"Bench\",\"description\":\"Pause on chest\",\"repUnit\":\"seconds\"}");
+
+    String updated = perform(token, put("/api/workouts/" + workoutA + "/exercises/" + id(created)), "{\"name\":\"Bench Press\"}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("Bench Press"))
+        .andExpect(jsonPath("$.description").value("Pause on chest"))
+        .andExpect(jsonPath("$.repUnit").value("seconds"))
+        .andReturn().getResponse().getContentAsString();
+    assertEquals(libraryId(created), libraryId(updated));
+
+    perform(token, get("/api/library-exercises"), null).andExpect(jsonPath("$", hasSize(1)));
+  }
+
+  @Test
+  void renamingASharedExerciseKeepsItsDetails() throws Exception {
+    long exerciseId = id(createExercise(workoutA, "{\"name\":\"Plank\",\"description\":\"Squeeze glutes\",\"repUnit\":\"seconds\"}"));
+    createExercise(workoutB, "{\"name\":\"Plank\"}");
+
+    perform(token, put("/api/workouts/" + workoutA + "/exercises/" + exerciseId), "{\"name\":\"Side Plank\"}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.name").value("Side Plank"))
+        .andExpect(jsonPath("$.description").value("Squeeze glutes"))
+        .andExpect(jsonPath("$.repUnit").value("seconds"));
+
+    // A new exercise without a rep unit leaves the shared entry's unit alone
+    perform(token, get("/api/workouts/" + workoutB + "/exercises"), null)
+        .andExpect(jsonPath("$[0].name").value("Plank"))
+        .andExpect(jsonPath("$[0].repUnit").value("seconds"));
+  }
+
+  @Test
   void progressAndPreviousValuesSpanWorkouts() throws Exception {
     long libraryId = libraryId(createExercise(workoutA, "{\"name\":\"Deadlift\"}"));
     createExercise(workoutB, "{\"name\":\"Deadlift\"}");

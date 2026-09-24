@@ -105,6 +105,34 @@ public class LibraryExerciseService {
             LibraryExercise.builder().user(user).name(trimmed).build()));
   }
 
+  /**
+   * Returns the entry a single exercise should use after being renamed from {@code current}: the
+   * existing entry with that name, otherwise {@code current} renamed in place if no other exercise
+   * uses it, otherwise a new entry that keeps the details of {@code current}.
+   */
+  @Transactional
+  public LibraryExercise renameFor(User user, LibraryExercise current, String name) {
+    if (name == null || name.isBlank()) {
+      throw new BadRequestException("Exercise name is required");
+    }
+    String trimmed = name.trim();
+    return libraryExerciseRepository.findByUserIdAndNameIgnoreCase(user.getId(), trimmed)
+        .orElseGet(() -> {
+          if (exerciseRepository.countByLibraryExerciseId(current.getId()) <= 1) {
+            current.setName(trimmed);
+            return current;
+          }
+          return libraryExerciseRepository.save(LibraryExercise.builder()
+              .user(user)
+              .name(trimmed)
+              .description(current.getDescription())
+              .videoUrl(current.getVideoUrl())
+              .videoId(current.getVideoId())
+              .repUnit(current.getRepUnit())
+              .build());
+        });
+  }
+
   /** Renames an entry, keeping names unique per user (a change of case only is allowed). */
   void rename(LibraryExercise entry, String name) {
     String trimmed = name.trim();

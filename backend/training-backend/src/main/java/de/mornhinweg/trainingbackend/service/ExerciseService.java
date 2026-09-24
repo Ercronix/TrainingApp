@@ -71,7 +71,7 @@ public class ExerciseService {
         // Only the capitalization changed, so fix it on the entry itself
         libraryExerciseService.rename(current, request.getName());
       } else {
-        exercise.setLibraryExercise(libraryExerciseService.resolve(user, null, request.getName()));
+        exercise.setLibraryExercise(libraryExerciseService.renameFor(user, current, request.getName()));
       }
     }
     libraryExerciseService.applyDetails(exercise.getLibraryExercise(),

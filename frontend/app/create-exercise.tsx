@@ -15,6 +15,9 @@ export default function CreateExerciseModal() {
   const { createExercise } = useExercises(workoutId);
   const [form, setForm] = useState({ name: '', sets: '', reps: '', weight: '', videoUrl: '', description: '' });
   const [repUnit, setRepUnit] = useState<'reps' | 'seconds'>('reps');
+  // Only an explicit choice is sent, so the default never overwrites a shared library entry
+  const [repUnitChosen, setRepUnitChosen] = useState(false);
+  const chooseRepUnit = (unit: 'reps' | 'seconds') => { setRepUnit(unit); setRepUnitChosen(true); };
   const updateField = (field: keyof typeof form) => (value: string) => setForm(prev => ({ ...prev, [field]: value }));
   const isPending = createExercise.isPending;
   const c = useTheme();
@@ -55,7 +58,7 @@ export default function CreateExerciseModal() {
       ...(libraryMatch ? { libraryExerciseId: libraryMatch.id } : { name: form.name.trim() }),
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
-      repUnit,
+      repUnit: repUnitChosen ? repUnit : undefined,
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       videoUrl: form.videoUrl.trim() || null,
       description: form.description.trim() || null,
@@ -131,14 +134,14 @@ export default function CreateExerciseModal() {
         <View className="flex-row gap-3 mb-5">
           <TouchableOpacity
             className={`flex-1 py-3 rounded items-center ${repUnit === 'reps' ? 'bg-accent' : 'bg-surface'}`}
-            onPress={() => setRepUnit('reps')}
+            onPress={() => chooseRepUnit('reps')}
             disabled={isPending}
           >
             <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'reps' ? 'text-accent-fg' : 'text-muted'}`}>REPS</Text>
           </TouchableOpacity>
           <TouchableOpacity
             className={`flex-1 py-3 rounded items-center ${repUnit === 'seconds' ? 'bg-accent' : 'bg-surface'}`}
-            onPress={() => setRepUnit('seconds')}
+            onPress={() => chooseRepUnit('seconds')}
             disabled={isPending}
           >
             <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'seconds' ? 'text-accent-fg' : 'text-muted'}`}>SECONDS</Text>

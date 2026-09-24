@@ -1,5 +1,6 @@
 package de.mornhinweg.trainingbackend.exception;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -31,6 +32,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequest(BadRequestException ex) {
         return errorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // A unique constraint hit by concurrent requests that both passed the service's own check
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        return errorResponse(HttpStatus.CONFLICT, "The request conflicts with existing data, please try again");
     }
 
     @ExceptionHandler(InvalidTokenException.class)
