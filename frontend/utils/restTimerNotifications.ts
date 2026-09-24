@@ -13,6 +13,8 @@ Notifications.setNotificationHandler({
 });
 
 let scheduledId: string | null = null;
+// Bumped by every schedule/cancel so a schedule still awaiting permission can tell it was superseded
+let generation = 0;
 let permissionRequested = false;
 
 async function ensurePermission(): Promise<boolean> {
@@ -37,11 +39,12 @@ async function ensurePermission(): Promise<boolean> {
 export async function scheduleRestTimerNotification(seconds: number): Promise<void> {
   await cancelRestTimerNotification();
   if (seconds <= 0) return;
+  const current = ++generation;
 
   const granted = await ensurePermission();
-  if (!granted) return;
+  if (!granted || current !== generation) return;
 
-  scheduledId = await Notifications.scheduleNotificationAsync({
+  const id = await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Rest Complete!',
       body: 'Time for your next set.',
@@ -53,10 +56,17 @@ export async function scheduleRestTimerNotification(seconds: number): Promise<vo
       channelId: CHANNEL_ID,
     },
   });
+  if (current !== generation) {
+    // Cancelled while scheduling (paused/reset right after starting)
+    await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
+    return;
+  }
+  scheduledId = id;
 }
 
 /** Cancels the pending rest-timer notification, if any (pause, reset, or manual completion). */
 export async function cancelRestTimerNotification(): Promise<void> {
+  generation++;
   if (!scheduledId) return;
   const id = scheduledId;
   scheduledId = null;

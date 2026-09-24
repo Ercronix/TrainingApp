@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, AppState } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -21,9 +21,13 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
     // Local notification as a backstop for when the app is backgrounded or
     // closed, since the setInterval below only advances while JS is running.
     scheduleRestTimerNotification(seconds);
+    // JS can keep running for a while after the app is minimized, so this interval may
+    // finish the timer in the background. The notification must survive that.
+    let keepNotification = false;
     const timer = setInterval(() => {
       const remaining = Math.ceil((endTime - Date.now()) / 1000);
       if (remaining <= 0) {
+        keepNotification = AppState.currentState !== 'active';
         setSeconds(0);
         setIsRunning(false);
         onComplete?.();
@@ -33,7 +37,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
     }, 250);
     return () => {
       clearInterval(timer);
-      cancelRestTimerNotification();
+      if (!keepNotification) cancelRestTimerNotification();
     };
   }, [isRunning]); // eslint-disable-line react-hooks/exhaustive-deps
 
