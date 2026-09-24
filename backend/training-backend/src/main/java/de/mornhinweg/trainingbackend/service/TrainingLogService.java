@@ -145,6 +145,11 @@ public class TrainingLogService {
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
 
+    // A repeated call (double tap, retried request) returns the finished session unchanged
+    if (trainingLog.isCompleted()) {
+      return toResponse(trainingLog, true);
+    }
+
     trainingLog.setCompletedAt(LocalDateTime.now());
     trainingLog.setDurationSeconds(
         (int) Duration.between(trainingLog.getStartedAt(), trainingLog.getCompletedAt()).getSeconds()
