@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
+import { useRestTimerStore } from '@/store/restTimerStore';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
@@ -80,7 +81,12 @@ export default function TrainingScreen() {
     const totalCount = training?.exercises.length || 0;
     const doComplete = () =>
       completeTraining.mutate(undefined, {
-        onSuccess: () => { alert('Done!', 'Training session complete!'); router.replace('/(tabs)'); },
+        onSuccess: () => {
+          // Don't leave a rest timer running (and notifying) after the session ends
+          useRestTimerStore.getState().reset();
+          alert('Done!', 'Training session complete!');
+          router.replace('/(tabs)');
+        },
       });
     if (completedCount < totalCount) {
       confirm('Incomplete', `${completedCount}/${totalCount} exercises done. Complete anyway?`, doComplete, 'Complete', 'Cancel');
@@ -231,7 +237,7 @@ export default function TrainingScreen() {
           </TouchableOpacity>
         )}
         <View className="mb-3">
-          <RestTimer duration={120} onComplete={() => alert('Rest Complete!', 'Time for next set!')} />
+          <RestTimer />
         </View>
         <TouchableOpacity
           className={`bg-accent rounded-md py-4 flex-row items-center justify-center gap-2 ${completeTraining.isPending ? 'opacity-50' : ''}`}

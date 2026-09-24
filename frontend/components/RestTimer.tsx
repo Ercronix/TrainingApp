@@ -2,50 +2,25 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { cancelRestTimerNotification, scheduleRestTimerNotification } from '@/utils/restTimerNotifications';
+import { useRestTimerStore } from '@/store/restTimerStore';
 
-interface RestTimerProps {
-  duration: number;
-  onComplete?: () => void;
-}
-
-export function RestTimer({ duration, onComplete }: RestTimerProps) {
-  const [seconds, setSeconds] = useState(duration);
-  const [isRunning, setIsRunning] = useState(false);
-  const [customDuration, setCustomDuration] = useState(duration);
+export function RestTimer() {
+  const { duration: customDuration, endTime, remaining, start, pause, reset, setDuration } = useRestTimerStore();
+  const isRunning = endTime != null;
+  const [nowMs, setNowMs] = useState(() => Date.now());
   const c = useTheme();
 
+  // The store owns the countdown; this only re-renders the display while it runs
   useEffect(() => {
     if (!isRunning) return;
-    const endTime = Date.now() + seconds * 1000;
-    // Local notification as a backstop for when the app is backgrounded or
-    // closed, since the setInterval below only advances while JS is running.
-    scheduleRestTimerNotification(seconds);
-    const timer = setInterval(() => {
-      const remaining = Math.ceil((endTime - Date.now()) / 1000);
-      if (remaining <= 0) {
-        setSeconds(0);
-        setIsRunning(false);
-        onComplete?.();
-      } else {
-        setSeconds(remaining);
-      }
-    }, 250);
-    return () => {
-      clearInterval(timer);
-      cancelRestTimerNotification();
-    };
-  }, [isRunning]); // eslint-disable-line react-hooks/exhaustive-deps
+    setNowMs(Date.now());
+    const timer = setInterval(() => setNowMs(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, [isRunning]);
 
-  const toggle = () => {
-    if (seconds === 0) setSeconds(customDuration);
-    setIsRunning(!isRunning);
-  };
+  const seconds = endTime != null ? Math.max(0, Math.ceil((endTime - nowMs) / 1000)) : remaining;
 
-  const reset = () => {
-    setSeconds(customDuration);
-    setIsRunning(false);
-  };
+  const toggle = () => (isRunning ? pause() : start());
 
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
@@ -53,12 +28,7 @@ export function RestTimer({ duration, onComplete }: RestTimerProps) {
     return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
   };
 
-  const setPreset = (mins: number) => {
-    const secs = mins * 60;
-    setCustomDuration(secs);
-    setSeconds(secs);
-    setIsRunning(false);
-  };
+  const setPreset = (mins: number) => setDuration(mins * 60);
 
   const isUrgent = seconds <= 10 && isRunning;
   const progress = ((customDuration - seconds) / customDuration) * 100;
