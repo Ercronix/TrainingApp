@@ -83,6 +83,7 @@ function AppLayout() {
               <Stack.Screen name="training"        options={{ headerShown: false }} />
               <Stack.Screen name="history-detail"  options={{ headerShown: false }} />
               <Stack.Screen name="library"         options={{ headerShown: false }} />
+              <Stack.Screen name="one-rep-max"     options={{ headerShown: false }} />
             </Stack>
             <ConfirmDialogHost />
           </AuthProvider>

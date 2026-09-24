@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { statsApi } from '@/services/api';
+import { useMemo } from 'react';
+import { statsApi, trainingLogsApi } from '@/services/api';
 import { QUERY_KEYS } from '@/constants/queryKeys';
-import { DashboardStats, Weekday } from '@/types';
+import { DashboardStats, TrainingLog, Weekday } from '@/types';
+import { computeTrainingAnalytics } from '@/utils/stats';
 
 const WEEKDAYS: Weekday[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];
 
@@ -52,10 +54,18 @@ export function useDashboard() {
     queryFn: () => statsApi.get(getTimeZone()),
   });
 
+  // Charts and trends need every session, so they come from the (offline-cached) history
+  const history = useQuery<TrainingLog[]>({
+    queryKey: ['history'],
+    queryFn: trainingLogsApi.getAll,
+  });
+  const analytics = useMemo(() => computeTrainingAnalytics(history.data ?? []), [history.data]);
+
   return {
     stats: query.data ?? EMPTY_STATS,
-    isLoading: query.isLoading,
-    isRefetching: query.isRefetching,
-    refetch: query.refetch,
+    analytics,
+    isLoading: query.isLoading || history.isLoading,
+    isRefetching: query.isRefetching || history.isRefetching,
+    refetch: () => Promise.all([query.refetch(), history.refetch()]),
   };
 }
