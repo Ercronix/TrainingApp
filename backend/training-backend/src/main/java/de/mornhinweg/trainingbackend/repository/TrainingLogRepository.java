@@ -28,8 +28,9 @@ public interface TrainingLogRepository extends JpaRepository<TrainingLog, Long> 
   Optional<TrainingLog> findFirstByUserIdAndCompletedAtIsNotNullOrderByStartedAtDesc(Long userId);
 
   // ── Dashboard stats ──────────────────────────────────────────
-  // Only completed sessions count. Volume is weight × sets × reps of completed
-  // exercise logs whose library entry is rep based (timed exercises are skipped).
+  // Only completed sessions count. Volume is weight × reps summed over the working
+  // sets (warm-ups excluded) of completed exercise logs whose library entry is rep
+  // based (timed exercises are skipped).
   // Timestamps are stored in the server's zone; day-level grouping converts them
   // from :serverZone to the user's :zone first.
 
@@ -58,12 +59,14 @@ public interface TrainingLogRepository extends JpaRepository<TrainingLog, Long> 
       FROM (
         SELECT tl.started_at,
                COALESCE(tl.duration_seconds, 0) AS duration,
-               (SELECT SUM(el.weight_used * el.sets_completed * el.reps_completed)
+               (SELECT SUM(sl.weight * sl.reps)
                 FROM exercise_logs el
+                JOIN set_logs sl ON sl.exercise_log_id = el.id
                 JOIN exercises e ON e.id = el.exercise_id
                 JOIN library_exercises le ON le.id = e.library_exercise_id
                 WHERE el.training_log_id = tl.id
                   AND el.completed
+                  AND NOT sl.warmup
                   AND le.rep_unit = 'reps') AS volume
         FROM training_logs tl
         WHERE tl.user_id = :userId

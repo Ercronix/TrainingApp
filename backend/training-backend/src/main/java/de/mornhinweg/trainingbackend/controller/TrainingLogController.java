@@ -29,7 +29,7 @@ public class TrainingLogController {
   @PutMapping("/exercise-logs/{exerciseLogId}")
   public ResponseEntity<ExerciseLogResponse> updateExerciseLog(
       @PathVariable Long exerciseLogId,
-      @RequestBody UpdateExerciseLogRequest request,
+      @Valid @RequestBody UpdateExerciseLogRequest request,
       Authentication authentication) {
     return ResponseEntity.ok(trainingLogService.updateExerciseLog(exerciseLogId, request, authentication));
   }

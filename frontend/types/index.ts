@@ -64,9 +64,12 @@ export interface ExerciseLog {
   plannedSets: number | null;
   plannedReps: number | null;
   plannedWeight: number | null;
+  // Summary of the working sets: their count, and the reps and weight of the heaviest
   setsCompleted: number;
   repsCompleted: number;
   weightUsed: number | null;
+  // Optional: sessions cached before per-set logging don't have them
+  sets?: SetLog[];
   completed: boolean;
   notes: string | null;
   repUnit: 'reps' | 'seconds' | null;
@@ -74,6 +77,15 @@ export interface ExerciseLog {
   previousSets: number | null;
   previousReps: number | null;
   previousWeight: number | null;
+  previousSetLogs?: SetLog[] | null;
+}
+
+// One performed set. `reps` holds seconds for exercises timed in seconds.
+export interface SetLog {
+  reps: number;
+  weight: number | null;
+  rpe: number | null;
+  warmup: boolean;
 }
 
 export interface Workout {
@@ -98,6 +110,8 @@ export interface Exercise {
 }
 
 export interface UpdateExerciseLogRequest {
+  // Replaces every logged set; the summary fields are derived from it on the server
+  sets?: SetLog[];
   setsCompleted?: number;
   repsCompleted?: number;
   weightUsed?: number | null;
@@ -144,6 +158,7 @@ export interface ExerciseProgressEntry {
   weightUsed: number | null;
   setsCompleted: number;
   repsCompleted: number;
+  sets?: SetLog[];
   trainingLogId: number;
   workoutName: string;
 }

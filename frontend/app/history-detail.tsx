@@ -7,6 +7,7 @@ import { useExercises } from '@/hooks/useExercises';
 import { confirm } from '@/utils/confirm';
 import { ExerciseLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { formatSets, setsOf } from '@/utils/sets';
 
 function formatDuration(seconds: number | null | undefined): string {
   if (!seconds) return '—';
@@ -76,7 +77,7 @@ export default function HistoryDetailScreen() {
             )}
             {item.completed && (
               <Text className="text-accent-text text-[11px] tracking-wider mt-0.5">
-                ✓ DONE: {item.setsCompleted} × {item.repsCompleted}{item.weightUsed ? ` @ ${item.weightUsed} kg` : ''}
+                ✓ DONE: {formatSets(setsOf(item), item.repUnit)}
               </Text>
             )}
             {item.notes && (

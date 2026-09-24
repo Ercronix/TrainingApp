@@ -1,5 +1,6 @@
 package de.mornhinweg.trainingbackend.dto.exercise;
 
+import de.mornhinweg.trainingbackend.dto.training.SetLogResponse;
 import lombok.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -17,9 +18,11 @@ public class ExerciseProgressResponse {
   @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
   public static class ProgressEntry {
     private LocalDateTime date;
+    // Summary of the working sets (count, and reps and weight of the heaviest)
     private BigDecimal weightUsed;
     private Integer setsCompleted;
     private Integer repsCompleted;
+    private List<SetLogResponse> sets;
     private Long trainingLogId;
     // Progress covers every workout that uses the library entry
     private String workoutName;
