@@ -36,31 +36,22 @@ export function ActiveTrainingBanner() {
 
   if (!activeTraining || segments[0] === '(auth)' || HIDDEN_ROUTES.has(pathname)) return null;
 
-  // Sit above the tab bar on tabs; elsewhere leave room for the screens' bottom-right FAB
-  const inTabs = segments[0] === '(tabs)';
-  const position = inTabs
-    ? { left: 16, right: 16, bottom: insets.bottom + TAB_BAR_OFFSET + 8 }
-    : { left: 16, right: 96, bottom: insets.bottom + 32 };
+  // Bottom left: above the tab bar on tabs, level with the screens' bottom-right FAB elsewhere
+  const bottom = insets.bottom + (segments[0] === '(tabs)' ? TAB_BAR_OFFSET + 8 : 32);
 
   return (
-    <View style={{ position: 'absolute', ...position }} pointerEvents="box-none">
+    <View style={{ position: 'absolute', left: 16, bottom }} pointerEvents="box-none">
       <TouchableOpacity
-        className="bg-accent rounded-md h-14 px-4 flex-row items-center gap-3"
+        className="bg-accent rounded-full h-10 px-4 flex-row items-center gap-2"
         style={{ shadowColor: '#131313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 }}
         onPress={() =>
           router.push({ pathname: '/training', params: { trainingLogId: activeTraining.id.toString() } })
         }
+        accessibilityLabel={`Resume ${activeTraining.workoutName || activeTraining.splitName}`}
         activeOpacity={0.85}
       >
-        <Ionicons name="flash" size={18} color={c.accentFg} />
-        <View className="flex-1">
-          <Text className="text-accent-fg text-[9px] font-bold tracking-[3px]">ACTIVE SESSION</Text>
-          <Text className="text-accent-fg text-sm font-bold tracking-tight" numberOfLines={1}>
-            {activeTraining.workoutName || activeTraining.splitName}
-          </Text>
-        </View>
-        <Text className="text-accent-fg text-sm font-mono-bold">{formatElapsed(elapsedSeconds)}</Text>
-        <Ionicons name="chevron-forward" size={16} color={c.accentFg} />
+        <Ionicons name="flash" size={14} color={c.accentFg} />
+        <Text className="text-accent-fg text-xs font-mono-bold">{formatElapsed(elapsedSeconds)}</Text>
       </TouchableOpacity>
     </View>
   );
