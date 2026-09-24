@@ -64,9 +64,12 @@ export interface ExerciseLog {
   plannedSets: number | null;
   plannedReps: number | null;
   plannedWeight: number | null;
+  // Summary of the working sets: their count, and the reps and weight of the heaviest
   setsCompleted: number;
   repsCompleted: number;
   weightUsed: number | null;
+  // Optional: sessions cached before per-set logging don't have them
+  sets?: SetLog[];
   completed: boolean;
   notes: string | null;
   repUnit: 'reps' | 'seconds' | null;
@@ -74,6 +77,15 @@ export interface ExerciseLog {
   previousSets: number | null;
   previousReps: number | null;
   previousWeight: number | null;
+  previousSetLogs?: SetLog[] | null;
+}
+
+// One performed set. `reps` holds seconds for exercises timed in seconds.
+export interface SetLog {
+  reps: number;
+  weight: number | null;
+  rpe: number | null;
+  warmup: boolean;
 }
 
 export interface Workout {
@@ -98,6 +110,8 @@ export interface Exercise {
 }
 
 export interface UpdateExerciseLogRequest {
+  // Replaces every logged set; the summary fields are derived from it on the server
+  sets?: SetLog[];
   setsCompleted?: number;
   repsCompleted?: number;
   weightUsed?: number | null;
@@ -144,6 +158,7 @@ export interface ExerciseProgressEntry {
   weightUsed: number | null;
   setsCompleted: number;
   repsCompleted: number;
+  sets?: SetLog[];
   trainingLogId: number;
   workoutName: string;
 }
@@ -156,31 +171,36 @@ export interface ExerciseProgress {
   entries: ExerciseProgressEntry[];
 }
 
+// Rolling windows of the last 7, 30 and 365 days
+export interface RangeValues {
+  week: number;
+  month: number;
+  year: number;
+}
+
+export type Weekday = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
+// Computed by the backend over completed sessions. Volume is in kg and skips timed exercises.
 export interface DashboardStats {
+  sessions: RangeValues;
+  volume: RangeValues;
+  durationSeconds: RangeValues;
+  averageVolume: RangeValues;
   streak: {
     current: number;
     longest: number;
-    last7Days: boolean[];
+    // Oldest first, ending today; dates are yyyy-MM-dd in the requested time zone
+    last7Days: { date: string; trained: boolean }[];
   };
-  sessions: {
-    week: number;
-    month: number;
-    year: number;
-  };
-  volume: {
-    week: number;
-    month: number;
-    year: number;
-  };
-  time: {
-    week: string;
-    month: string;
-    year: string;
-  };
-  averageVolume: number;
-  lastSession: TrainingLog | null;
-  mostActiveDay: string;
-  sessionsByDay: Record<string, number>;
+  mostActiveDay: Weekday | null;
+  mostActiveDaySessions: number;
+  lastSession: {
+    id: number;
+    workoutName: string;
+    splitName: string;
+    startedAt: string;
+    exerciseCount: number;
+  } | null;
 }
 
 

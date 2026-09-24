@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { ExerciseProgressEntry } from '@/types';
 import { formatKg } from '@/utils/strength';
+import { formatSets } from '@/utils/sets';
 import {
   ExerciseStats, SessionPoint, computeExerciseStats, formatNumber, formatSigned, formatWeeks,
 } from '@/utils/stats';
@@ -92,11 +93,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
     : [];
 
   const metricUnit = activeMetric === 'volume' || activeMetric === 'weight' || activeMetric === 'e1rm' ? ' kg' : kind === 'timed' ? ' s' : ' reps';
-  const describe = (i: number) => {
-    const p = visible[i];
-    const set = `${p.sets}×${p.reps}${kind === 'timed' ? 's' : ''}`;
-    return p.weight > 0 ? `${formatKg(p.weight)} kg × ${set}` : set;
-  };
+  const describe = (i: number) => formatSets(visible[i].workingSets, kind === 'timed' ? 'seconds' : 'reps');
 
   const sincePr = stats.sincePr;
 
@@ -267,13 +264,12 @@ function Stat({ value, label, accent, tone }: { value: string; label: string; ac
 }
 
 function RecordRow({ label, value, point, kind }: { label: string; value: string; point: SessionPoint; kind: ExerciseStats['kind'] }) {
-  const set = `${point.sets}×${point.reps}${kind === 'timed' ? 's' : ''}`;
   return (
     <View className="flex-row items-center py-2 gap-3">
       <View className="flex-1">
         <Text className="text-primary text-sm">{label}</Text>
         <Text className="text-muted text-[10px]">
-          {longDate(point.date)} · {point.weight > 0 ? `${formatKg(point.weight)} kg × ` : ''}{set}
+          {longDate(point.date)} · {formatSets(point.workingSets, kind === 'timed' ? 'seconds' : 'reps')}
         </Text>
       </View>
       <Text className="text-accent-text text-base font-mono-bold">{value}</Text>

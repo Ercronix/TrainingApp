@@ -4,6 +4,7 @@ import { getErrorMessage } from '@/utils/errorHandler';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { MUTATION_KEYS, UpdateExerciseLogVariables } from '@/services/queryClient';
 import { TrainingLog } from '@/types';
+import { summarizeSets } from '@/utils/sets';
 
 /**
  * Updates an exercise log optimistically, so the change shows immediately — also while
@@ -19,7 +20,10 @@ export function useUpdateExerciseLog(trainingLogId: string) {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<TrainingLog>(queryKey);
       if (previous) {
-        const patch = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
+        const patch = {
+          ...Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined)),
+          ...(data.sets ? summarizeSets(data.sets) : {}),
+        };
         queryClient.setQueryData<TrainingLog>(queryKey, {
           ...previous,
           exercises: previous.exercises.map((e) => (e.id === exerciseLogId ? { ...e, ...patch } : e)),

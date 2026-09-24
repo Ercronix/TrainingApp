@@ -2,6 +2,7 @@ package de.mornhinweg.trainingbackend.dto.training;
 
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class ExerciseLogResponse {
@@ -14,9 +15,11 @@ public class ExerciseLogResponse {
   private Integer plannedSets;
   private Integer plannedReps;
   private BigDecimal plannedWeight;
+  // Summary of the working sets: their count, and the reps and weight of the heaviest
   private Integer setsCompleted;
   private Integer repsCompleted;
   private BigDecimal weightUsed;
+  private List<SetLogResponse> sets;
   private Boolean completed;
   private String notes;
   private String repUnit;
@@ -25,4 +28,5 @@ public class ExerciseLogResponse {
   private Integer previousSets;
   private Integer previousReps;
   private BigDecimal previousWeight;
+  private List<SetLogResponse> previousSetLogs;
 }

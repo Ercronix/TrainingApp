@@ -10,6 +10,7 @@ import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useIsOnline } from '@/hooks/useIsOnline';
+import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--:--';
@@ -61,10 +62,11 @@ export default function TrainingScreen() {
   const toggleExercise = (exerciseLog: ExerciseLog) => {
     const completing = !exerciseLog.completed;
     const data: UpdateExerciseLogRequest = { completed: completing };
-    if (completing) {
-      if (!exerciseLog.setsCompleted || exerciseLog.setsCompleted === 0) data.setsCompleted = exerciseLog.plannedSets ?? 0;
-      if (!exerciseLog.repsCompleted || exerciseLog.repsCompleted === 0) data.repsCompleted = exerciseLog.plannedReps ?? 0;
-      if (!exerciseLog.weightUsed && exerciseLog.plannedWeight) data.weightUsed = exerciseLog.plannedWeight;
+    // Ticking off an exercise without logging it records the plan as its sets
+    if (completing && setsOf(exerciseLog).length === 0 && exerciseLog.plannedSets) {
+      data.sets = Array.from({ length: exerciseLog.plannedSets }, () => ({
+        reps: exerciseLog.plannedReps ?? 0, weight: exerciseLog.plannedWeight, rpe: null, warmup: false,
+      }));
     }
     updateExerciseLog.mutate({ exerciseLogId: exerciseLog.id, data });
   };
@@ -118,14 +120,14 @@ export default function TrainingScreen() {
               {item.plannedSets} × {item.plannedReps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
             </Text>
           )}
-          {!item.completed && item.previousSets != null && item.previousReps != null && (
+          {!item.completed && previousSetsOf(item).length > 0 && (
             <Text className="text-subtle text-[11px] mt-1">
-              Last: {item.previousSets}×{item.previousReps}{item.repUnit === 'seconds' ? 's' : ''}{item.previousWeight != null ? ` @ ${item.previousWeight} kg` : ''}
+              Last: {formatSets(previousSetsOf(item), item.repUnit)}
             </Text>
           )}
           {item.completed && (
             <Text className="text-accent-text text-[11px] mt-1">
-              ✓ {item.setsCompleted}×{item.repsCompleted}{item.repUnit === 'seconds' ? 's' : ''}{item.weightUsed != null ? ` @ ${item.weightUsed} kg` : ''}
+              ✓ {formatSets(setsOf(item), item.repUnit)}
             </Text>
           )}
         </View>
@@ -148,16 +150,10 @@ export default function TrainingScreen() {
         onPress={() =>
           router.push({
             pathname: '/log-exercise' as any,
+            // The modal reads the log (sets, plan, previous session) from the training query
             params: {
               exerciseLogId: item.id.toString(), exerciseId: item.exerciseId?.toString() ?? '',
-              exerciseName: item.exerciseName,
-              plannedSets: item.plannedSets?.toString() || '', plannedReps: item.plannedReps?.toString() || '',
-              plannedWeight: item.plannedWeight?.toString() || '', trainingLogId,
-              repUnit: item.repUnit || 'reps',
-              setsCompleted: item.setsCompleted?.toString() || '', repsCompleted: item.repsCompleted?.toString() || '',
-              weightUsed: item.weightUsed?.toString() || '',
-              previousSets: item.previousSets?.toString() || '', previousReps: item.previousReps?.toString() || '',
-              previousWeight: item.previousWeight?.toString() || '',
+              exerciseName: item.exerciseName, trainingLogId,
             },
           })
         }

@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard, formatDuration as formatSeconds, parseLocalDate, weekdayName } from '@/hooks/useDashboard';
 import { useState } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
@@ -61,11 +61,6 @@ export default function DashboardScreen() {
     });
   };
 
-  const weekDays = [
-    { key: 'mon', label: 'M' }, { key: 'tue', label: 'T' }, { key: 'wed', label: 'W' },
-    { key: 'thu', label: 'T' }, { key: 'fri', label: 'F' }, { key: 'sat', label: 'S' }, { key: 'sun', label: 'S' },
-  ];
-
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center bg-base">
@@ -107,13 +102,13 @@ export default function DashboardScreen() {
 
         {/* Week grid */}
         <View className="flex-row justify-between">
-          {weekDays.map((day, index) => {
-            const isTrained = stats.streak.last7Days[index];
+          {stats.streak.last7Days.map((day) => {
+            const label = parseLocalDate(day.date).toLocaleDateString(undefined, { weekday: 'short' }).charAt(0).toUpperCase();
             return (
-              <View key={`${day.key}-${index}`} className="items-center gap-1">
-                <Text className="text-muted text-[10px] tracking-widest">{day.label}</Text>
-                <View className={`w-8 h-8 rounded-full items-center justify-center ${isTrained ? 'bg-accent' : 'bg-elevated'}`}>
-                  {isTrained && <Ionicons name="checkmark" size={12} color={c.accentFg} />}
+              <View key={day.date} className="items-center gap-1">
+                <Text className="text-muted text-[10px] tracking-widest">{label}</Text>
+                <View className={`w-8 h-8 rounded-full items-center justify-center ${day.trained ? 'bg-accent' : 'bg-elevated'}`}>
+                  {day.trained && <Ionicons name="checkmark" size={12} color={c.accentFg} />}
                 </View>
               </View>
             );
@@ -156,13 +151,13 @@ export default function DashboardScreen() {
 
         <View className="bg-surface rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
           <Ionicons name="time-outline" size={20} color={c.danger} />
-          <Text className="text-danger text-[28px] font-mono-bold tracking-tighter">{stats.time[timeRange]}</Text>
+          <Text className="text-danger text-[28px] font-mono-bold tracking-tighter">{formatSeconds(stats.durationSeconds[timeRange])}</Text>
           <Text className="text-muted text-[9px] tracking-[2px]">TIME TRAINED</Text>
         </View>
 
         <View className="bg-elevated rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
           <Ionicons name="trending-up-outline" size={20} color={c.accent} />
-          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.averageVolume}</Text>
+          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.averageVolume[timeRange]}</Text>
           <Text className="text-muted text-[9px] tracking-[2px]">AVG / SESSION</Text>
         </View>
       </View>
@@ -185,7 +180,7 @@ export default function DashboardScreen() {
               <Text className="text-muted text-xs">
                 {new Date(lastSession.startedAt).toLocaleDateString(undefined, {
                   weekday: 'long', day: 'numeric', month: 'long',
-                })} · {lastSession.exercises?.length || 0} exercises
+                })} · {lastSession.exerciseCount} exercises
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={c.muted} />
@@ -297,7 +292,7 @@ export default function DashboardScreen() {
       {lifetime.sessions > 0 && (
         <View className="mx-4 mb-3 bg-surface rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-3">
-            SESSIONS BY WEEKDAY · MOST ACTIVE: {stats.mostActiveDay.toUpperCase()}
+            SESSIONS BY WEEKDAY{stats.mostActiveDay ? ` · MOST ACTIVE: ${weekdayName(stats.mostActiveDay).toUpperCase()}` : ''}
           </Text>
           <BarChart
             bars={analytics.weekdayCounts.map((count, i) => ({

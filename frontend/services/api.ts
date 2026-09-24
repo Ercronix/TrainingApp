@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -311,6 +311,14 @@ export const trainingLogsApi = {
 
   delete: async (id: number): Promise<void> => {
     await api.delete(`/training-logs/${id}`);
+  },
+};
+
+export const statsApi = {
+  // timeZone is an IANA zone name; the server uses it to group sessions into calendar days
+  get: async (timeZone?: string): Promise<DashboardStats> => {
+    const response = await api.get("/stats", { params: { tz: timeZone } });
+    return response.data;
   },
 };
 

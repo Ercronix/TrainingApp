@@ -9,6 +9,7 @@ import { ExerciseAnalytics } from '@/components/ExerciseAnalytics';
 import { OneRepMaxCalculator } from '@/components/OneRepMaxCalculator';
 import { useTheme } from '@/hooks/useTheme';
 import { estimateOneRepMax } from '@/utils/strength';
+import { setsOf, workingSets } from '@/utils/sets';
 import { useLibrary } from '@/hooks/useLibrary';
 import { confirm } from '@/utils/confirm';
 
@@ -38,12 +39,16 @@ export default function ExerciseDetailScreen() {
   const libraryId = progress?.libraryExerciseId ?? (libraryExerciseId ? Number(libraryExerciseId) : null);
   const timed = library.find((l) => l.id === libraryId)?.repUnit === 'seconds';
   // Seed the calculator with the set behind the best estimated 1RM
-  const bestSet = timed ? undefined : (progress?.entries ?? []).reduce<{ weight: number; reps: number } | undefined>((best, e) => {
-    const weight = Number(e.weightUsed ?? 0);
-    if (weight <= 0 || e.repsCompleted <= 0) return best;
-    return !best || estimateOneRepMax(weight, e.repsCompleted) > estimateOneRepMax(best.weight, best.reps)
-      ? { weight, reps: e.repsCompleted } : best;
-  }, undefined);
+  let bestSet: { weight: number; reps: number } | undefined;
+  if (!timed) {
+    for (const set of (progress?.entries ?? []).flatMap((e) => workingSets(setsOf(e)))) {
+      const weight = Number(set.weight ?? 0);
+      if (weight <= 0 || set.reps <= 0) continue;
+      if (!bestSet || estimateOneRepMax(weight, set.reps) > estimateOneRepMax(bestSet.weight, bestSet.reps)) {
+        bestSet = { weight, reps: set.reps };
+      }
+    }
+  }
 
   const getYouTubeId = (url: string) => {
     if (!url) return null;

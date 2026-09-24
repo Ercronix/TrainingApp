@@ -1,5 +1,6 @@
-import { ExerciseProgressEntry, TrainingLog } from '@/types';
+import { ExerciseProgressEntry, SetLog, TrainingLog } from '@/types';
 import { estimateOneRepMax } from '@/utils/strength';
+import { setsOf, setVolume, workingSets } from '@/utils/sets';
 
 const DAY_MS = 86_400_000;
 const WEEK_MS = 7 * DAY_MS;
@@ -76,14 +77,18 @@ export type ExerciseKind = 'weighted' | 'bodyweight' | 'timed';
 
 export interface SessionPoint {
   date: number;
+  /** Heaviest working set. */
   weight: number;
+  /** Working sets (warm-ups excluded). */
   sets: number;
-  /** Reps per set, or seconds per set for timed exercises. */
+  /** Most reps in a working set, or the longest hold in seconds for timed exercises. */
   reps: number;
+  /** Best estimate over the working sets (a lighter set for more reps can win). */
   e1rm: number;
-  /** Tonnage: weight × sets × reps. Zero for bodyweight and timed work. */
+  /** Tonnage: weight × reps summed over working sets. Zero for bodyweight and timed work. */
   volume: number;
   totalReps: number;
+  workingSets: SetLog[];
   trainingLogId: number;
   workoutName: string;
 }
@@ -91,17 +96,17 @@ export interface SessionPoint {
 export function toSessionPoints(entries: ExerciseProgressEntry[], timed = false): SessionPoint[] {
   return entries
     .map((e) => {
-      const weight = Number(e.weightUsed ?? 0) || 0;
-      const sets = e.setsCompleted || 0;
-      const reps = e.repsCompleted || 0;
+      const working = workingSets(setsOf(e));
+      const weight = (s: SetLog) => Number(s.weight ?? 0) || 0;
       return {
         date: new Date(e.date).getTime(),
-        weight,
-        sets,
-        reps,
-        e1rm: timed ? 0 : estimateOneRepMax(weight, reps),
-        volume: timed ? 0 : weight * sets * reps,
-        totalReps: sets * reps,
+        weight: Math.max(0, ...working.map(weight)),
+        sets: working.length,
+        reps: Math.max(0, ...working.map((s) => s.reps || 0)),
+        e1rm: timed ? 0 : Math.max(0, ...working.map((s) => estimateOneRepMax(weight(s), s.reps))),
+        volume: timed ? 0 : setVolume(working),
+        totalReps: working.reduce((sum, s) => sum + (s.reps || 0), 0),
+        workingSets: working,
         trainingLogId: e.trainingLogId,
         workoutName: e.workoutName,
       };
@@ -380,11 +385,12 @@ export function computeTrainingAnalytics(logs: TrainingLog[], weekCount = 12, no
       if (!ex.completed) continue;
       exerciseCount++;
       const timed = ex.repUnit === 'seconds';
-      const weight = Number(ex.weightUsed ?? 0) || 0;
-      logSets += ex.setsCompleted || 0;
+      const sets = setsOf(ex);
+      const working = workingSets(sets);
+      logSets += working.length;
       if (!timed) {
-        logVolume += weight * (ex.setsCompleted || 0) * (ex.repsCompleted || 0);
-        reps += (ex.setsCompleted || 0) * (ex.repsCompleted || 0);
+        logVolume += setVolume(working);
+        reps += working.reduce((sum, s) => sum + (s.reps || 0), 0);
       }
       const group = byExercise.get(ex.libraryExerciseId)
         ?? { name: ex.exerciseName, timed, entries: [] };
@@ -393,6 +399,7 @@ export function computeTrainingAnalytics(logs: TrainingLog[], weekCount = 12, no
         weightUsed: ex.weightUsed,
         setsCompleted: ex.setsCompleted,
         repsCompleted: ex.repsCompleted,
+        sets,
         trainingLogId: log.id,
         workoutName: log.workoutName,
       });
