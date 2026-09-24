@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trainingLogsApi } from '@/services/api';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { alert } from '@/utils/confirm';
-import { TrainingLog } from '@/types'; 
+import { TrainingLog } from '@/types';
+import { QUERY_KEYS } from '@/constants/queryKeys';
 
 export function useHistory() {
   const queryClient = useQueryClient();
@@ -16,6 +17,7 @@ export function useHistory() {
     mutationFn: (id: number) => trainingLogsApi.delete(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['history'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats });
     },
     onError: (error: unknown) => {
       alert('Error', getErrorMessage(error));

@@ -171,31 +171,36 @@ export interface ExerciseProgress {
   entries: ExerciseProgressEntry[];
 }
 
+// Rolling windows of the last 7, 30 and 365 days
+export interface RangeValues {
+  week: number;
+  month: number;
+  year: number;
+}
+
+export type Weekday = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+
+// Computed by the backend over completed sessions. Volume is in kg and skips timed exercises.
 export interface DashboardStats {
+  sessions: RangeValues;
+  volume: RangeValues;
+  durationSeconds: RangeValues;
+  averageVolume: RangeValues;
   streak: {
     current: number;
     longest: number;
-    last7Days: boolean[];
+    // Oldest first, ending today; dates are yyyy-MM-dd in the requested time zone
+    last7Days: { date: string; trained: boolean }[];
   };
-  sessions: {
-    week: number;
-    month: number;
-    year: number;
-  };
-  volume: {
-    week: number;
-    month: number;
-    year: number;
-  };
-  time: {
-    week: string;
-    month: string;
-    year: string;
-  };
-  averageVolume: number;
-  lastSession: TrainingLog | null;
-  mostActiveDay: string;
-  sessionsByDay: Record<string, number>;
+  mostActiveDay: Weekday | null;
+  mostActiveDaySessions: number;
+  lastSession: {
+    id: number;
+    workoutName: string;
+    splitName: string;
+    startedAt: string;
+    exerciseCount: number;
+  } | null;
 }
 
 

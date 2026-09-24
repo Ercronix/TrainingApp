@@ -14,6 +14,8 @@ public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> 
 
   List<ExerciseLog> findByTrainingLogIdOrderByIdAsc(Long trainingLogId);
 
+  long countByTrainingLogId(Long trainingLogId);
+
   List<ExerciseLog> findByExerciseIdOrderByCreatedAtDesc(Long exerciseId);
 
   @Query("""

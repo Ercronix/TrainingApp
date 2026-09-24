@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useDashboard } from '@/hooks/useDashboard';
+import { useDashboard, formatDuration, parseLocalDate, weekdayName } from '@/hooks/useDashboard';
 import { useState } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -10,11 +10,6 @@ export default function DashboardScreen() {
   const { stats, isLoading, isRefetching, refetch } = useDashboard();
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
   const c = useTheme();
-
-  const weekDays = [
-    { key: 'mon', label: 'M' }, { key: 'tue', label: 'T' }, { key: 'wed', label: 'W' },
-    { key: 'thu', label: 'T' }, { key: 'fri', label: 'F' }, { key: 'sat', label: 'S' }, { key: 'sun', label: 'S' },
-  ];
 
   if (isLoading) {
     return (
@@ -57,13 +52,13 @@ export default function DashboardScreen() {
 
         {/* Week grid */}
         <View className="flex-row justify-between">
-          {weekDays.map((day, index) => {
-            const isTrained = stats.streak.last7Days[index];
+          {stats.streak.last7Days.map((day) => {
+            const label = parseLocalDate(day.date).toLocaleDateString(undefined, { weekday: 'short' }).charAt(0).toUpperCase();
             return (
-              <View key={`${day.key}-${index}`} className="items-center gap-1">
-                <Text className="text-muted text-[10px] tracking-widest">{day.label}</Text>
-                <View className={`w-8 h-8 rounded-full items-center justify-center ${isTrained ? 'bg-accent' : 'bg-elevated'}`}>
-                  {isTrained && <Ionicons name="checkmark" size={12} color={c.accentFg} />}
+              <View key={day.date} className="items-center gap-1">
+                <Text className="text-muted text-[10px] tracking-widest">{label}</Text>
+                <View className={`w-8 h-8 rounded-full items-center justify-center ${day.trained ? 'bg-accent' : 'bg-elevated'}`}>
+                  {day.trained && <Ionicons name="checkmark" size={12} color={c.accentFg} />}
                 </View>
               </View>
             );
@@ -106,13 +101,13 @@ export default function DashboardScreen() {
 
         <View className="bg-surface rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
           <Ionicons name="time-outline" size={20} color={c.danger} />
-          <Text className="text-danger text-[28px] font-mono-bold tracking-tighter">{stats.time[timeRange]}</Text>
+          <Text className="text-danger text-[28px] font-mono-bold tracking-tighter">{formatDuration(stats.durationSeconds[timeRange])}</Text>
           <Text className="text-muted text-[9px] tracking-[2px]">TIME TRAINED</Text>
         </View>
 
         <View className="bg-elevated rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
           <Ionicons name="trending-up-outline" size={20} color={c.accent} />
-          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.averageVolume}</Text>
+          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.averageVolume[timeRange]}</Text>
           <Text className="text-muted text-[9px] tracking-[2px]">AVG / SESSION</Text>
         </View>
       </View>
@@ -135,7 +130,7 @@ export default function DashboardScreen() {
               <Text className="text-muted text-xs">
                 {new Date(lastSession.startedAt).toLocaleDateString(undefined, {
                   weekday: 'long', day: 'numeric', month: 'long',
-                })} · {lastSession.exercises?.length || 0} exercises
+                })} · {lastSession.exerciseCount} exercises
               </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={c.muted} />
@@ -148,9 +143,9 @@ export default function DashboardScreen() {
         <View className="mx-4 mb-10 bg-surface rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-3">MOST ACTIVE DAY</Text>
           <View className="flex-row items-end justify-between">
-            <Text className="text-primary text-[28px] font-bold tracking-tight">{stats.mostActiveDay}</Text>
+            <Text className="text-primary text-[28px] font-bold tracking-tight">{weekdayName(stats.mostActiveDay)}</Text>
             <Text className="text-muted text-xs mb-1">
-              {(stats.sessionsByDay[stats.mostActiveDay as keyof typeof stats.sessionsByDay]) || 0} sessions
+              {stats.mostActiveDaySessions} sessions
             </Text>
           </View>
         </View>
