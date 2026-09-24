@@ -19,6 +19,9 @@ export function useExercises(workoutId: string) {
     mutationFn: (data: CreateExerciseRequest) => exercisesApi.create(Number(workoutId), data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
+      // A new name adds a library entry, and details edit the shared one
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.library });
+      void queryClient.invalidateQueries({ queryKey: ['exercises'] });
     },
     onError: (error: unknown) => {
       alert('Error', getErrorMessage(error));
@@ -29,6 +32,7 @@ export function useExercises(workoutId: string) {
     mutationFn: (exerciseId: number) => exercisesApi.delete(Number(workoutId), exerciseId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.library });
     },
     onError: (error: unknown) => {
       alert('Error', getErrorMessage(error));

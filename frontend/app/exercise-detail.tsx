@@ -8,23 +8,31 @@ import { useExerciseProgress } from '@/hooks/useExerciseProgress';
 import { ExerciseProgressChart } from '@/components/exercise-progress-chart';
 import { useTheme } from '@/hooks/useTheme';
 import { getPersonalRecords, formatKg } from '@/utils/strength';
+import { useLibrary } from '@/hooks/useLibrary';
+import { confirm } from '@/utils/confirm';
 
 export default function ExerciseDetailScreen() {
   const {
     exerciseId, exerciseName, description: initialDescription,
-    videoUrl: initialVideoUrl, sets, reps, weight, workoutId,
+    videoUrl: initialVideoUrl, sets, reps, weight, workoutId, libraryExerciseId, fromLibrary,
   } = useLocalSearchParams<{
     exerciseId: string; exerciseName: string; description: string;
     videoUrl: string; sets: string; reps: string; weight: string; workoutId: string;
+    libraryExerciseId: string; fromLibrary: string;
   }>();
+  // Opened from the library: there is no workout exercise, and the entry can be renamed or deleted
+  const isLibraryView = fromLibrary === '1' && !!libraryExerciseId;
 
   const router = useRouter();
-  const { saveVideo, saveDescription, isPending } = useExerciseDetail(workoutId, exerciseId);
+  const { saveVideo, saveDescription, saveName, isPending } = useExerciseDetail(workoutId, exerciseId, libraryExerciseId);
+  const { deleteEntry } = useLibrary();
+  const [name, setName] = useState(exerciseName || '');
+  const [editingName, setEditingName] = useState(false);
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl || '');
   const [description, setDescription] = useState(initialDescription || '');
   const [editingVideo, setEditingVideo] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
-  const { progress, isLoading: progressLoading } = useExerciseProgress(exerciseId);
+  const { progress, isLoading: progressLoading } = useExerciseProgress(exerciseId, libraryExerciseId);
   const c = useTheme();
   const records = getPersonalRecords(progress?.entries ?? []);
 
@@ -36,6 +44,11 @@ export default function ExerciseDetailScreen() {
   };
   const videoId = videoUrl ? getYouTubeId(videoUrl) : null;
 
+  const handleDelete = () => {
+    confirm('Delete Exercise', `Remove "${name}" from your library?`,
+      () => deleteEntry.mutate(Number(libraryExerciseId), { onSuccess: () => router.back() }), 'Delete');
+  };
+
   return (
     <View className="flex-1 bg-base">
       {/* Header */}
@@ -43,8 +56,32 @@ export default function ExerciseDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} className="mb-4">
           <Ionicons name="arrow-back" size={20} color={c.accent} />
         </TouchableOpacity>
-        <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">EXERCISE</Text>
-        <Text className="text-primary text-[32px] font-bold tracking-tighter leading-9">{exerciseName}</Text>
+        <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">{isLibraryView ? 'LIBRARY EXERCISE' : 'EXERCISE'}</Text>
+        {editingName ? (
+          <View className="flex-row items-center gap-2">
+            <TextInput
+              className="flex-1 bg-surface rounded px-3 py-2 text-primary text-[22px] font-bold tracking-tight"
+              value={name}
+              onChangeText={setName}
+              autoFocus
+              keyboardAppearance="dark"
+              editable={!isPending}
+              onSubmitEditing={() => saveName(name, () => setEditingName(false))}
+            />
+            <TouchableOpacity onPress={() => saveName(name, () => setEditingName(false))} disabled={isPending}>
+              <Ionicons name="checkmark" size={22} color={c.accent} />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View className="flex-row items-center gap-3">
+            <Text className="flex-1 text-primary text-[32px] font-bold tracking-tighter leading-9">{name}</Text>
+            {isLibraryView && (
+              <TouchableOpacity onPress={() => setEditingName(true)}>
+                <Ionicons name="pencil-outline" size={18} color={c.muted} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -200,6 +237,18 @@ export default function ExerciseDetailScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {isLibraryView && (
+          <TouchableOpacity
+            className={`bg-surface rounded-md py-5 mt-2 flex-row items-center justify-center gap-2 ${deleteEntry.isPending ? 'opacity-50' : ''}`}
+            onPress={handleDelete}
+            disabled={deleteEntry.isPending}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="trash-outline" size={18} color={c.danger} />
+            <Text className="text-danger text-sm font-bold tracking-[2px]">DELETE FROM LIBRARY</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
       </KeyboardAvoidingView>
     </View>

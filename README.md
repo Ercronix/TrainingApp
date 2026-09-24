@@ -10,6 +10,7 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 - Training split management (create, update, activate, delete).
 - Workout management per split.
 - Exercise management per workout, including reordering.
+- Shared exercise library: an exercise used in several workouts shares its notes, video and progress history.
 - Live training logs:
   - start session
   - update exercise completion, reps, sets, weight, notes
@@ -50,7 +51,7 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 - `backend/docker-compose.yml`: local PostgreSQL container setup.
 - `docker-compose.yml` (repo root): production deployment (PostgreSQL, backend, Expo web build behind Nginx).
 - JWT-protected API routes (`/api/**`, except `/api/auth/**`).
-- Flyway migrations manage schema evolution (`V1` to `V12`).
+- Flyway migrations manage schema evolution (`V1` to `V13`).
 
 ## Run Locally
 

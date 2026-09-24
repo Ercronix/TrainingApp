@@ -26,7 +26,9 @@ export function useEditExercise(workoutId: string, exerciseId: string) {
         plannedWeight: form.plannedWeight ? parseFloat(form.plannedWeight) : null,
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.exercises(workoutId) });
+      // Renaming can relink the exercise, and the rep unit is shared with other workouts
+      void queryClient.invalidateQueries({ queryKey: ['exercises'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.library });
       router.back();
     },
     onError: (error: unknown) => {

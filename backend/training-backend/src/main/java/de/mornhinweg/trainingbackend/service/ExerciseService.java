@@ -4,10 +4,9 @@ import de.mornhinweg.trainingbackend.dto.exercise.*;
 import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.exception.UnauthorizedException;
 import de.mornhinweg.trainingbackend.model.Exercise;
-import de.mornhinweg.trainingbackend.model.ExerciseLog;
+import de.mornhinweg.trainingbackend.model.LibraryExercise;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.model.Workout;
-import de.mornhinweg.trainingbackend.repository.ExerciseLogRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.UserRepository;
 import de.mornhinweg.trainingbackend.repository.WorkoutRepository;
@@ -27,7 +26,7 @@ public class ExerciseService {
   private final ExerciseRepository exerciseRepository;
   private final WorkoutRepository workoutRepository;
   private final UserRepository userRepository;
-  private final ExerciseLogRepository exerciseLogRepository;
+  private final LibraryExerciseService libraryExerciseService;
 
   public List<ExerciseResponse> getExercisesByWorkout(Long workoutId, Authentication authentication) {
     User user = getCurrentUser(authentication);
@@ -45,15 +44,14 @@ public class ExerciseService {
     int nextOrderIndex = exerciseRepository
         .findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(workout.getId())
         .size();
+    LibraryExercise libraryExercise = libraryExerciseService.resolve(user, request.getLibraryExerciseId(), request.getName());
+    libraryExerciseService.applyDetails(libraryExercise,
+        request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
     Exercise exercise = Exercise.builder()
         .workout(workout)
-        .name(request.getName())
-        .description(request.getDescription())
-        .videoUrl(request.getVideoUrl())
-        .videoId(request.getVideoId())
+        .libraryExercise(libraryExercise)
         .sets(request.getSets())
         .reps(request.getReps())
-        .repUnit(request.getRepUnit() != null ? request.getRepUnit() : "reps")
         .plannedWeight(request.getPlannedWeight())
         .orderIndex(nextOrderIndex)
         .temporary(false)
@@ -65,13 +63,21 @@ public class ExerciseService {
   public ExerciseResponse updateExercise(Long exerciseId, UpdateExerciseRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Exercise exercise = getOwnedExercise(exerciseId, user);
-    if (request.getName() != null) exercise.setName(request.getName());
-    if (request.getDescription() != null) exercise.setDescription(request.getDescription());
-    if (request.getVideoUrl() != null) exercise.setVideoUrl(request.getVideoUrl());
-    if (request.getVideoId() != null) exercise.setVideoId(request.getVideoId());
+    if (request.getLibraryExerciseId() != null) {
+      exercise.setLibraryExercise(libraryExerciseService.resolve(user, request.getLibraryExerciseId(), null));
+    } else if (request.getName() != null) {
+      LibraryExercise current = exercise.getLibraryExercise();
+      if (current.getName().equalsIgnoreCase(request.getName().trim())) {
+        // Only the capitalization changed, so fix it on the entry itself
+        libraryExerciseService.rename(current, request.getName());
+      } else {
+        exercise.setLibraryExercise(libraryExerciseService.renameFor(user, current, request.getName()));
+      }
+    }
+    libraryExerciseService.applyDetails(exercise.getLibraryExercise(),
+        request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
     if (request.getSets() != null) exercise.setSets(request.getSets());
     if (request.getReps() != null) exercise.setReps(request.getReps());
-    if (request.getRepUnit() != null) exercise.setRepUnit(request.getRepUnit());
     if (request.getPlannedWeight() != null) exercise.setPlannedWeight(request.getPlannedWeight());
     if (request.getOrderIndex() != null) exercise.setOrderIndex(request.getOrderIndex());
     return toResponse(exerciseRepository.save(exercise));
@@ -133,37 +139,21 @@ public class ExerciseService {
   public ExerciseProgressResponse getProgress(Long exerciseId, Authentication authentication) {
     User user = getCurrentUser(authentication);
     Exercise exercise = getOwnedExercise(exerciseId, user);
-
-    List<ExerciseLog> logs = exerciseLogRepository.findCompletedByExerciseIdOrderByDate(exerciseId);
-
-    List<ExerciseProgressResponse.ProgressEntry> entries = logs.stream()
-        .map(log -> ExerciseProgressResponse.ProgressEntry.builder()
-            .date(log.getTrainingLog().getCompletedAt())
-            .weightUsed(log.getWeightUsed())
-            .setsCompleted(log.getSetsCompleted())
-            .repsCompleted(log.getRepsCompleted())
-            .trainingLogId(log.getTrainingLog().getId())
-            .build())
-        .collect(Collectors.toList());
-
-    return ExerciseProgressResponse.builder()
-        .exerciseId(exercise.getId())
-        .exerciseName(exercise.getName())
-        .entries(entries)
-        .build();
+    return libraryExerciseService.buildProgress(exercise.getLibraryExercise(), exercise.getId());
   }
 
   private ExerciseResponse toResponse(Exercise exercise) {
     return ExerciseResponse.builder()
         .id(exercise.getId())
         .workoutId(exercise.getWorkout().getId())
-        .name(exercise.getName())
-        .description(exercise.getDescription())
-        .videoUrl(exercise.getVideoUrl())
-        .videoId(exercise.getVideoId())
+        .libraryExerciseId(exercise.getLibraryExercise().getId())
+        .name(exercise.getLibraryExercise().getName())
+        .description(exercise.getLibraryExercise().getDescription())
+        .videoUrl(exercise.getLibraryExercise().getVideoUrl())
+        .videoId(exercise.getLibraryExercise().getVideoId())
         .sets(exercise.getSets())
         .reps(exercise.getReps())
-        .repUnit(exercise.getRepUnit())
+        .repUnit(exercise.getLibraryExercise().getRepUnit())
         .plannedWeight(exercise.getPlannedWeight())
         .lastUsedWeight(exercise.getLastUsedWeight())
         .lastTrainedAt(exercise.getLastTrainedAt())

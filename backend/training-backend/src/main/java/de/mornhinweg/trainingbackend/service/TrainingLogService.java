@@ -25,6 +25,7 @@ public class TrainingLogService {
   private final WorkoutRepository workoutRepository;
   private final ExerciseRepository exerciseRepository;
   private final UserRepository userRepository;
+  private final LibraryExerciseService libraryExerciseService;
 
   @Transactional
   public TrainingLogResponse startTraining(StartTrainingRequest request, Authentication authentication) {
@@ -115,7 +116,7 @@ public class TrainingLogService {
 
     Exercise exercise = Exercise.builder()
         .workout(workout)
-        .name(request.getName())
+        .libraryExercise(libraryExerciseService.resolve(user, request.getLibraryExerciseId(), request.getName()))
         .sets(request.getSets())
         .reps(request.getReps())
         .plannedWeight(request.getPlannedWeight())
@@ -220,13 +221,16 @@ public class TrainingLogService {
 
   private ExerciseLogResponse toExerciseLogResponse(ExerciseLog exerciseLog, boolean includePrevious) {
     Exercise exercise = exerciseLog.getExercise();
+    LibraryExercise libraryExercise = exercise.getLibraryExercise();
+    // Previous values come from any workout that uses the same library exercise
     ExerciseLog previous = includePrevious
-        ? exerciseLogRepository.findPreviousCompleted(exercise.getId(), exerciseLog.getTrainingLog().getId()).orElse(null)
+        ? exerciseLogRepository.findPreviousCompleted(libraryExercise.getId(), exerciseLog.getTrainingLog().getId()).orElse(null)
         : null;
     return ExerciseLogResponse.builder()
         .id(exerciseLog.getId())
         .exerciseId(exercise.getId())
-        .exerciseName(exercise.getName())
+        .libraryExerciseId(libraryExercise.getId())
+        .exerciseName(libraryExercise.getName())
         .workoutId(exercise.getWorkout().getId())
         .workoutName(exercise.getWorkout().getName())
         .plannedSets(exercise.getSets())
@@ -237,7 +241,7 @@ public class TrainingLogService {
         .weightUsed(exerciseLog.getWeightUsed())
         .completed(exerciseLog.getCompleted())
         .notes(exerciseLog.getNotes())
-        .repUnit(exercise.getRepUnit())
+        .repUnit(libraryExercise.getRepUnit())
         .previousSets(previous != null ? previous.getSetsCompleted() : null)
         .previousReps(previous != null ? previous.getRepsCompleted() : null)
         .previousWeight(previous != null ? previous.getWeightUsed() : null)

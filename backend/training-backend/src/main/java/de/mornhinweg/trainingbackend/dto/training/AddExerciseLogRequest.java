@@ -1,6 +1,6 @@
 package de.mornhinweg.trainingbackend.dto.training;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
@@ -13,7 +13,10 @@ import java.math.BigDecimal;
 @Builder
 public class AddExerciseLogRequest {
 
-  @NotBlank(message = "Exercise name is required")
+  // Either an existing library entry or a name (matched against the library, added when new)
+  private Long libraryExerciseId;
+
+  @Size(max = 100)
   private String name;
 
   private Integer sets;

@@ -6,7 +6,8 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import { getErrorMessage } from '@/utils/errorHandler';
 
 export interface AddExerciseLogDto {
-  name: string;
+  libraryExerciseId?: number;
+  name?: string;
   sets?: number | null;
   reps?: number | null;
   plannedWeight?: number | null;
@@ -28,6 +29,7 @@ export function useAddExerciseLog(trainingLogId?: string) {
       }
       void queryClient.invalidateQueries({ queryKey: ['exercises'] });
       void queryClient.invalidateQueries({ queryKey: ['workouts'] });
+      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.library });
       Alert.alert('Success', 'Exercise added!');
       router.back();
     },

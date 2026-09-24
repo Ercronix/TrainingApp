@@ -5,4 +5,5 @@ export const QUERY_KEYS = {
   exercises: (workoutId: string) => ['exercises', workoutId] as const,
   exercise: (exerciseId: string) => ['exercise', exerciseId] as const,
   training: (id: string) => ['training', id] as const,
+  library: ['library'] as const,
 };
