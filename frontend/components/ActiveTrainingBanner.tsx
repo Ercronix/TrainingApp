@@ -1,0 +1,67 @@
+import { View, Text, TouchableOpacity } from 'react-native';
+import { usePathname, useRouter, useSegments } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { useActiveTraining } from '@/hooks/useActiveTraining';
+import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
+import { useTheme } from '@/hooks/useTheme';
+
+// Screens the banner stays off: the session itself and the modals
+const HIDDEN_ROUTES = new Set([
+  '/training', '/add-exercise', '/log-exercise', '/create-split', '/create-workout',
+  '/create-exercise', '/edit-split', '/edit-workout', '/edit-exercise',
+]);
+
+// Height of the floating tab bar plus its gap to the bottom edge (see app/(tabs)/_layout.tsx)
+const TAB_BAR_OFFSET = 64 + 12;
+
+function formatElapsed(seconds: number | null): string {
+  if (seconds == null) return '--:--';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  const mmss = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  return h > 0 ? `${h}:${mmss}` : mmss;
+}
+
+/** Floating shortcut back into an unfinished training session, shown on every other screen. */
+export function ActiveTrainingBanner() {
+  const { activeTraining } = useActiveTraining();
+  const router = useRouter();
+  const pathname = usePathname();
+  const segments = useSegments();
+  const insets = useSafeAreaInsets();
+  const c = useTheme();
+  const elapsedSeconds = useElapsedSeconds({ startedAt: activeTraining?.startedAt });
+
+  if (!activeTraining || segments[0] === '(auth)' || HIDDEN_ROUTES.has(pathname)) return null;
+
+  // Sit above the tab bar on tabs; elsewhere leave room for the screens' bottom-right FAB
+  const inTabs = segments[0] === '(tabs)';
+  const position = inTabs
+    ? { left: 16, right: 16, bottom: insets.bottom + TAB_BAR_OFFSET + 8 }
+    : { left: 16, right: 96, bottom: insets.bottom + 32 };
+
+  return (
+    <View style={{ position: 'absolute', ...position }} pointerEvents="box-none">
+      <TouchableOpacity
+        className="bg-accent rounded-md h-14 px-4 flex-row items-center gap-3"
+        style={{ shadowColor: '#131313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 }}
+        onPress={() =>
+          router.push({ pathname: '/training', params: { trainingLogId: activeTraining.id.toString() } })
+        }
+        activeOpacity={0.85}
+      >
+        <Ionicons name="flash" size={18} color={c.accentFg} />
+        <View className="flex-1">
+          <Text className="text-accent-fg text-[9px] font-bold tracking-[3px]">ACTIVE SESSION</Text>
+          <Text className="text-accent-fg text-sm font-bold tracking-tight" numberOfLines={1}>
+            {activeTraining.workoutName || activeTraining.splitName}
+          </Text>
+        </View>
+        <Text className="text-accent-fg text-sm font-mono-bold">{formatElapsed(elapsedSeconds)}</Text>
+        <Ionicons name="chevron-forward" size={16} color={c.accentFg} />
+      </TouchableOpacity>
+    </View>
+  );
+}

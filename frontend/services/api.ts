@@ -299,7 +299,8 @@ export const trainingLogsApi = {
     return response.data;
   },
 
-  getActive: async (): Promise<TrainingLog | null> => {
+  // Sessions that were started but not completed, newest first
+  getActive: async (): Promise<TrainingLog[]> => {
     const response = await api.get("/training-logs/active");
     return response.data;
   },

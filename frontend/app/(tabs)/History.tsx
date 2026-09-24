@@ -98,7 +98,11 @@ export default function HistoryScreen() {
         <TouchableOpacity
           className="bg-surface rounded-l-md p-5"
           onPress={() =>
-            router.push({ pathname: '/history-detail' as any, params: { trainingLogId: item.id.toString() } })
+            // Unfinished sessions reopen in the training screen so they can be continued
+            router.push({
+              pathname: item.isCompleted ? '/history-detail' as any : '/training',
+              params: { trainingLogId: item.id.toString() },
+            })
           }
           activeOpacity={0.85}
         >
