@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
+import { useRestTimerStore } from '@/store/restTimerStore';
 import { authApi } from '@/services/api';
 import { storage } from '@/services/storage';
 import { clearQueryCache } from '@/services/queryClient';
@@ -40,9 +41,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Whatever ended the session (logout button, rejected refresh token), don't leave the
-  // previous user's cached data behind
+  // previous user's cached data or a running rest timer behind
   useEffect(() => {
-    if (wasAuthenticated.current && !isAuthenticated) void clearQueryCache();
+    if (wasAuthenticated.current && !isAuthenticated) {
+      void clearQueryCache();
+      useRestTimerStore.getState().reset();
+    }
     wasAuthenticated.current = isAuthenticated;
   }, [isAuthenticated]);
 
