@@ -8,7 +8,8 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 
 ### Frontend (`frontend/`)
 - `npm ci` then `npm run start` (Expo dev server; `w` for web). `npm run web` for web only.
-- Typecheck (the only frontend check CI runs; there is no linter or test suite): `npx tsc --noEmit`
+- Checks CI runs (there is no test suite): `npx tsc --noEmit` and `npm run lint` (ESLint,
+  `eslint-config-expo` flat config). Lint currently passes with 5 warnings; warnings don't fail CI.
 - Imports use the `@/` alias for the `frontend/` root.
 
 ### Backend (`backend/training-backend/`, Java 21, Gradle wrapper)
