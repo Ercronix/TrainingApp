@@ -32,9 +32,8 @@ function AppLayout() {
 
   useEffect(() => {
     storage.getItem('color-scheme').then((saved) => {
-      if (saved === 'light' || saved === 'dark') {
-        setColorScheme(saved);
-      }
+      // Dark is the default; only an explicit saved preference switches to light
+      setColorScheme(saved === 'light' ? 'light' : 'dark');
     });
     storage.getItem('theme-id').then((saved) => {
       if (saved) setThemeId(saved);

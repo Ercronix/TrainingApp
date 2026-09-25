@@ -220,7 +220,6 @@ export default function LogExerciseModal() {
 
         <TouchableOpacity
           className={`bg-accent rounded-md py-5 flex-row items-center justify-center gap-2 ${isPending ? 'opacity-50' : ''}`}
-          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
           onPress={handleSave}
           disabled={isPending}
           activeOpacity={0.85}

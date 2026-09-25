@@ -140,7 +140,6 @@ export default function RegisterScreen() {
 
                 <TouchableOpacity
                     className={`bg-accent rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
-                    style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
                     onPress={handleRegister}
                     disabled={loading}
                     activeOpacity={0.85}

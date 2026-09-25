@@ -112,7 +112,6 @@ export default function WorkoutsScreen() {
         <AnimatedPressable
           wrapperStyle={{ position: 'absolute', right: 24, bottom: 32 + insets.bottom }}
           className="w-14 h-14 rounded-md bg-accent justify-center items-center"
-          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
           activeOpacity={0.8}
         >
           <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>

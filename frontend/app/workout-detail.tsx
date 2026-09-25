@@ -150,7 +150,6 @@ export default function WorkoutDetailScreen() {
       {!reorderMode && exercises.length > 0 && (
         <TouchableOpacity
           className={`mx-4 mb-3 bg-accent rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
-          style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 }}
           onPress={() => startTraining(exercises.length)}
           disabled={isStarting}
           activeOpacity={0.85}
@@ -193,7 +192,6 @@ export default function WorkoutDetailScreen() {
           <AnimatedPressable
             wrapperStyle={{ position: 'absolute', right: 24, bottom: 32 + insets.bottom }}
             className="w-14 h-14 rounded-md bg-accent justify-center items-center"
-            style={{ shadowColor: '#cafd00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 }}
             activeOpacity={0.8}
           >
             <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
