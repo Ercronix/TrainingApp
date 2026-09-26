@@ -3,7 +3,6 @@ package de.mornhinweg.trainingbackend.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -26,12 +25,14 @@ public class JwtUtil {
     return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
   }
 
-  public String extractUsername(String token) {
-    return extractClaim(token, Claims::getSubject);
-  }
-
-  public Date extractExpiration(String token) {
-    return extractClaim(token, Claims::getExpiration);
+  /**
+   * The subject is the user id rather than the username: usernames can change or be freed by
+   * account deletion and re-registered, and a still-valid token must never resolve to someone else.
+   * Parsing verifies the signature and expiry. Throws NumberFormatException for tokens issued
+   * before the switch, whose subject is still a username.
+   */
+  public Long extractUserId(String token) {
+    return Long.parseLong(extractClaim(token, Claims::getSubject));
   }
 
   public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
@@ -47,13 +48,9 @@ public class JwtUtil {
         .getPayload();
   }
 
-  private Boolean isTokenExpired(String token) {
-    return extractExpiration(token).before(new Date());
-  }
-
-  public String generateToken(String username) {
+  public String generateToken(Long userId) {
     Map<String, Object> claims = new HashMap<>();
-    return createToken(claims, username);
+    return createToken(claims, userId.toString());
   }
 
   private String createToken(Map<String, Object> claims, String subject) {
@@ -67,14 +64,5 @@ public class JwtUtil {
         .expiration(expiryDate)
         .signWith(getSigningKey())
         .compact();
-  }
-
-  public Boolean validateToken(String token, UserDetails userDetails) {
-    try {
-      final String username = extractUsername(token);
-      return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-    } catch (JwtException | IllegalArgumentException e) {
-      return false;
-    }
   }
 }
