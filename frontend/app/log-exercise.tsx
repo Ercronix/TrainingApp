@@ -10,7 +10,7 @@ import { PlateCalculator } from '@/components/PlateCalculator';
 import { RestCountdown } from '@/components/RestTimer';
 import { useRestTimerStore } from '@/store/restTimerStore';
 import { QUERY_KEYS } from '@/constants/queryKeys';
-import { alert } from '@/utils/confirm';
+import { alert, confirm } from '@/utils/confirm';
 import { formatSets, previousSetsOf } from '@/utils/sets';
 import { ExerciseLog, SetLog, TrainingLog } from '@/types';
 
@@ -19,7 +19,7 @@ interface SetRow {
   reps: string;
   rpe: string;
   warmup: boolean;
-  /** Finished this session; only drives the check mark and rest timer, not what gets saved. */
+  /** Finished this session. Once any row is checked, only checked rows are saved. */
   done: boolean;
 }
 
@@ -131,11 +131,13 @@ export default function LogExerciseModal() {
   };
 
   const handleSave = () => {
+    // Once any set is checked, only the checked ones were performed
+    const anyDone = rows.some((r) => r.done);
     const sets: SetLog[] = [];
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       // Rows without reps weren't performed
-      if (!row.reps.trim()) continue;
+      if ((anyDone && !row.done) || !row.reps.trim()) continue;
       const reps = parseInt(row.reps, 10);
       const weight = row.weight.trim() ? parseNumber(row.weight) : null;
       const rpe = row.rpe.trim() ? parseNumber(row.rpe) : null;
@@ -153,7 +155,12 @@ export default function LogExerciseModal() {
       alert('No sets', `Enter the ${unitShort} of at least one set.`);
       return;
     }
-    saveExercise(sets);
+    if (anyDone) {
+      saveExercise(sets);
+      return;
+    }
+    const count = sets.length === 1 ? '1 set' : `all ${sets.length} sets`;
+    confirm('No sets checked', `Save ${count} as done?`, () => saveExercise(sets), 'Save');
   };
 
   let workingNumber = 0;
