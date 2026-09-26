@@ -203,6 +203,7 @@ export default function LogExerciseModal() {
 
         {rows.map((row, i) => {
           if (!row.warmup) workingNumber++;
+          // min-w-0: on web an <input> won't shrink below its default ~20ch width, overflowing the row
           const inputClass = 'bg-surface rounded px-3 py-3 text-primary text-lg font-bold tracking-tight';
           const onFocus = () => setFocused(i);
           return (
@@ -218,7 +219,7 @@ export default function LogExerciseModal() {
                 </Text>
               </TouchableOpacity>
               <TextInput
-                className={`${inputClass} flex-1`}
+                className={`${inputClass} flex-1 min-w-0`}
                 placeholder={log?.plannedWeight != null ? String(log.plannedWeight) : '0'}
                 placeholderTextColor={c.elevated}
                 value={row.weight}
@@ -228,7 +229,7 @@ export default function LogExerciseModal() {
                 keyboardAppearance="dark"
               />
               <TextInput
-                className={`${inputClass} flex-1`}
+                className={`${inputClass} flex-1 min-w-0`}
                 placeholder={log?.plannedReps != null ? String(log.plannedReps) : '0'}
                 placeholderTextColor={c.elevated}
                 value={timing?.index === i ? String(elapsed) : row.reps}
