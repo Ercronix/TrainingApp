@@ -21,7 +21,16 @@ public class CustomUserDetailsService implements UserDetailsService {
   public UserDetails loadUserByUsername(@NonNull String username) throws UsernameNotFoundException {
     User user = userRepository.findByUsername(username)
         .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+    return toUserDetails(user);
+  }
 
+  public UserDetails loadUserById(Long id) throws UsernameNotFoundException {
+    User user = userRepository.findById(id)
+        .orElseThrow(() -> new UsernameNotFoundException("User not found: " + id));
+    return toUserDetails(user);
+  }
+
+  private static UserDetails toUserDetails(User user) {
     // Spring Security UserDetails erstellen
     return new org.springframework.security.core.userdetails.User(
         user.getUsername(),

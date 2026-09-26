@@ -241,6 +241,16 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      {/* Account management */}
+      <TouchableOpacity
+        className="mx-4 mb-3 bg-surface rounded-md py-5 flex-row items-center justify-center gap-2"
+        onPress={() => router.push('/account' as any)}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="settings-outline" size={18} color={c.accent} />
+        <Text className="text-primary text-sm font-bold tracking-[2px]">MANAGE ACCOUNT</Text>
+      </TouchableOpacity>
+
       {/* Exercise library */}
       <TouchableOpacity
         className="mx-4 mb-3 bg-surface rounded-md py-5 flex-row items-center justify-center gap-2"

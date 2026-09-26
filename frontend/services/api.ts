@@ -32,7 +32,11 @@ const authClient = axios.create({
 async function saveSession(data: AuthResponse) {
   await storage.setItem(ACCESS_TOKEN_KEY, data.token);
   if (data.refreshToken) await storage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
-  // Cached so the app can start while offline
+  await saveUser(data);
+}
+
+// Cached so the app can start while offline
+async function saveUser(data: Pick<AuthResponse, "userId" | "username" | "email">) {
   await storage.setItem(USER_KEY, JSON.stringify({ userId: data.userId, username: data.username, email: data.email }));
 }
 
@@ -139,6 +143,28 @@ export const authApi = {
   },
 
   clearSession,
+};
+
+// Plain calls rather than TanStack mutations: a mutation paused offline would be persisted to
+// AsyncStorage with its variables, i.e. the password, and replayed later.
+export const accountApi = {
+  update: async (data: { username: string; email: string; currentPassword: string }): Promise<AuthResponse> => {
+    const response = await api.put<AuthResponse>("/account", data);
+    await saveUser(response.data);
+    return response.data;
+  },
+
+  /** Signs out every other device; this one gets a fresh session. */
+  changePassword: async (data: { currentPassword: string; newPassword: string }): Promise<AuthResponse> => {
+    const response = await api.put<AuthResponse>("/account/password", data);
+    await saveSession(response.data);
+    return response.data;
+  },
+
+  deleteAccount: async (password: string): Promise<void> => {
+    await api.delete("/account", { data: { password } });
+    await clearSession();
+  },
 };
 
 export const splitsApi = {
