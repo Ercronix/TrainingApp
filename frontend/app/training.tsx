@@ -212,6 +212,23 @@ export default function TrainingScreen() {
         renderItem={renderExerciseItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: dockHeight + 16 }}
+        ListFooterComponent={
+          !training?.isCompleted ? (
+            <TouchableOpacity
+              className="bg-surface rounded-md py-4 flex-row items-center justify-center gap-2 mt-1"
+              onPress={() =>
+                router.push({
+                  pathname: '/add-exercise' as any,
+                  params: { trainingLogId },
+                })
+              }
+              activeOpacity={0.85}
+            >
+              <Ionicons name="add" size={18} color={c.accent} />
+              <Text className="text-primary text-sm font-bold tracking-[2px]">ADD EXERCISE</Text>
+            </TouchableOpacity>
+          ) : null
+        }
       />
 
       {/* Bottom dock */}
@@ -220,22 +237,6 @@ export default function TrainingScreen() {
         style={{ paddingBottom: 32 + insets.bottom }}
         onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
       >
-        {!training?.isCompleted && (
-          <TouchableOpacity
-            className="bg-surface rounded-md py-4 flex-row items-center justify-center gap-2 mb-3"
-            style={{ shadowColor: '#131313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 4 }}
-            onPress={() =>
-              router.push({
-                pathname: '/add-exercise' as any,
-                params: { trainingLogId },
-              })
-            }
-            activeOpacity={0.85}
-          >
-            <Ionicons name="add" size={18} color={c.accent} />
-            <Text className="text-primary text-sm font-bold tracking-[2px]">ADD EXERCISE</Text>
-          </TouchableOpacity>
-        )}
         <View className="mb-3">
           <RestTimer />
         </View>

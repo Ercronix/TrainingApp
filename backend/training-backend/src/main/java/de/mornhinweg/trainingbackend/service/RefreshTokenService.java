@@ -65,6 +65,12 @@ public class RefreshTokenService {
     refreshTokenRepository.deleteByTokenHash(hash(rawToken));
   }
 
+  /** Signs the user out on every device. */
+  @Transactional
+  public void revokeAll(User user) {
+    refreshTokenRepository.deleteAllForUser(user.getId());
+  }
+
   private static String hash(String rawToken) {
     try {
       MessageDigest digest = MessageDigest.getInstance("SHA-256");

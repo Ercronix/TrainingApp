@@ -28,6 +28,10 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
   const rightWidth = (rightActions?.length ?? 0) * ACTION_WIDTH;
   const leftWidth = (leftActions?.length ?? 0) * ACTION_WIDTH;
 
+  // The pan responder is created once, so it reads the actions through a ref to see prop changes
+  const actions = useRef({ rightActions, leftActions, rightWidth, leftWidth });
+  actions.current = { rightActions, leftActions, rightWidth, leftWidth };
+
   const close = useCallback(() => {
     Animated.spring(translateX, {
       toValue: 0,
@@ -48,6 +52,7 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
         translateX.setValue(0);
       },
       onPanResponderMove: (_, gestureState) => {
+        const { rightActions, leftActions, rightWidth, leftWidth } = actions.current;
         let newValue = gestureState.dx;
         const total = lastOffset.current + newValue;
 
@@ -61,6 +66,7 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
         translateX.setValue(newValue);
       },
       onPanResponderRelease: (_, gestureState) => {
+        const { rightActions, leftActions, rightWidth, leftWidth } = actions.current;
         translateX.flattenOffset();
         const currentPos = lastOffset.current + gestureState.dx;
 
