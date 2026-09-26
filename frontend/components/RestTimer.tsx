@@ -4,11 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useRestTimerStore } from '@/store/restTimerStore';
 
-export function RestTimer() {
-  const { duration: customDuration, endTime, remaining, start, pause, reset, setDuration } = useRestTimerStore();
+/** Seconds left on the rest timer, re-rendering while it runs. */
+function useRestSeconds() {
+  const { endTime, remaining } = useRestTimerStore();
   const isRunning = endTime != null;
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const c = useTheme();
 
   // The store owns the countdown; this only re-renders the display while it runs
   useEffect(() => {
@@ -19,14 +19,34 @@ export function RestTimer() {
   }, [isRunning]);
 
   const seconds = endTime != null ? Math.max(0, Math.ceil((endTime - nowMs) / 1000)) : remaining;
+  return { seconds, isRunning };
+}
+
+const formatTime = (secs: number) => {
+  const mins = Math.floor(secs / 60);
+  const remainingSecs = secs % 60;
+  return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
+};
+
+/** Compact read-only countdown, shown only while the rest timer runs. */
+export function RestCountdown() {
+  const { seconds, isRunning } = useRestSeconds();
+  if (!isRunning) return null;
+  return (
+    <View className="bg-surface rounded-sm px-3 py-2">
+      <Text className={`text-[11px] tracking-widest ${seconds <= 10 ? 'text-danger' : 'text-accent-text'}`}>
+        REST {formatTime(seconds)}
+      </Text>
+    </View>
+  );
+}
+
+export function RestTimer() {
+  const { duration: customDuration, start, pause, reset, setDuration } = useRestTimerStore();
+  const { seconds, isRunning } = useRestSeconds();
+  const c = useTheme();
 
   const toggle = () => (isRunning ? pause() : start());
-
-  const formatTime = (secs: number) => {
-    const mins = Math.floor(secs / 60);
-    const remainingSecs = secs % 60;
-    return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
-  };
 
   const setPreset = (mins: number) => setDuration(mins * 60);
 
