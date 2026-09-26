@@ -29,8 +29,9 @@ export default function AccountModal() {
 
   // Mirrors register.tsx; the server's validation errors carry no readable message
   const saveDetails = async () => {
-    if (username.length < 3) return alert('Error', 'Username must be at least 3 characters');
+    if (username.length < 3 || username.length > 50) return alert('Error', 'Username must be between 3 and 50 characters');
     if (!/\S+@\S+\.\S+/.test(email)) return alert('Error', 'Enter a valid email');
+    if (email.length > 100) return alert('Error', 'Email must be at most 100 characters');
     if (!detailsPassword) return alert('Error', 'Enter your current password to confirm');
 
     setPending('details');
@@ -58,7 +59,7 @@ export default function AccountModal() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      alert('Password changed', 'You have been signed out on all other devices.');
+      alert('Password changed', 'Other devices will be signed out when their current session expires.');
     } catch (error) {
       alert('Error', getErrorMessage(error));
     } finally {
