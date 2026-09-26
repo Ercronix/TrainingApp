@@ -75,6 +75,7 @@ function AppLayout() {
               <Stack.Screen name="edit-split"     options={{ presentation: 'modal', headerShown: false }} />
               <Stack.Screen name="edit-workout"   options={{ presentation: 'modal', headerShown: false }} />
               <Stack.Screen name="edit-exercise"  options={{ presentation: 'modal', headerShown: false }} />
+              <Stack.Screen name="account"        options={{ presentation: 'modal', headerShown: false }} />
 
               {/* Screens */}
               <Stack.Screen name="workouts"        options={{ headerShown: false }} />
