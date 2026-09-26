@@ -1,5 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Vibration } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useExerciseLog } from '@/hooks/useExerciseLog';
@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 import { PlateCalculator } from '@/components/PlateCalculator';
+import { RestCountdown } from '@/components/RestTimer';
+import { useRestTimerStore } from '@/store/restTimerStore';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { alert } from '@/utils/confirm';
 import { formatSets, previousSetsOf } from '@/utils/sets';
@@ -17,18 +19,23 @@ interface SetRow {
   reps: string;
   rpe: string;
   warmup: boolean;
+  /** Finished this session; only drives the check mark and rest timer, not what gets saved. */
+  done: boolean;
 }
 
-const toRow = (s: SetLog, keepRpe: boolean): SetRow => ({
+const emptyRow: SetRow = { weight: '', reps: '', rpe: '', warmup: false, done: false };
+
+const toRow = (s: SetLog, logged: boolean): SetRow => ({
   weight: s.weight != null ? String(s.weight) : '',
   reps: String(s.reps),
-  rpe: keepRpe && s.rpe != null ? String(s.rpe) : '',
+  rpe: logged && s.rpe != null ? String(s.rpe) : '',
   warmup: s.warmup,
+  done: logged,
 });
 
 // Prefill: what's already logged this session, else last session, else the plan
 function initialRows(log: ExerciseLog | undefined): SetRow[] {
-  if (!log) return [{ weight: '', reps: '', rpe: '', warmup: false }];
+  if (!log) return [{ ...emptyRow }];
   if (log.sets?.length) return log.sets.map((s) => toRow(s, true));
   const previous = previousSetsOf(log);
   if (previous.length) return previous.map((s) => toRow(s, false));
@@ -38,6 +45,7 @@ function initialRows(log: ExerciseLog | undefined): SetRow[] {
     reps: log.plannedReps != null ? String(log.plannedReps) : '',
     rpe: '',
     warmup: false,
+    done: false,
   };
   return Array.from({ length: Math.max(planned, 1) }, () => ({ ...row }));
 }
@@ -56,12 +64,34 @@ export default function LogExerciseModal() {
     ?.exercises.find((e) => e.id === Number(exerciseLogId)));
   const [rows, setRows] = useState<SetRow[]>(() => initialRows(log));
   const [focused, setFocused] = useState(0);
+  // Stopwatch of the set being performed, for timed exercises
+  const [timing, setTiming] = useState<{ index: number; startedAt: number } | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const vibrated = useRef(false);
   const router = useRouter();
   const { saveExercise, isPending } = useExerciseLog(exerciseLogId, trainingLogId, exerciseId);
   const c = useTheme();
   const repUnit = log?.repUnit ?? 'reps';
   const unitShort = repUnit === 'seconds' ? 'sec' : 'reps';
   const previous = log ? previousSetsOf(log) : [];
+  const isTimed = repUnit === 'seconds';
+  const elapsed = timing ? Math.max(0, Math.floor((nowMs - timing.startedAt) / 1000)) : 0;
+
+  useEffect(() => {
+    if (!timing) return;
+    setNowMs(Date.now());
+    const timer = setInterval(() => setNowMs(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, [timing]);
+
+  // Buzz once when the timed set reaches its target
+  const target = timing ? parseInt(rows[timing.index]?.reps || String(log?.plannedReps ?? ''), 10) : NaN;
+  useEffect(() => {
+    if (timing && !vibrated.current && target > 0 && elapsed >= target) {
+      vibrated.current = true;
+      Vibration.vibrate(500);
+    }
+  }, [timing, elapsed, target]);
 
   const updateRow = (index: number, patch: Partial<SetRow>) =>
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
@@ -69,14 +99,35 @@ export default function LogExerciseModal() {
   const addSet = () => {
     setRows((prev) => {
       const last = prev[prev.length - 1];
-      return [...prev, last ? { ...last, rpe: '', warmup: false } : { weight: '', reps: '', rpe: '', warmup: false }];
+      return [...prev, last ? { ...last, rpe: '', warmup: false, done: false } : { ...emptyRow }];
     });
     setFocused(rows.length);
   };
 
   const removeSet = (index: number) => {
+    setTiming(null);
     setRows((prev) => prev.filter((_, i) => i !== index));
     setFocused((f) => (f >= index && f > 0 ? f - 1 : f));
+  };
+
+  const toggleDone = (index: number) => {
+    const done = !rows[index].done;
+    updateRow(index, { done });
+    // Finishing a set starts the rest before the next one
+    if (done) useRestTimerStore.getState().restart();
+  };
+
+  const toggleTiming = (index: number) => {
+    if (timing?.index === index) {
+      // Stopping records the time held as the set's seconds and finishes it
+      updateRow(index, { reps: String(elapsed), done: true });
+      setTiming(null);
+      useRestTimerStore.getState().restart();
+      return;
+    }
+    vibrated.current = false;
+    setTiming({ index, startedAt: Date.now() });
+    setFocused(index);
   };
 
   const handleSave = () => {
@@ -137,6 +188,7 @@ export default function LogExerciseModal() {
               <Text className="text-muted text-[11px] tracking-widest">LAST: {formatSets(previous, repUnit)}</Text>
             </View>
           )}
+          <RestCountdown />
         </View>
 
         {/* Column labels */}
@@ -145,6 +197,7 @@ export default function LogExerciseModal() {
           <Text className="text-muted text-[9px] tracking-[2px] flex-1">KG</Text>
           <Text className="text-muted text-[9px] tracking-[2px] flex-1">{unitShort.toUpperCase()}</Text>
           <Text className="text-muted text-[9px] tracking-[2px] w-14">RPE</Text>
+          <View className="w-8" />
           <View className="w-8" />
         </View>
 
@@ -178,7 +231,8 @@ export default function LogExerciseModal() {
                 className={`${inputClass} flex-1`}
                 placeholder={log?.plannedReps != null ? String(log.plannedReps) : '0'}
                 placeholderTextColor={c.elevated}
-                value={row.reps}
+                value={timing?.index === i ? String(elapsed) : row.reps}
+                editable={timing?.index !== i}
                 onChangeText={(reps) => updateRow(i, { reps })}
                 onFocus={onFocus}
                 keyboardType="number-pad"
@@ -202,6 +256,32 @@ export default function LogExerciseModal() {
               >
                 <Ionicons name="remove-circle-outline" size={20} color={rows.length === 1 ? c.elevated : c.muted} />
               </TouchableOpacity>
+              {isTimed && !row.done ? (
+                <TouchableOpacity
+                  className="w-8 h-12 justify-center items-center"
+                  onPress={() => toggleTiming(i)}
+                  disabled={timing != null && timing.index !== i}
+                  accessibilityLabel={timing?.index === i ? `Stop timing set ${i + 1}` : `Start timing set ${i + 1}`}
+                >
+                  <Ionicons
+                    name={timing?.index === i ? 'stop-circle' : 'play-circle-outline'}
+                    size={22}
+                    color={timing?.index === i ? c.accent : timing != null ? c.elevated : c.muted}
+                  />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  className="w-8 h-12 justify-center items-center"
+                  onPress={() => toggleDone(i)}
+                  accessibilityLabel={row.done ? `Mark set ${i + 1} as not done` : `Finish set ${i + 1} and start rest`}
+                >
+                  <Ionicons
+                    name={row.done ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                    size={22}
+                    color={row.done ? c.accent : c.muted}
+                  />
+                </TouchableOpacity>
+              )}
             </View>
           );
         })}
