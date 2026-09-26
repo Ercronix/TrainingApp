@@ -3,6 +3,7 @@ import { useRouter, useSegments } from 'expo-router';
 import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 import { useRestTimerStore } from '@/store/restTimerStore';
+import { useSetDraftStore } from '@/store/setDraftStore';
 import { authApi } from '@/services/api';
 import { storage } from '@/services/storage';
 import { clearQueryCache } from '@/services/queryClient';
@@ -46,6 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (wasAuthenticated.current && !isAuthenticated) {
       void clearQueryCache();
       useRestTimerStore.getState().reset();
+      useSetDraftStore.getState().reset();
     }
     wasAuthenticated.current = isAuthenticated;
   }, [isAuthenticated]);

@@ -28,13 +28,16 @@ const formatTime = (secs: number) => {
   return `${mins.toString().padStart(2, '0')}:${remainingSecs.toString().padStart(2, '0')}`;
 };
 
-/** Compact read-only countdown, shown only while the rest timer runs. */
+/**
+ * Compact read-only countdown. Always rendered, muted while idle, so starting the timer doesn't
+ * shift the layout around it.
+ */
 export function RestCountdown() {
   const { seconds, isRunning } = useRestSeconds();
-  if (!isRunning) return null;
+  const color = !isRunning ? 'text-muted' : seconds <= 10 ? 'text-danger' : 'text-accent-text';
   return (
     <View className="bg-surface rounded-sm px-3 py-2">
-      <Text className={`text-[11px] tracking-widest ${seconds <= 10 ? 'text-danger' : 'text-accent-text'}`}>
+      <Text className={`text-[11px] tracking-widest ${color}`}>
         REST {formatTime(seconds)}
       </Text>
     </View>
