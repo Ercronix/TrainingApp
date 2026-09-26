@@ -14,6 +14,8 @@ interface RestTimerState {
   /** Seconds left while paused/stopped. */
   remaining: number;
   start: () => void;
+  /** Starts a full rest from the selected preset, even if a timer is already running. */
+  restart: () => void;
   pause: () => void;
   reset: () => void;
   setDuration: (seconds: number) => void;
@@ -59,6 +61,11 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => {
       // Backstop for when the app is backgrounded or closed and JS isn't running
       void scheduleRestTimerNotification(seconds);
       completionTimeout = setTimeout(complete, seconds * 1000);
+    },
+
+    restart: () => {
+      stop(get().duration);
+      get().start();
     },
 
     pause: () => {

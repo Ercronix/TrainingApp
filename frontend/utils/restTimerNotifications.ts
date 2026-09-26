@@ -38,7 +38,8 @@ async function ensurePermission(): Promise<boolean> {
 /** Schedules a local notification to fire when the rest timer finishes, replacing any pending one. */
 export async function scheduleRestTimerNotification(seconds: number): Promise<void> {
   await cancelRestTimerNotification();
-  if (seconds <= 0) return;
+  // expo-notifications can't schedule on web; the store still completes the timer in the app
+  if (seconds <= 0 || Platform.OS === 'web') return;
   const current = ++generation;
 
   const granted = await ensurePermission();
