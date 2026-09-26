@@ -111,17 +111,29 @@ export default function AccountModal() {
             <Text className="text-muted text-[10px] tracking-[3px] mb-4">DETAILS</Text>
             <Field label="USERNAME" value={username} onChangeText={setUsername} editable={!busy} />
             <Field label="EMAIL" value={email} onChangeText={setEmail} keyboardType="email-address" editable={!busy} />
-            <Field label="CURRENT PASSWORD" value={detailsPassword} onChangeText={setDetailsPassword} secure editable={!busy} />
-            <TouchableOpacity
-              className={`bg-accent rounded-md py-4 items-center mt-1 ${busy ? 'opacity-50' : ''}`}
-              onPress={saveDetails}
-              disabled={busy}
-              activeOpacity={0.85}
-            >
-              <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
-                {pending === 'details' ? 'SAVING...' : 'SAVE DETAILS'}
-              </Text>
-            </TouchableOpacity>
+            <Text className="text-muted text-[9px] tracking-[3px] mb-2">CONFIRM WITH PASSWORD</Text>
+            <View className="flex-row gap-2">
+              <TextInput
+                className="flex-1 bg-base rounded-sm px-4 py-3 text-primary text-base"
+                value={detailsPassword}
+                onChangeText={setDetailsPassword}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardAppearance="dark"
+                editable={!busy}
+              />
+              <TouchableOpacity
+                className={`bg-accent rounded-md px-5 justify-center ${busy ? 'opacity-50' : ''}`}
+                onPress={saveDetails}
+                disabled={busy}
+                activeOpacity={0.85}
+              >
+                <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
+                  {pending === 'details' ? 'SAVING...' : 'SAVE'}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Password */}
