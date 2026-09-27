@@ -37,7 +37,7 @@ export function ConfirmDialogHost() {
         Animated.timing(opacity, { toValue: 1, duration: 150, useNativeDriver: true }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, scale, opacity]);
 
   if (!visible) return null;
 

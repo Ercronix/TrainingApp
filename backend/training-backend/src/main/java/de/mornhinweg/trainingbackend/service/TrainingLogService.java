@@ -168,7 +168,13 @@ public class TrainingLogService {
       return toResponse(trainingLog, true);
     }
 
-    trainingLog.setCompletedAt(LocalDateTime.now());
+    // Backdated for a session completed offline, but never before it started
+    LocalDateTime completedAt = LocalDateTime.now();
+    if (request.getCompletedSecondsAgo() != null) {
+      completedAt = completedAt.minusSeconds(request.getCompletedSecondsAgo());
+      if (completedAt.isBefore(trainingLog.getStartedAt())) completedAt = trainingLog.getStartedAt();
+    }
+    trainingLog.setCompletedAt(completedAt);
     trainingLog.setDurationSeconds(
         (int) Duration.between(trainingLog.getStartedAt(), trainingLog.getCompletedAt()).getSeconds()
     );
@@ -183,7 +189,7 @@ public class TrainingLogService {
       if (exerciseLog.getCompleted() && exerciseLog.getWeightUsed() != null) {
         Exercise exercise = exerciseLog.getExercise();
         exercise.setLastUsedWeight(exerciseLog.getWeightUsed());
-        exercise.setLastTrainedAt(LocalDateTime.now());
+        exercise.setLastTrainedAt(trainingLog.getCompletedAt());
         exerciseRepository.save(exercise);
       }
     }
@@ -249,6 +255,10 @@ public class TrainingLogService {
     ExerciseLog previous = includePrevious
         ? exerciseLogRepository.findPreviousCompleted(libraryExercise.getId(), exerciseLog.getTrainingLog().getId()).orElse(null)
         : null;
+    // Records to beat: from sessions completed before this one started
+    ExerciseLogRepository.Bests bests = includePrevious
+        ? exerciseLogRepository.findBestsCompletedBefore(libraryExercise.getId(), exerciseLog.getTrainingLog().getStartedAt())
+        : null;
     return ExerciseLogResponse.builder()
         .id(exerciseLog.getId())
         .exerciseId(exercise.getId())
@@ -270,6 +280,8 @@ public class TrainingLogService {
         .previousReps(previous != null ? previous.getRepsCompleted() : null)
         .previousWeight(previous != null ? previous.getWeightUsed() : null)
         .previousSetLogs(previous != null ? SetLogResponse.fromAll(previous.getSetLogs()) : null)
+        .bestWeight(bests != null ? bests.getBestWeight() : null)
+        .bestOneRepMax(bests != null ? bests.getBestOneRepMax() : null)
         .build();
   }
 }

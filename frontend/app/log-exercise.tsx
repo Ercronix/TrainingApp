@@ -52,8 +52,8 @@ const targetOf = (rows: SetRow[], index: number, log: ExerciseLog | undefined) =
   parseInt(rows[index]?.reps || String(log?.plannedReps ?? ''), 10);
 
 export default function LogExerciseModal() {
-  const { exerciseLogId, exerciseId, trainingLogId, exerciseName } = useLocalSearchParams<{
-    exerciseLogId: string; exerciseId: string; trainingLogId: string; exerciseName: string;
+  const { exerciseLogId, trainingLogId, exerciseName } = useLocalSearchParams<{
+    exerciseLogId: string; trainingLogId: string; exerciseName: string;
   }>();
   const queryClient = useQueryClient();
   const [log] = useState(() => queryClient.getQueryData<TrainingLog>(QUERY_KEYS.training(trainingLogId))
@@ -68,7 +68,7 @@ export default function LogExerciseModal() {
   // A stopwatch restored past its target already buzzed (or ran out while away)
   const vibrated = useRef(draft?.timing != null && Date.now() - draft.timing.startedAt >= targetOf(draft.rows, draft.timing.index, log) * 1000);
   const router = useRouter();
-  const { saveExercise, isPending } = useExerciseLog(exerciseLogId, trainingLogId, exerciseId);
+  const { saveExercise, isPending } = useExerciseLog(exerciseLogId, trainingLogId);
   const c = useTheme();
   const repUnit = log?.repUnit ?? 'reps';
   const unitShort = repUnit === 'seconds' ? 'sec' : 'reps';

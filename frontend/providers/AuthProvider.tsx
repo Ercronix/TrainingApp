@@ -39,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
     void loadSession();
-  }, []);
+  }, [setUser, logout]);
 
   // Whatever ended the session (logout button, rejected refresh token), don't leave the
   // previous user's cached data or a running rest timer behind
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else if (isAuthenticated && inAuthGroup) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, segments, isReady]);
+  }, [isAuthenticated, segments, isReady, router]);
 
   if (!isReady) return null;
   return <>{children}</>;
