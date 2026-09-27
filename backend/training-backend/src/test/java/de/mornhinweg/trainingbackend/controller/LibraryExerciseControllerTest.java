@@ -173,6 +173,81 @@ class LibraryExerciseControllerTest {
         .andExpect(status().isNotFound());
   }
 
+  @Test
+  void musclesCanBeSetReplacedAndCleared() throws Exception {
+    String created = createExercise(workoutA, """
+        {"name":"Bench Press","muscles":[
+          {"muscle":"TRICEPS","role":"SECONDARY"},{"muscle":"CHEST","role":"PRIMARY"}]}
+        """);
+    long libraryId = libraryId(created);
+
+    perform(token, get("/api/library-exercises"), null)
+        .andExpect(jsonPath("$[0].muscles", hasSize(2)))
+        // Primary muscles come first
+        .andExpect(jsonPath("$[0].muscles[0].muscle").value("CHEST"))
+        .andExpect(jsonPath("$[0].muscles[1].muscle").value("TRICEPS"));
+
+    // Changing a role and adding a muscle in one update
+    perform(token, put("/api/library-exercises/" + libraryId), """
+        {"muscles":[{"muscle":"CHEST","role":"SECONDARY"},{"muscle":"FRONT_DELTS","role":"PRIMARY"}]}
+        """)
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.muscles", hasSize(2)))
+        .andExpect(jsonPath("$.muscles[0].muscle").value("FRONT_DELTS"))
+        .andExpect(jsonPath("$.muscles[1].role").value("SECONDARY"));
+
+    // Other updates leave the muscles alone
+    perform(token, put("/api/library-exercises/" + libraryId), "{\"description\":\"Arch\"}")
+        .andExpect(jsonPath("$.muscles", hasSize(2)));
+
+    perform(token, put("/api/library-exercises/" + libraryId), "{\"muscles\":[]}")
+        .andExpect(jsonPath("$.muscles", hasSize(0)));
+  }
+
+  @Test
+  void invalidMusclesAreRejected() throws Exception {
+    long libraryId = libraryId(createExercise(workoutA, "{\"name\":\"Row\"}"));
+
+    perform(token, put("/api/library-exercises/" + libraryId), """
+        {"muscles":[{"muscle":"LATS","role":"PRIMARY"},{"muscle":"LATS","role":"SECONDARY"}]}
+        """).andExpect(status().isBadRequest());
+    perform(token, put("/api/library-exercises/" + libraryId), """
+        {"muscles":[{"muscle":"LATS"}]}
+        """).andExpect(status().isBadRequest());
+    perform(token, put("/api/library-exercises/" + libraryId), """
+        {"muscles":[{"muscle":"SHOULDERS","role":"PRIMARY"}]}
+        """).andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void renamingASharedExerciseKeepsItsMuscles() throws Exception {
+    long exerciseId = id(createExercise(workoutA, """
+        {"name":"Curl","muscles":[{"muscle":"BICEPS","role":"PRIMARY"}]}
+        """));
+    createExercise(workoutB, "{\"name\":\"Curl\"}");
+
+    long renamedId = libraryId(perform(token, put("/api/workouts/" + workoutA + "/exercises/" + exerciseId), "{\"name\":\"Hammer Curl\"}")
+        .andExpect(status().isOk())
+        .andReturn().getResponse().getContentAsString());
+
+    perform(token, get("/api/library-exercises"), null)
+        .andExpect(jsonPath("$[?(@.id == " + renamedId + ")].muscles[0].muscle").value("BICEPS"));
+  }
+
+  @Test
+  void exercisesAddedDuringASessionCanSetMuscles() throws Exception {
+    createExercise(workoutA, "{\"name\":\"Squat\"}");
+    long sessionId = id(perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutA + "}"));
+
+    perform(token, post("/api/training-logs/" + sessionId + "/exercise-logs"), """
+        {"name":"Calf Raise","addToWorkout":false,"muscles":[{"muscle":"CALVES","role":"PRIMARY"}]}
+        """).andExpect(status().isCreated());
+
+    perform(token, get("/api/library-exercises"), null)
+        .andExpect(jsonPath("$[0].name").value("Calf Raise"))
+        .andExpect(jsonPath("$[0].muscles[0].muscle").value("CALVES"));
+  }
+
   private String register() throws Exception {
     String name = "test_" + UUID.randomUUID().toString().substring(0, 8);
     String body = """

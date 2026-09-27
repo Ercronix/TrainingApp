@@ -119,6 +119,31 @@ export interface UpdateExerciseLogRequest {
   notes?: string;
 }
 
+// Shoulders are split into the three delt heads
+export type Muscle =
+  | 'CHEST' | 'LATS' | 'MIDDLE_BACK' | 'TRAPS' | 'LOWER_BACK'
+  | 'FRONT_DELTS' | 'SIDE_DELTS' | 'REAR_DELTS'
+  | 'BICEPS' | 'TRICEPS' | 'FOREARMS'
+  | 'QUADRICEPS' | 'HAMSTRINGS' | 'GLUTES' | 'CALVES' | 'ADDUCTORS' | 'ABDUCTORS'
+  | 'ABDOMINALS' | 'NECK';
+
+// A set counts fully for a primary muscle and half for a secondary one
+export type MuscleRole = 'PRIMARY' | 'SECONDARY';
+
+export interface MuscleTarget {
+  muscle: Muscle;
+  role: MuscleRole;
+}
+
+// A common exercise from the shared, read-only catalog
+export interface CatalogExercise {
+  id: number;
+  name: string;
+  equipment: string | null;
+  category: string;
+  muscles: MuscleTarget[];
+}
+
 // An exercise in the user's library. Workout exercises link to one and add their own plan
 // (sets/reps/weight), so name, notes, video and rep unit are shared by every workout using it.
 export interface LibraryExercise {
@@ -128,6 +153,8 @@ export interface LibraryExercise {
   videoUrl: string | null;
   videoId: string | null;
   repUnit: 'reps' | 'seconds';
+  // Primary muscles first, empty until assigned. Missing in data cached before muscles existed.
+  muscles?: MuscleTarget[];
   workoutCount: number;
   lastTrainedAt: string | null;
 }
@@ -137,6 +164,8 @@ export interface UpdateLibraryExerciseRequest {
   description?: string | null;
   videoUrl?: string | null;
   repUnit?: 'reps' | 'seconds';
+  // Replaces the muscles; an empty list clears them
+  muscles?: MuscleTarget[];
 }
 
 export interface CreateExerciseRequest {
@@ -151,6 +180,8 @@ export interface CreateExerciseRequest {
   reps?: number | null;
   repUnit?: string;
   plannedWeight?: number | null;
+  // Replaces the library entry's muscles when sent
+  muscles?: MuscleTarget[];
 }
 
 export interface ExerciseProgressEntry {

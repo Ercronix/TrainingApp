@@ -64,6 +64,7 @@ export function useDashboard() {
   return {
     stats: query.data ?? EMPTY_STATS,
     analytics,
+    history: history.data ?? [],
     isLoading: query.isLoading || history.isLoading,
     isRefetching: query.isRefetching || history.isRefetching,
     refetch: () => Promise.all([query.refetch(), history.refetch()]),

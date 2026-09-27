@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -281,6 +281,13 @@ export const libraryApi = {
   },
 };
 
+export const catalogApi = {
+  getAll: async (): Promise<CatalogExercise[]> => {
+    const response = await api.get("/exercise-catalog");
+    return response.data;
+  },
+};
+
 // Training Logs API
 export const trainingLogsApi = {
   start: async (workoutId: number): Promise<TrainingLog> => {
@@ -296,6 +303,7 @@ export const trainingLogsApi = {
       sets?: number | null;
       reps?: number | null;
       plannedWeight?: number | null;
+      muscles?: MuscleTarget[];
       addToWorkout: boolean;
     },
   ): Promise<ExerciseLog> => {

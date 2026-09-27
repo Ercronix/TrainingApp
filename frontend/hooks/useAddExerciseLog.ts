@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import { trainingLogsApi } from '@/services/api';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { getErrorMessage } from '@/utils/errorHandler';
+import { MuscleTarget } from '@/types';
 
 export interface AddExerciseLogDto {
   libraryExerciseId?: number;
@@ -11,6 +12,7 @@ export interface AddExerciseLogDto {
   sets?: number | null;
   reps?: number | null;
   plannedWeight?: number | null;
+  muscles?: MuscleTarget[];
   addToWorkout: boolean;
 }
 
