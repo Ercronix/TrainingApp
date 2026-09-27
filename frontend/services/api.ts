@@ -323,8 +323,9 @@ export const trainingLogsApi = {
     return response.data;
   },
 
-  complete: async (id: number, notes?: string): Promise<TrainingLog> => {
-    const response = await api.put(`/training-logs/${id}/complete`, { notes });
+  // completedSecondsAgo backdates the finish of a session completed while offline
+  complete: async (id: number, notes?: string, completedSecondsAgo?: number): Promise<TrainingLog> => {
+    const response = await api.put(`/training-logs/${id}/complete`, { notes, completedSecondsAgo });
     return response.data;
   },
 

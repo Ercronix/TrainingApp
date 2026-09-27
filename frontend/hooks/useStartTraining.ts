@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { trainingLogsApi } from '@/services/api';
-import { confirm, alert } from '@/utils/confirm';
+import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 
