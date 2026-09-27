@@ -84,7 +84,7 @@ export default function TrainingScreen() {
     const finish = (message: string) => {
       // Don't leave a rest timer running (and notifying) after the session ends
       useRestTimerStore.getState().reset();
-      alert('Done!', records.length > 0 ? `${message}\n\nNew records 🏆\n${records.join('\n')}` : message);
+      alert('Done!', records.length > 0 ? `${message}\n\nNew records:\n${records.join('\n')}` : message);
       router.replace('/(tabs)');
     };
     const doComplete = () => {

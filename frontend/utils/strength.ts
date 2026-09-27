@@ -35,13 +35,13 @@ export function detectPersonalRecord(
  * The record a log's working sets set against the sessions before it, or null. Checks the
  * heaviest set first, then the one with the best estimated 1RM.
  */
-export function personalRecordOf(log: ExerciseLog, sets: SetLog[] = log.sets ?? []): string | null {
+export function personalRecordOf(log: ExerciseLog): string | null {
   const records: PersonalRecords = {
     bestWeight: log.bestWeight ?? null,
     // Timed sets hold seconds in reps, so only their weight can set a record
     bestOneRepMax: log.repUnit === 'seconds' ? null : log.bestOneRepMax ?? null,
   };
-  const working = sets.filter((s) => !s.warmup && Number(s.weight ?? 0) > 0);
+  const working = (log.sets ?? []).filter((s) => !s.warmup && Number(s.weight ?? 0) > 0);
   const byWeight = [...working].sort((a, b) => Number(b.weight) - Number(a.weight) || b.reps - a.reps)[0];
   const byOneRepMax = log.repUnit === 'seconds' ? undefined : [...working].sort((a, b) =>
     estimateOneRepMax(Number(b.weight), b.reps) - estimateOneRepMax(Number(a.weight), a.reps))[0];

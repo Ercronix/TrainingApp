@@ -1,10 +1,8 @@
 import { useRouter } from 'expo-router';
-import { alert } from '@/utils/confirm';
 import { useUpdateExerciseLog } from './useUpdateExerciseLog';
-import { personalRecordOf } from '@/utils/strength';
-import { ExerciseLog, SetLog } from '@/types';
+import { SetLog } from '@/types';
 
-export function useExerciseLog(exerciseLogId: string, trainingLogId: string, log?: ExerciseLog) {
+export function useExerciseLog(exerciseLogId: string, trainingLogId: string) {
   const router = useRouter();
   const mutation = useUpdateExerciseLog(trainingLogId);
 
@@ -16,9 +14,6 @@ export function useExerciseLog(exerciseLogId: string, trainingLogId: string, log
 
     // Optimistic: don't wait for the server (it may be unreachable at the gym)
     router.back();
-
-    const record = log ? personalRecordOf(log, sets) : null;
-    if (record) alert('New personal record! 🏆', record);
   };
 
   return { saveExercise, isPending: mutation.isPending };
