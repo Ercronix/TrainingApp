@@ -255,6 +255,10 @@ public class TrainingLogService {
     ExerciseLog previous = includePrevious
         ? exerciseLogRepository.findPreviousCompleted(libraryExercise.getId(), exerciseLog.getTrainingLog().getId()).orElse(null)
         : null;
+    // Records to beat: from sessions completed before this one started
+    ExerciseLogRepository.Bests bests = includePrevious
+        ? exerciseLogRepository.findBestsCompletedBefore(libraryExercise.getId(), exerciseLog.getTrainingLog().getStartedAt())
+        : null;
     return ExerciseLogResponse.builder()
         .id(exerciseLog.getId())
         .exerciseId(exercise.getId())
@@ -276,6 +280,8 @@ public class TrainingLogService {
         .previousReps(previous != null ? previous.getRepsCompleted() : null)
         .previousWeight(previous != null ? previous.getWeightUsed() : null)
         .previousSetLogs(previous != null ? SetLogResponse.fromAll(previous.getSetLogs()) : null)
+        .bestWeight(bests != null ? bests.getBestWeight() : null)
+        .bestOneRepMax(bests != null ? bests.getBestOneRepMax() : null)
         .build();
   }
 }
