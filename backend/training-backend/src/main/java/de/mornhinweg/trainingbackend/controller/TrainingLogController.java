@@ -46,7 +46,7 @@ public class TrainingLogController {
   @PutMapping("/{id}/complete")
   public ResponseEntity<TrainingLogResponse> completeTraining(
       @PathVariable Long id,
-      @RequestBody CompleteTrainingRequest request,
+      @Valid @RequestBody CompleteTrainingRequest request,
       Authentication authentication) {
     return ResponseEntity.ok(trainingLogService.completeTraining(id, request, authentication));
   }

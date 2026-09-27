@@ -73,21 +73,24 @@ export default function TrainingScreen() {
   };
 
   const handleComplete = () => {
-    if (!isOnline) {
-      alert('Offline', 'Reconnect to finish the session. Your logged exercises are kept and will sync.');
-      return;
-    }
     const completedCount = training?.exercises.filter((e: ExerciseLog) => e.completed).length || 0;
     const totalCount = training?.exercises.length || 0;
-    const doComplete = () =>
-      completeTraining.mutate(undefined, {
-        onSuccess: () => {
-          // Don't leave a rest timer running (and notifying) after the session ends
-          useRestTimerStore.getState().reset();
-          alert('Done!', 'Training session complete!');
-          router.replace('/(tabs)');
-        },
-      });
+    const finish = (message: string) => {
+      // Don't leave a rest timer running (and notifying) after the session ends
+      useRestTimerStore.getState().reset();
+      alert('Done!', message);
+      router.replace('/(tabs)');
+    };
+    const doComplete = () => {
+      const variables = { trainingLogId: Number(trainingLogId), completedAtMs: Date.now() };
+      if (isOnline) {
+        completeTraining.mutate(variables, { onSuccess: () => finish('Training session complete!') });
+      } else {
+        // Paused until back online; the session is already shown as finished
+        completeTraining.mutate(variables);
+        finish('Session saved. It will sync when you are back online.');
+      }
+    };
     if (completedCount < totalCount) {
       confirm('Incomplete', `${completedCount}/${totalCount} exercises done. Complete anyway?`, doComplete, 'Complete', 'Cancel');
     } else {
@@ -95,80 +98,90 @@ export default function TrainingScreen() {
     }
   };
 
-  const renderExerciseItem = ({ item }: { item: ExerciseLog }) => (
-    <View className={`rounded-md mb-2 flex-row overflow-hidden relative ${item.completed ? 'bg-surface-done' : 'bg-surface'}`}>
-      {/* Done stripe */}
-      {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent" />}
+  const renderExerciseItem = ({ item }: { item: ExerciseLog }) => {
+    // Added while offline (or still being saved): no server id yet, so it can't be opened or logged
+    const syncing = item.id < 0;
+    return (
+      <View className={`rounded-md mb-2 flex-row overflow-hidden relative ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${syncing ? 'opacity-50' : ''}`}>
+        {/* Done stripe */}
+        {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent" />}
 
-      {/* Main tap area */}
-      <TouchableOpacity
-        className="flex-1 px-5 py-4 flex-row items-center gap-2"
-        onPress={() =>
-          router.push({
-            pathname: '/exercise-detail' as any,
-            params: {
-              exerciseId: item.exerciseId?.toString() ?? '', exerciseName: item.exerciseName,
-              libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
-              description: '', videoUrl: '',
-              sets: item.plannedSets?.toString() || '', reps: item.plannedReps?.toString() || '',
-              weight: item.plannedWeight?.toString() || '', workoutId: item.workoutId?.toString() ?? '',
-            },
-          })
-        }
-        activeOpacity={0.85}
-      >
-        <View className="flex-1">
-          <Text className="text-primary text-base font-bold tracking-tight mb-1">
-            {item.exerciseName}
-          </Text>
-          {item.plannedSets && item.plannedReps && (
-            <Text className="text-muted text-xs">
-              {item.plannedSets} × {item.plannedReps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+        {/* Main tap area */}
+        <TouchableOpacity
+          className="flex-1 px-5 py-4 flex-row items-center gap-2"
+          onPress={() =>
+            router.push({
+              pathname: '/exercise-detail' as any,
+              params: {
+                exerciseId: item.exerciseId?.toString() ?? '', exerciseName: item.exerciseName,
+                libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
+                description: '', videoUrl: '',
+                sets: item.plannedSets?.toString() || '', reps: item.plannedReps?.toString() || '',
+                weight: item.plannedWeight?.toString() || '', workoutId: item.workoutId?.toString() ?? '',
+              },
+            })
+          }
+          activeOpacity={0.85}
+          disabled={syncing}
+        >
+          <View className="flex-1">
+            <Text className="text-primary text-base font-bold tracking-tight mb-1">
+              {item.exerciseName}
             </Text>
-          )}
-          {!item.completed && previousSetsOf(item).length > 0 && (
-            <Text className="text-subtle text-[11px] mt-1">
-              Last: {formatSets(previousSetsOf(item), item.repUnit)}
-            </Text>
-          )}
-          {item.completed && (
-            <Text className="text-accent-text text-[11px] mt-1">
-              ✓ {formatSets(setsOf(item), item.repUnit)}
-            </Text>
-          )}
-        </View>
-        <Ionicons name="information-circle-outline" size={18} color={c.muted} />
-      </TouchableOpacity>
+            {item.plannedSets && item.plannedReps && (
+              <Text className="text-muted text-xs">
+                {item.plannedSets} × {item.plannedReps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+              </Text>
+            )}
+            {!item.completed && previousSetsOf(item).length > 0 && (
+              <Text className="text-subtle text-[11px] mt-1">
+                Last: {formatSets(previousSetsOf(item), item.repUnit)}
+              </Text>
+            )}
+            {item.completed && (
+              <Text className="text-accent-text text-[11px] mt-1">
+                ✓ {formatSets(setsOf(item), item.repUnit)}
+              </Text>
+            )}
+            {syncing && (
+              <Text className="text-muted text-[10px] tracking-[2px] mt-1">SYNCING…</Text>
+            )}
+          </View>
+          <Ionicons name="information-circle-outline" size={18} color={c.muted} />
+        </TouchableOpacity>
 
-      {/* Toggle */}
-      <TouchableOpacity
-        className={`w-14 justify-center items-center ${item.completed ? 'bg-surface-done' : 'bg-base'}`}
-        onPress={() => toggleExercise(item)}
-      >
-        <View className={`w-6 h-6 rounded-full justify-center items-center ${item.completed ? 'bg-accent' : 'border-2 border-elevated'}`}>
-          {item.completed && <Ionicons name="checkmark" size={14} color={c.accentFg} />}
-        </View>
-      </TouchableOpacity>
+        {/* Toggle */}
+        <TouchableOpacity
+          className={`w-14 justify-center items-center ${item.completed ? 'bg-surface-done' : 'bg-base'}`}
+          onPress={() => toggleExercise(item)}
+          disabled={syncing}
+        >
+          <View className={`w-6 h-6 rounded-full justify-center items-center ${item.completed ? 'bg-accent' : 'border-2 border-elevated'}`}>
+            {item.completed && <Ionicons name="checkmark" size={14} color={c.accentFg} />}
+          </View>
+        </TouchableOpacity>
 
-      {/* Log */}
-      <TouchableOpacity
-        className="w-14 justify-center items-center bg-base gap-0.5"
-        onPress={() =>
-          router.push({
-            pathname: '/log-exercise' as any,
-            // The modal reads the log (sets, plan, previous session) from the training query
-            params: {
-              exerciseLogId: item.id.toString(), exerciseId: item.exerciseId?.toString() ?? '',
-              exerciseName: item.exerciseName, trainingLogId,
-            },
-          })
-        }
-      >
-        <Ionicons name="create-outline" size={22} color={item.completed ? c.accent : c.muted} />
-        <Text className={`text-[8px] tracking-widest ${item.completed ? 'text-accent-text' : 'text-muted'}`}>LOG</Text>
-      </TouchableOpacity>
-    </View>
-  );
+        {/* Log */}
+        <TouchableOpacity
+          className="w-14 justify-center items-center bg-base gap-0.5"
+          onPress={() =>
+            router.push({
+              pathname: '/log-exercise' as any,
+              // The modal reads the log (sets, plan, previous session) from the training query
+              params: {
+                exerciseLogId: item.id.toString(), exerciseId: item.exerciseId?.toString() ?? '',
+                exerciseName: item.exerciseName, trainingLogId,
+              },
+            })
+          }
+          disabled={syncing}
+        >
+          <Ionicons name="create-outline" size={22} color={item.completed ? c.accent : c.muted} />
+          <Text className={`text-[8px] tracking-widest ${item.completed ? 'text-accent-text' : 'text-muted'}`}>LOG</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   if (isLoading) {
     return (

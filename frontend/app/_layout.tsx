@@ -41,6 +41,9 @@ function AppLayout() {
     storage.getItem('custom-accent').then((saved) => {
       if (saved) setCustomAccent(saved);
     });
+    // Load saved preferences once on mount. nativewind's setColorScheme is a new function on
+    // every render, so listing it would re-run this effect each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const onLayoutRootView = useCallback(() => {

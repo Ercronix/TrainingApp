@@ -3,6 +3,8 @@ import { trainingLogsApi } from '@/services/api';
 import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { QUERY_KEYS } from '@/constants/queryKeys';
+import { CompleteTrainingVariables, MUTATION_KEYS, trainingScope } from '@/services/queryClient';
+import { TrainingLog } from '@/types';
 import { useUpdateExerciseLog } from './useUpdateExerciseLog';
 
 export function useTraining(trainingLogId: string) {
@@ -15,14 +17,34 @@ export function useTraining(trainingLogId: string) {
 
   const updateExerciseLog = useUpdateExerciseLog(trainingLogId);
 
-  const completeTraining = useMutation({
-    mutationFn: () => trainingLogsApi.complete(Number(trainingLogId)),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['history'] });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeTraining });
+  // Marks the session finished right away, so it also works offline: the request is paused
+  // (and persisted) and runs after the session's other pending changes once back online.
+  const completeTraining = useMutation<
+    TrainingLog, unknown, CompleteTrainingVariables, { previous?: TrainingLog; previousActive?: TrainingLog[] }
+  >({
+    mutationKey: MUTATION_KEYS.completeTraining,
+    scope: trainingScope(trainingLogId),
+    onMutate: async ({ completedAtMs }) => {
+      const queryKey = QUERY_KEYS.training(trainingLogId);
+      await queryClient.cancelQueries({ queryKey });
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.activeTraining });
+      const previous = queryClient.getQueryData<TrainingLog>(queryKey);
+      const previousActive = queryClient.getQueryData<TrainingLog[]>(QUERY_KEYS.activeTraining);
+      if (previous) {
+        queryClient.setQueryData<TrainingLog>(queryKey, {
+          ...previous, isCompleted: true, completedAt: new Date(completedAtMs).toISOString(),
+        });
+      }
+      if (previousActive) {
+        queryClient.setQueryData<TrainingLog[]>(
+          QUERY_KEYS.activeTraining, previousActive.filter((t) => t.id !== Number(trainingLogId)),
+        );
+      }
+      return { previous, previousActive };
     },
-    onError: (error: unknown) => {
+    onError: (error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(QUERY_KEYS.training(trainingLogId), context.previous);
+      if (context?.previousActive) queryClient.setQueryData(QUERY_KEYS.activeTraining, context.previousActive);
       alert('Error', getErrorMessage(error));
     },
   });

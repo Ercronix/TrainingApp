@@ -47,6 +47,26 @@ class TrainingLogControllerTest {
     assertEquals((Integer) JsonPath.read(first, "$.durationSeconds"), JsonPath.read(second, "$.durationSeconds"));
   }
 
+  @Test
+  void completedSecondsAgoBackdatesButNotBeforeTheStart() throws Exception {
+    String token = register();
+    long splitId = id(perform(token, post("/api/splits"), "{\"name\":\"Split\"}"));
+    long workoutId = id(perform(token, post("/api/workouts/split/" + splitId), "{\"name\":\"Push\"}"));
+    long sessionId = id(perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutId + "}"));
+
+    perform(token, put("/api/training-logs/" + sessionId + "/complete"), "{\"completedSecondsAgo\":-1}")
+        .andExpect(status().isBadRequest());
+
+    // Finished "a day ago", i.e. before the session started: clamped to the start
+    perform(token, put("/api/training-logs/" + sessionId + "/complete"), "{\"completedSecondsAgo\":86400}")
+        .andExpect(status().isOk());
+    String session = perform(token, get("/api/training-logs/" + sessionId), null)
+        .andReturn().getResponse().getContentAsString();
+
+    assertEquals((String) JsonPath.read(session, "$.startedAt"), JsonPath.read(session, "$.completedAt"));
+    assertEquals(0, (Integer) JsonPath.read(session, "$.durationSeconds"));
+  }
+
   private String register() throws Exception {
     String name = "test_" + UUID.randomUUID().toString().substring(0, 8);
     String body = """

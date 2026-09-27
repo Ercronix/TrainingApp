@@ -9,7 +9,7 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 ### Frontend (`frontend/`)
 - `npm ci` then `npm run start` (Expo dev server; `w` for web). `npm run web` for web only.
 - Checks CI runs (there is no test suite): `npx tsc --noEmit` and `npm run lint` (ESLint,
-  `eslint-config-expo` flat config). Lint currently passes with 5 warnings; warnings don't fail CI.
+  `eslint-config-expo` flat config). Lint runs with `--max-warnings 0`, so warnings fail CI.
 - Imports use the `@/` alias for the `frontend/` root.
 
 ### Backend (`backend/training-backend/`, Java 21, Gradle wrapper)
@@ -39,6 +39,6 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 - All HTTP calls go through the domain objects in `services/api.ts` (`authApi`, `accountApi`, `splitsApi`, `workoutsApi`, `exercisesApi`, `libraryApi`, `trainingLogsApi`, `statsApi`). The API base URL is `EXPO_PUBLIC_API_URL` (default `localhost:8080`) on web, but native builds always use the hard-coded production URL. The axios interceptor attaches the access token and, on a 401, refreshes once (concurrent 401s share a single refresh) and retries.
 - Tokens are stored via `services/storage.ts` (SecureStore on native, localStorage on web).
 - Server state uses TanStack Query through per-feature hooks in `hooks/`. Query keys are in `constants/queryKeys.ts`. Zustand stores in `store/` hold only client state (auth, theme, dialogs).
-- **Offline support** (`services/queryClient.ts`): the query cache is persisted to AsyncStorage for 7 days, and NetInfo drives `onlineManager`. Mutations that must survive offline and app restarts (currently `updateExerciseLog`) need a `mutationKey` plus a `setMutationDefaults` entry registering their `mutationFn`. They are replayed via `resumePausedMutations` after the cache is restored, and the hook updates the UI optimistically. On startup without a network, `AuthProvider` keeps the user signed in using the cached user. The query cache is cleared whenever the session ends.
+- **Offline support** (`services/queryClient.ts`): the query cache is persisted to AsyncStorage for 7 days, and NetInfo drives `onlineManager`. Mutations that must survive offline and app restarts (the session's `updateExerciseLog`, `addExerciseLog` and `completeTraining`) need a `mutationKey` plus a `setMutationDefaults` entry registering their `mutationFn` (and any invalidation, since hook callbacks are lost on restart). They are replayed via `resumePausedMutations` after the cache is restored, and the hook updates the UI optimistically. A session's mutations share `trainingScope(id)` so they replay in order. On startup without a network, `AuthProvider` keeps the user signed in using the cached user. The query cache is cleared whenever the session ends.
 - Styling: NativeWind (Tailwind) classes backed by CSS variables. `constants/theme.ts` defines themes and palettes (dark/light and a custom accent), `getThemeVars` injects them at the root, and `tailwind.config.js` maps color names to `var(--color-*)`. Use theme color classes (`bg-surface`, `text-accent`, etc.) rather than hard-coded colors.
 - Dialogs: use `alert`/`confirm` from `utils/confirm.ts` (themed, and they work on web) rather than React Native's `Alert.alert`.

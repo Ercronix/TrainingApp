@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { QUERY_KEYS } from '@/constants/queryKeys';
-import { MUTATION_KEYS, UpdateExerciseLogVariables } from '@/services/queryClient';
+import { MUTATION_KEYS, UpdateExerciseLogVariables, trainingScope } from '@/services/queryClient';
 import { TrainingLog } from '@/types';
 import { summarizeSets } from '@/utils/sets';
 
@@ -16,6 +16,7 @@ export function useUpdateExerciseLog(trainingLogId: string) {
 
   return useMutation<unknown, unknown, UpdateExerciseLogVariables, { previous?: TrainingLog }>({
     mutationKey: MUTATION_KEYS.updateExerciseLog,
+    scope: trainingScope(trainingLogId),
     onMutate: async ({ exerciseLogId, data }) => {
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<TrainingLog>(queryKey);

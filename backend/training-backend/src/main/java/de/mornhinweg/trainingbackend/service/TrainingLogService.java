@@ -168,7 +168,13 @@ public class TrainingLogService {
       return toResponse(trainingLog, true);
     }
 
-    trainingLog.setCompletedAt(LocalDateTime.now());
+    // Backdated for a session completed offline, but never before it started
+    LocalDateTime completedAt = LocalDateTime.now();
+    if (request.getCompletedSecondsAgo() != null) {
+      completedAt = completedAt.minusSeconds(request.getCompletedSecondsAgo());
+      if (completedAt.isBefore(trainingLog.getStartedAt())) completedAt = trainingLog.getStartedAt();
+    }
+    trainingLog.setCompletedAt(completedAt);
     trainingLog.setDurationSeconds(
         (int) Duration.between(trainingLog.getStartedAt(), trainingLog.getCompletedAt()).getSeconds()
     );
@@ -183,7 +189,7 @@ public class TrainingLogService {
       if (exerciseLog.getCompleted() && exerciseLog.getWeightUsed() != null) {
         Exercise exercise = exerciseLog.getExercise();
         exercise.setLastUsedWeight(exerciseLog.getWeightUsed());
-        exercise.setLastTrainedAt(LocalDateTime.now());
+        exercise.setLastTrainedAt(trainingLog.getCompletedAt());
         exerciseRepository.save(exercise);
       }
     }

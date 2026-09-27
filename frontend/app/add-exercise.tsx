@@ -46,13 +46,13 @@ export default function AddExerciseScreen() {
       return;
     }
 
-    addExerciseLog.mutate({
+    addExerciseLog({
       ...(libraryMatch ? { libraryExerciseId: libraryMatch.id } : { name: form.name.trim() }),
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       addToWorkout,
-    });
+    }, libraryMatch?.name ?? form.name.trim());
   };
 
   return (
