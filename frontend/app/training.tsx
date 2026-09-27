@@ -12,6 +12,7 @@ import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
+import { personalRecordOf } from '@/utils/strength';
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--:--';
@@ -75,10 +76,15 @@ export default function TrainingScreen() {
   const handleComplete = () => {
     const completedCount = training?.exercises.filter((e: ExerciseLog) => e.completed).length || 0;
     const totalCount = training?.exercises.length || 0;
+    const records = (training?.exercises ?? [])
+      .filter((e: ExerciseLog) => e.completed)
+      .map((e: ExerciseLog) => ({ name: e.exerciseName, record: personalRecordOf(e) }))
+      .filter((r) => r.record != null)
+      .map((r) => `${r.name}: ${r.record}`);
     const finish = (message: string) => {
       // Don't leave a rest timer running (and notifying) after the session ends
       useRestTimerStore.getState().reset();
-      alert('Done!', message);
+      alert('Done!', records.length > 0 ? `${message}\n\nNew records:\n${records.join('\n')}` : message);
       router.replace('/(tabs)');
     };
     const doComplete = () => {
@@ -101,6 +107,7 @@ export default function TrainingScreen() {
   const renderExerciseItem = ({ item }: { item: ExerciseLog }) => {
     // Added while offline (or still being saved): no server id yet, so it can't be opened or logged
     const syncing = item.id < 0;
+    const isRecord = item.completed && personalRecordOf(item) != null;
     return (
       <View className={`rounded-md mb-2 flex-row overflow-hidden relative ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${syncing ? 'opacity-50' : ''}`}>
         {/* Done stripe */}
@@ -139,9 +146,17 @@ export default function TrainingScreen() {
               </Text>
             )}
             {item.completed && (
-              <Text className="text-accent-text text-[11px] mt-1">
-                ✓ {formatSets(setsOf(item), item.repUnit)}
-              </Text>
+              <View className="flex-row items-center gap-2 mt-1">
+                <Text className="text-accent-text text-[11px]">
+                  {formatSets(setsOf(item), item.repUnit)}
+                </Text>
+                {isRecord && (
+                  <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
+                    <Ionicons name="trophy" size={10} color={c.accentFg} />
+                    <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
+                  </View>
+                )}
+              </View>
             )}
             {syncing && (
               <Text className="text-muted text-[10px] tracking-[2px] mt-1">SYNCING…</Text>
@@ -169,8 +184,7 @@ export default function TrainingScreen() {
               pathname: '/log-exercise' as any,
               // The modal reads the log (sets, plan, previous session) from the training query
               params: {
-                exerciseLogId: item.id.toString(), exerciseId: item.exerciseId?.toString() ?? '',
-                exerciseName: item.exerciseName, trainingLogId,
+                exerciseLogId: item.id.toString(), exerciseName: item.exerciseName, trainingLogId,
               },
             })
           }

@@ -78,6 +78,10 @@ export interface ExerciseLog {
   previousReps: number | null;
   previousWeight: number | null;
   previousSetLogs?: SetLog[] | null;
+  // Best working set weight and estimated 1RM of sessions completed before this one (null if
+  // none). Optional: sessions cached before records were added don't have them.
+  bestWeight?: number | null;
+  bestOneRepMax?: number | null;
 }
 
 // One performed set. `reps` holds seconds for exercises timed in seconds.

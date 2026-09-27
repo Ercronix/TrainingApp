@@ -77,7 +77,7 @@ export default function HistoryDetailScreen() {
             )}
             {item.completed && (
               <Text className="text-accent-text text-[11px] tracking-wider mt-0.5">
-                ✓ DONE: {formatSets(setsOf(item), item.repUnit)}
+                DONE: {formatSets(setsOf(item), item.repUnit)}
               </Text>
             )}
             {item.notes && (

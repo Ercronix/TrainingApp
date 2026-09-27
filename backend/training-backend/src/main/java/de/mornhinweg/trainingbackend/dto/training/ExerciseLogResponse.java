@@ -29,4 +29,8 @@ public class ExerciseLogResponse {
   private Integer previousReps;
   private BigDecimal previousWeight;
   private List<SetLogResponse> previousSetLogs;
+
+  // Best working set weight and estimated 1RM of sessions completed before this one (null if none)
+  private BigDecimal bestWeight;
+  private Double bestOneRepMax;
 }
