@@ -254,7 +254,7 @@ export default function DashboardScreen() {
         <View className="mx-4 mb-3 bg-surface rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-1">STRENGTH TRENDS</Text>
           <Text className="text-muted text-[10px] mb-3">
-            Best est. 1RM (reps or seconds for bodyweight and timed work) and its 90-day trend
+            Top weight (reps or seconds for bodyweight and timed work) and its 90-day trend
           </Text>
           {trends.map((t) => {
             const p = t.progression;

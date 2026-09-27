@@ -83,9 +83,8 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
   const lastDate = points[points.length - 1].date;
   const visible = points.filter((p) => lastDate - p.date <= rangeDays * DAY_MS && metricValue(p, activeMetric) > 0);
   const chartPoints: TrendPoint[] = visible.map((p) => ({ x: p.date, y: metricValue(p, activeMetric) }));
-  // The projection follows the primary metric (e1RM for weighted work, else the first option)
-  const primaryMetric: Metric = kind === 'weighted' ? 'e1rm' : metrics[0].id;
-  const showProjection = progression && activeMetric === primaryMetric && chartPoints.length > 1;
+  // The projection follows the primary metric, which is always the first option
+  const showProjection = progression && activeMetric === metrics[0].id && chartPoints.length > 1;
   const projection: TrendPoint[] = showProjection
     ? [
         { x: progression.lastDate, y: progression.trendValue },
@@ -139,7 +138,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       {/* Numbers */}
       <View className="bg-surface rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-3">
-          {kind === 'weighted' ? 'ESTIMATED 1RM' : kind === 'timed' ? 'BEST HOLD' : 'BEST SET'}
+          {kind === 'weighted' ? 'TOP WEIGHT' : kind === 'timed' ? 'BEST HOLD' : 'BEST SET'}
         </Text>
         <View className="flex-row flex-wrap gap-y-4">
           <Stat value={fmt(stats.best)} label="ALL-TIME BEST" accent />

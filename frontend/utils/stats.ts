@@ -122,7 +122,7 @@ export function classifyExercise(points: SessionPoint[], timed: boolean): Exerci
 
 /** The number that best describes strength for the kind of exercise. */
 export function primaryValue(p: SessionPoint, kind: ExerciseKind): number {
-  return kind === 'weighted' ? p.e1rm : p.reps;
+  return kind === 'weighted' ? p.weight : p.reps;
 }
 
 // ─── Regression & progression ───────────────────────────────────────────────
@@ -230,7 +230,7 @@ export interface ExerciseStats {
   bestE1rm: SessionPoint | null;
   bestVolume: SessionPoint | null;
   bestReps: SessionPoint | null;
-  /** Best of the primary metric (e1RM, reps or seconds). */
+  /** Best of the primary metric (top weight, reps or seconds). */
   best: number;
   latest: number;
   /** Primary metric: first session to latest session. */
