@@ -19,10 +19,10 @@ type Metric = 'e1rm' | 'weight' | 'volume' | 'reps' | 'totalReps';
 
 const METRICS: Record<ExerciseStats['kind'], { id: Metric; label: string }[]> = {
   weighted: [
-    { id: 'e1rm', label: 'EST. 1RM' },
     { id: 'weight', label: 'WEIGHT' },
-    { id: 'volume', label: 'VOLUME' },
     { id: 'reps', label: 'REPS' },
+    { id: 'volume', label: 'VOLUME' },
+    { id: 'e1rm', label: 'EST. 1RM' },
   ],
   bodyweight: [
     { id: 'reps', label: 'REPS / SET' },
@@ -138,7 +138,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       {/* Numbers */}
       <View className="bg-surface rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-3">
-          {kind === 'weighted' ? 'ESTIMATED 1RM' : kind === 'timed' ? 'BEST HOLD' : 'BEST SET'}
+          {kind === 'weighted' ? 'TOP WEIGHT' : kind === 'timed' ? 'BEST HOLD' : 'BEST SET'}
         </Text>
         <View className="flex-row flex-wrap gap-y-4">
           <Stat value={fmt(stats.best)} label="ALL-TIME BEST" accent />
@@ -225,7 +225,6 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       {/* Record sets */}
       <View className="bg-surface rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">RECORD SESSIONS</Text>
-        {stats.bestE1rm && <RecordRow label="Best est. 1RM" value={fmt(stats.bestE1rm.e1rm)} point={stats.bestE1rm} kind={kind} />}
         {stats.bestWeight && <RecordRow label="Heaviest weight" value={fmt(stats.bestWeight.weight)} point={stats.bestWeight} kind={kind} />}
         {stats.bestVolume && <RecordRow label="Most volume" value={`${formatNumber(stats.bestVolume.volume)} kg`} point={stats.bestVolume} kind={kind} />}
         {stats.bestReps && (
@@ -236,6 +235,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
             kind={kind}
           />
         )}
+        {stats.bestE1rm && <RecordRow label="Best est. 1RM" value={fmt(stats.bestE1rm.e1rm)} point={stats.bestE1rm} kind={kind} />}
       </View>
     </>
   );

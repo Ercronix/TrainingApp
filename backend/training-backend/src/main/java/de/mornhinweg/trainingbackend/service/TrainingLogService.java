@@ -132,9 +132,12 @@ public class TrainingLogService {
         ? exerciseRepository.findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(workout.getId()).size()
         : exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId()).size();
 
+    LibraryExercise libraryExercise = libraryExerciseService.resolve(user, request.getLibraryExerciseId(), request.getName());
+    libraryExerciseService.applyMuscles(libraryExercise, request.getMuscles());
+
     Exercise exercise = Exercise.builder()
         .workout(workout)
-        .libraryExercise(libraryExerciseService.resolve(user, request.getLibraryExerciseId(), request.getName()))
+        .libraryExercise(libraryExercise)
         .sets(request.getSets())
         .reps(request.getReps())
         .plannedWeight(request.getPlannedWeight())

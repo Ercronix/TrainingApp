@@ -7,6 +7,10 @@ import { useTheme } from '@/hooks/useTheme';
 import { alert } from '@/utils/confirm';
 import { useLibrary } from '@/hooks/useLibrary';
 import { LibrarySuggestions, findLibraryMatch } from '@/components/LibrarySuggestions';
+import { CatalogSuggestions } from '@/components/CatalogSuggestions';
+import { MuscleSummary } from '@/components/MusclePicker';
+import { useCatalog } from '@/hooks/useCatalog';
+import { CatalogExercise } from '@/types';
 
 export default function AddExerciseScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
@@ -28,6 +32,10 @@ export default function AddExerciseScreen() {
 
   const { library } = useLibrary();
   const libraryMatch = findLibraryMatch(library, form.name);
+  const { catalog } = useCatalog();
+  // A picked catalog exercise brings its muscles along, as long as the name isn't edited again
+  const [catalogPick, setCatalogPick] = useState<CatalogExercise | null>(null);
+  const catalogMuscles = !libraryMatch && catalogPick?.name === form.name.trim() ? catalogPick.muscles : undefined;
 
   if (!trainingLogId) {
     return (
@@ -51,6 +59,7 @@ export default function AddExerciseScreen() {
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
+      muscles: catalogMuscles,
       addToWorkout,
     }, libraryMatch?.name ?? form.name.trim());
   };
@@ -121,6 +130,14 @@ export default function AddExerciseScreen() {
           </View>
         )}
         <LibrarySuggestions library={library} query={form.name} onSelect={(entry) => updateField('name')(entry.name)} />
+        {!libraryMatch && (
+          <CatalogSuggestions
+            catalog={catalog}
+            query={form.name}
+            onSelect={(entry) => { setCatalogPick(entry); updateField('name')(entry.name); }}
+          />
+        )}
+        {catalogMuscles && <MuscleSummary muscles={catalogMuscles} className="-mt-2 mb-4" />}
 
         {/* Sets */}
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">SETS</Text>

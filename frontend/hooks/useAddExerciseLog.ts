@@ -4,7 +4,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { AddExerciseLogVariables, MUTATION_KEYS, trainingScope } from '@/services/queryClient';
-import { ExerciseLog, TrainingLog } from '@/types';
+import { MuscleTarget ,ExerciseLog, TrainingLog } from '@/types';
 
 export interface AddExerciseLogDto {
   libraryExerciseId?: number;
@@ -12,6 +12,7 @@ export interface AddExerciseLogDto {
   sets?: number | null;
   reps?: number | null;
   plannedWeight?: number | null;
+  muscles?: MuscleTarget[];
   addToWorkout: boolean;
 }
 

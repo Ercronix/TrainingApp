@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLibrary } from '@/hooks/useLibrary';
 import { useTheme } from '@/hooks/useTheme';
 import { LibraryExercise } from '@/types';
+import { MuscleSummary } from '@/components/MusclePicker';
 
 export default function LibraryScreen() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function LibraryScreen() {
     const query = searchQuery.trim().toLowerCase();
     return query ? library.filter((e) => e.name.toLowerCase().includes(query)) : library;
   }, [library, searchQuery]);
+  const untaggedCount = library.filter((e) => !e.muscles?.length).length;
 
   const renderItem = ({ item }: { item: LibraryExercise }) => (
     <TouchableOpacity
@@ -40,6 +42,7 @@ export default function LibraryScreen() {
           {item.repUnit === 'seconds' ? ' · TIMED' : ''}
           {item.lastTrainedAt ? ` · LAST ${new Date(item.lastTrainedAt).toLocaleDateString()}` : ''}
         </Text>
+        {item.muscles?.length ? <MuscleSummary muscles={item.muscles} className="mt-1" /> : null}
       </View>
       {!!item.videoUrl && <Ionicons name="play-circle-outline" size={18} color={c.muted} />}
       <Ionicons name="chevron-forward" size={18} color={c.subtle} />
@@ -59,6 +62,24 @@ export default function LibraryScreen() {
           Notes, video and progress are shared by every workout that uses an exercise
         </Text>
       </View>
+
+      {untaggedCount > 0 && !isLoading && (
+        <TouchableOpacity
+          className="mx-4 mb-3 bg-surface rounded-md px-5 py-4 flex-row items-center gap-3"
+          onPress={() => router.push('/assign-muscles' as any)}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="body-outline" size={20} color={c.accent} />
+          <View className="flex-1">
+            <Text className="text-primary text-sm font-bold">Assign muscles</Text>
+            <Text className="text-muted text-[11px]">
+              {untaggedCount} {untaggedCount === 1 ? 'exercise has' : 'exercises have'} no muscles yet, so their sets
+              don't count towards weekly volume
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={c.subtle} />
+        </TouchableOpacity>
+      )}
 
       {/* Search bar */}
       <View className="px-4 mb-3">

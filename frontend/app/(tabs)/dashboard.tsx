@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
 import { BarChart } from '@/components/charts/BarChart';
+import { MuscleVolumeCard } from '@/components/MuscleVolumeCard';
 import { formatKg } from '@/utils/strength';
 import { ExerciseTrend, formatDuration, formatNumber, formatSigned } from '@/utils/stats';
 
@@ -23,7 +24,7 @@ const TRENDS_COLLAPSED = 5;
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { stats, analytics, isLoading, isRefetching, refetch } = useDashboard();
+  const { stats, analytics, history, isLoading, isRefetching, refetch } = useDashboard();
   const { library } = useLibrary();
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
   const [weeklyMetric, setWeeklyMetric] = useState<WeeklyMetric>('volume');
@@ -221,6 +222,8 @@ export default function DashboardScreen() {
         <Text className="text-muted text-[10px] mt-2">Touch and drag across the bars to inspect a week</Text>
       </View>
 
+      {lifetime.sessions > 0 && <MuscleVolumeCard logs={history} library={library} />}
+
       {/* Lifetime numbers */}
       {lifetime.sessions > 0 && (
         <View className="mx-4 mb-3 bg-surface rounded-md p-5">
@@ -251,7 +254,7 @@ export default function DashboardScreen() {
         <View className="mx-4 mb-3 bg-surface rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-1">STRENGTH TRENDS</Text>
           <Text className="text-muted text-[10px] mb-3">
-            Best est. 1RM (reps or seconds for bodyweight and timed work) and its 90-day trend
+            Top weight (reps or seconds for bodyweight and timed work) and its 90-day trend
           </Text>
           {trends.map((t) => {
             const p = t.progression;

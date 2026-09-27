@@ -12,6 +12,10 @@ import { estimateOneRepMax } from '@/utils/strength';
 import { setsOf, workingSets } from '@/utils/sets';
 import { useLibrary } from '@/hooks/useLibrary';
 import { confirm } from '@/utils/confirm';
+import { MusclePicker, MuscleSummary } from '@/components/MusclePicker';
+import { CatalogSuggestions } from '@/components/CatalogSuggestions';
+import { useCatalog } from '@/hooks/useCatalog';
+import { MuscleTarget } from '@/types';
 
 export default function ExerciseDetailScreen() {
   const {
@@ -27,7 +31,10 @@ export default function ExerciseDetailScreen() {
 
   const router = useRouter();
   const { saveVideo, saveDescription, saveName, isPending } = useExerciseDetail(workoutId, exerciseId, libraryExerciseId);
-  const { library, deleteEntry } = useLibrary();
+  const { library, deleteEntry, updateEntry } = useLibrary();
+  const { catalog } = useCatalog();
+  const [editingMuscles, setEditingMuscles] = useState(false);
+  const [muscles, setMuscles] = useState<MuscleTarget[]>([]);
   const [name, setName] = useState(exerciseName || '');
   const [editingName, setEditingName] = useState(false);
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl || '');
@@ -37,7 +44,17 @@ export default function ExerciseDetailScreen() {
   const { progress, isLoading: progressLoading } = useExerciseProgress(exerciseId, libraryExerciseId);
   const c = useTheme();
   const libraryId = progress?.libraryExerciseId ?? (libraryExerciseId ? Number(libraryExerciseId) : null);
-  const timed = library.find((l) => l.id === libraryId)?.repUnit === 'seconds';
+  const entry = library.find((l) => l.id === libraryId);
+  const timed = entry?.repUnit === 'seconds';
+
+  const startEditingMuscles = () => {
+    setMuscles(entry?.muscles ?? []);
+    setEditingMuscles(true);
+  };
+  const saveMuscles = () => {
+    if (libraryId == null) return;
+    updateEntry.mutate({ id: libraryId, data: { muscles } }, { onSuccess: () => setEditingMuscles(false) });
+  };
   // Seed the calculator with the set behind the best estimated 1RM
   let bestSet: { weight: number; reps: number } | undefined;
   if (!timed) {
@@ -122,6 +139,52 @@ export default function ExerciseDetailScreen() {
           </View>
         )}
 
+        {/* Muscles */}
+        {entry && (
+          <View className="bg-surface rounded-md p-5 mb-2">
+            <View className="flex-row justify-between items-center mb-3">
+              <Text className="text-muted text-[9px] tracking-[3px]">MUSCLES</Text>
+              <TouchableOpacity onPress={() => (editingMuscles ? setEditingMuscles(false) : startEditingMuscles())}>
+                <Ionicons name={editingMuscles ? 'close-outline' : 'pencil-outline'} size={18} color={c.muted} />
+              </TouchableOpacity>
+            </View>
+
+            {editingMuscles ? (
+              <View>
+                <CatalogSuggestions
+                  catalog={catalog}
+                  query={name}
+                  requireAll={false}
+                  title="SIMILAR CATALOG EXERCISES"
+                  onSelect={(match) => setMuscles(match.muscles)}
+                />
+                <MusclePicker value={muscles} onChange={setMuscles} disabled={updateEntry.isPending} />
+                <TouchableOpacity
+                  className={`bg-accent rounded py-3 items-center mt-4 ${updateEntry.isPending ? 'opacity-50' : ''}`}
+                  onPress={saveMuscles}
+                  disabled={updateEntry.isPending}
+                >
+                  <Text className="text-accent-fg text-[11px] font-bold tracking-[2px]">
+                    {updateEntry.isPending ? 'SAVING...' : 'SAVE MUSCLES'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : entry.muscles?.length ? (
+              <TouchableOpacity onPress={startEditingMuscles}>
+                <MuscleSummary muscles={entry.muscles} className="text-sm" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                className="h-20 items-center justify-center bg-base rounded gap-2"
+                onPress={startEditingMuscles}
+              >
+                <Ionicons name="body-outline" size={28} color={c.elevated} />
+                <Text className="text-elevated text-[10px] tracking-[2px]">TAP TO SET MUSCLES</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
         {/* Video */}
         <View className="bg-surface rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
@@ -178,17 +241,6 @@ export default function ExerciseDetailScreen() {
           <ExerciseAnalytics entries={progress?.entries ?? []} timed={timed} />
         )}
 
-        {!timed && !progressLoading && (
-          <View className="bg-surface rounded-md p-5 mb-2">
-            <Text className="text-muted text-[9px] tracking-[3px] mb-3">1RM CALCULATOR</Text>
-            <OneRepMaxCalculator
-              key={bestSet ? `${bestSet.weight}x${bestSet.reps}` : 'empty'}
-              initialWeight={bestSet?.weight}
-              initialReps={bestSet?.reps}
-            />
-          </View>
-        )}
-
         {/* Description */}
         <View className="bg-surface rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
@@ -236,6 +288,17 @@ export default function ExerciseDetailScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {!timed && !progressLoading && (
+          <View className="bg-surface rounded-md p-5 mb-2">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-3">1RM CALCULATOR</Text>
+            <OneRepMaxCalculator
+              key={bestSet ? `${bestSet.weight}x${bestSet.reps}` : 'empty'}
+              initialWeight={bestSet?.weight}
+              initialReps={bestSet?.reps}
+            />
+          </View>
+        )}
 
         {isLibraryView && (
           <TouchableOpacity

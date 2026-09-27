@@ -1,10 +1,13 @@
 package de.mornhinweg.trainingbackend.dto.training;
 
+import de.mornhinweg.trainingbackend.dto.library.MuscleTargetDto;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -24,6 +27,9 @@ public class AddExerciseLogRequest {
   private Integer reps;
 
   private BigDecimal plannedWeight;
+
+  // Replaces the library entry's muscles when present
+  private List<@Valid MuscleTargetDto> muscles;
 
   @NotNull(message = "addToWorkout is required")
   private Boolean addToWorkout;

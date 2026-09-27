@@ -2,6 +2,7 @@ package de.mornhinweg.trainingbackend.dto.library;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class LibraryExerciseResponse {
@@ -11,6 +12,7 @@ public class LibraryExerciseResponse {
   private String videoUrl;
   private String videoId;
   private String repUnit;
+  private List<MuscleTargetDto> muscles;
   // Number of workouts (templates, not one-off session exercises) that use this entry
   private long workoutCount;
   private LocalDateTime lastTrainedAt;

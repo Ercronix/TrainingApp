@@ -3,6 +3,7 @@ package de.mornhinweg.trainingbackend.service;
 import de.mornhinweg.trainingbackend.dto.exercise.ExerciseProgressResponse;
 import de.mornhinweg.trainingbackend.dto.library.CreateLibraryExerciseRequest;
 import de.mornhinweg.trainingbackend.dto.library.LibraryExerciseResponse;
+import de.mornhinweg.trainingbackend.dto.library.MuscleTargetDto;
 import de.mornhinweg.trainingbackend.dto.library.UpdateLibraryExerciseRequest;
 import de.mornhinweg.trainingbackend.dto.training.SetLogResponse;
 import de.mornhinweg.trainingbackend.exception.BadRequestException;
@@ -10,6 +11,8 @@ import de.mornhinweg.trainingbackend.exception.ConflictException;
 import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.model.ExerciseLog;
 import de.mornhinweg.trainingbackend.model.LibraryExercise;
+import de.mornhinweg.trainingbackend.model.Muscle;
+import de.mornhinweg.trainingbackend.model.MuscleTarget;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.repository.ExerciseLogRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
@@ -21,8 +24,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,6 +64,7 @@ public class LibraryExerciseService {
         .videoId(request.getVideoId())
         .repUnit(request.getRepUnit() != null ? request.getRepUnit() : "reps")
         .build();
+    applyMuscles(entry, request.getMuscles());
     return toResponse(libraryExerciseRepository.save(entry), null);
   }
 
@@ -67,6 +74,7 @@ public class LibraryExerciseService {
     LibraryExercise entry = getOwnedEntry(id, user);
     if (request.getName() != null) rename(entry, request.getName());
     applyDetails(entry, request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
+    applyMuscles(entry, request.getMuscles());
     entry = libraryExerciseRepository.save(entry);
     List<Object[]> usage = exerciseRepository.findUsageByLibraryExerciseId(entry.getId());
     return toResponse(entry, usage.isEmpty() ? null : usage.get(0));
@@ -130,6 +138,7 @@ public class LibraryExerciseService {
               .videoUrl(current.getVideoUrl())
               .videoId(current.getVideoId())
               .repUnit(current.getRepUnit())
+              .muscles(new HashSet<>(current.getMuscles()))
               .build());
         });
   }
@@ -154,6 +163,25 @@ public class LibraryExerciseService {
     if (videoUrl != null) entry.setVideoUrl(videoUrl);
     if (videoId != null) entry.setVideoId(videoId);
     if (repUnit != null) entry.setRepUnit(repUnit);
+  }
+
+  /** Replaces the entry's muscles unless {@code muscles} is null. Each muscle may appear once. */
+  void applyMuscles(LibraryExercise entry, List<MuscleTargetDto> muscles) {
+    if (muscles == null) return;
+    Set<Muscle> seen = EnumSet.noneOf(Muscle.class);
+    Set<MuscleTarget> targets = new HashSet<>();
+    for (MuscleTargetDto m : muscles) {
+      if (m == null || m.getMuscle() == null || m.getRole() == null) {
+        throw new BadRequestException("Each muscle needs a muscle and a role");
+      }
+      if (!seen.add(m.getMuscle())) {
+        throw new BadRequestException("Muscle " + m.getMuscle() + " is listed more than once");
+      }
+      targets.add(new MuscleTarget(m.getMuscle(), m.getRole()));
+    }
+    // Keep the managed collection and only change its contents
+    entry.getMuscles().retainAll(targets);
+    entry.getMuscles().addAll(targets);
   }
 
   ExerciseProgressResponse buildProgress(LibraryExercise entry, Long exerciseId) {
@@ -199,6 +227,7 @@ public class LibraryExerciseService {
         .videoUrl(entry.getVideoUrl())
         .videoId(entry.getVideoId())
         .repUnit(entry.getRepUnit())
+        .muscles(MuscleTargetDto.fromAll(entry.getMuscles()))
         .workoutCount(usage != null ? ((Number) usage[1]).longValue() : 0)
         .lastTrainedAt(usage != null ? (LocalDateTime) usage[2] : null)
         .createdAt(entry.getCreatedAt())

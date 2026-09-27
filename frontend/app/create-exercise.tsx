@@ -7,7 +7,11 @@ import { useTheme } from '@/hooks/useTheme';
 import { alert } from '@/utils/confirm';
 import { useLibrary } from '@/hooks/useLibrary';
 import { LibrarySuggestions, findLibraryMatch } from '@/components/LibrarySuggestions';
-import { LibraryExercise } from '@/types';
+import { CatalogSuggestions } from '@/components/CatalogSuggestions';
+import { MusclePicker } from '@/components/MusclePicker';
+import { useCatalog } from '@/hooks/useCatalog';
+import { sameMuscles } from '@/utils/muscles';
+import { CatalogExercise, LibraryExercise, MuscleTarget } from '@/types';
 
 export default function CreateExerciseModal() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
@@ -22,7 +26,11 @@ export default function CreateExerciseModal() {
   const isPending = createExercise.isPending;
   const c = useTheme();
   const { library } = useLibrary();
+  const { catalog } = useCatalog();
   const libraryMatch = findLibraryMatch(library, form.name);
+  const [muscles, setMuscles] = useState<MuscleTarget[]>([]);
+  // The catalog suggestion the muscles were copied from, so renaming away from it drops them
+  const [catalogPick, setCatalogPick] = useState<CatalogExercise | null>(null);
 
   // An existing library entry brings its shared details along
   const applyEntry = (entry: LibraryExercise) => {
@@ -33,6 +41,18 @@ export default function CreateExerciseModal() {
       description: prev.description || entry.description || '',
     }));
     setRepUnit(entry.repUnit === 'seconds' ? 'seconds' : 'reps');
+    setMuscles(entry.muscles ?? []);
+    setCatalogPick(null);
+  };
+
+  const applyCatalog = (entry: CatalogExercise) => {
+    const match = findLibraryMatch(library, entry.name);
+    if (match) applyEntry(match);
+    else {
+      updateField('name')(entry.name);
+      setMuscles(entry.muscles);
+      setCatalogPick(entry);
+    }
   };
 
   const handleNameChange = (name: string) => {
@@ -47,8 +67,13 @@ export default function CreateExerciseModal() {
         videoUrl: prev.videoUrl === (libraryMatch.videoUrl ?? '') ? '' : prev.videoUrl,
         description: prev.description === (libraryMatch.description ?? '') ? '' : prev.description,
       }));
+      if (sameMuscles(muscles, libraryMatch.muscles ?? [])) setMuscles([]);
     } else {
       updateField('name')(name);
+      if (catalogPick && name.trim().toLowerCase() !== catalogPick.name.toLowerCase()) {
+        if (sameMuscles(muscles, catalogPick.muscles)) setMuscles([]);
+        setCatalogPick(null);
+      }
     }
   };
 
@@ -62,6 +87,8 @@ export default function CreateExerciseModal() {
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       videoUrl: form.videoUrl.trim() || null,
       description: form.description.trim() || null,
+      // Muscles are shared by the library entry, so they are only sent when changed
+      muscles: sameMuscles(muscles, libraryMatch?.muscles ?? []) ? undefined : muscles,
     }, { onSuccess: () => router.back() });
   };
 
@@ -101,6 +128,7 @@ export default function CreateExerciseModal() {
           </View>
         )}
         <LibrarySuggestions library={library} query={form.name} onSelect={applyEntry} />
+        {!libraryMatch && <CatalogSuggestions catalog={catalog} query={form.name} onSelect={applyCatalog} />}
 
         <View className="flex-row gap-3 mb-3">
           <View className="flex-1">
@@ -146,6 +174,11 @@ export default function CreateExerciseModal() {
           >
             <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'seconds' ? 'text-accent-fg' : 'text-muted'}`}>SECONDS</Text>
           </TouchableOpacity>
+        </View>
+
+        <Text className="text-muted text-[9px] tracking-[3px] mb-2">MUSCLES</Text>
+        <View className="bg-surface rounded p-4 mb-5">
+          <MusclePicker value={muscles} onChange={setMuscles} disabled={isPending} />
         </View>
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>
