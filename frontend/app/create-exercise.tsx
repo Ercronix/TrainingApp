@@ -29,6 +29,8 @@ export default function CreateExerciseModal() {
   const { catalog } = useCatalog();
   const libraryMatch = findLibraryMatch(library, form.name);
   const [muscles, setMuscles] = useState<MuscleTarget[]>([]);
+  // The catalog suggestion the muscles were copied from, so renaming away from it drops them
+  const [catalogPick, setCatalogPick] = useState<CatalogExercise | null>(null);
 
   // An existing library entry brings its shared details along
   const applyEntry = (entry: LibraryExercise) => {
@@ -40,6 +42,7 @@ export default function CreateExerciseModal() {
     }));
     setRepUnit(entry.repUnit === 'seconds' ? 'seconds' : 'reps');
     setMuscles(entry.muscles ?? []);
+    setCatalogPick(null);
   };
 
   const applyCatalog = (entry: CatalogExercise) => {
@@ -48,6 +51,7 @@ export default function CreateExerciseModal() {
     else {
       updateField('name')(entry.name);
       setMuscles(entry.muscles);
+      setCatalogPick(entry);
     }
   };
 
@@ -66,6 +70,10 @@ export default function CreateExerciseModal() {
       if (sameMuscles(muscles, libraryMatch.muscles ?? [])) setMuscles([]);
     } else {
       updateField('name')(name);
+      if (catalogPick && name.trim().toLowerCase() !== catalogPick.name.toLowerCase()) {
+        if (sameMuscles(muscles, catalogPick.muscles)) setMuscles([]);
+        setCatalogPick(null);
+      }
     }
   };
 

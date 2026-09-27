@@ -30,6 +30,14 @@ export default function AssignMusclesScreen() {
     [library, done],
   );
 
+  // Matching tokenizes the whole catalog, so it runs once per entry rather than on every render
+  const matchesById = useMemo(
+    () => new Map(untagged.map((e) => [
+      e.id, searchCatalog(catalog, e.name, { limit: MATCHES_PER_EXERCISE, requireAll: false }),
+    ])),
+    [catalog, untagged],
+  );
+
   const apply = (entry: LibraryExercise, match: CatalogExercise) => {
     updateEntry.mutate(
       { id: entry.id, data: { muscles: match.muscles } },
@@ -47,7 +55,7 @@ export default function AssignMusclesScreen() {
     });
 
   const renderItem = ({ item }: { item: LibraryExercise }) => {
-    const matches = searchCatalog(catalog, item.name, { limit: MATCHES_PER_EXERCISE, requireAll: false });
+    const matches = matchesById.get(item.id) ?? [];
     return (
       <View className="bg-surface rounded-md mb-2 overflow-hidden">
         <TouchableOpacity className="flex-row items-center px-5 pt-4 pb-2" onPress={() => openEntry(item)} activeOpacity={0.85}>

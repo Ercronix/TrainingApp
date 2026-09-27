@@ -136,13 +136,13 @@ export interface MuscleWeek {
   sets: Partial<Record<Muscle, number>>;
   /** Working sets of library entries without muscles, which count for nothing. */
   untaggedSets: number;
+  /** Library entries without muscles that were trained this week. */
+  untaggedIds: Set<number>;
 }
 
 export interface MuscleVolume {
   /** Oldest first; the last one is the running week. */
   weeks: MuscleWeek[];
-  /** Library entries without muscles that were trained in these weeks. */
-  untaggedExercises: number;
 }
 
 const logDate = (log: TrainingLog) => new Date(log.completedAt ?? log.startedAt).getTime();
@@ -162,11 +162,9 @@ export function computeMuscleVolume(
   const weeks: MuscleWeek[] = Array.from({ length: weekCount }, (_, i) => {
     const d = new Date(thisWeek);
     d.setDate(d.getDate() - (weekCount - 1 - i) * 7);
-    return { start: d.getTime(), sets: {}, untaggedSets: 0 };
+    return { start: d.getTime(), sets: {}, untaggedSets: 0, untaggedIds: new Set() };
   });
   const weekIndex = new Map(weeks.map((w, i) => [w.start, i]));
-
-  const untagged = new Set<number>();
 
   for (const log of logs) {
     if (!log.isCompleted) continue;
@@ -180,7 +178,7 @@ export function computeMuscleVolume(
       const muscles = musclesById.get(ex.libraryExerciseId) ?? [];
       if (muscles.length === 0) {
         week.untaggedSets += sets;
-        untagged.add(ex.libraryExerciseId);
+        week.untaggedIds.add(ex.libraryExerciseId);
         continue;
       }
       for (const { muscle, role } of muscles) {
@@ -189,5 +187,5 @@ export function computeMuscleVolume(
     }
   }
 
-  return { weeks, untaggedExercises: untagged.size };
+  return { weeks };
 }

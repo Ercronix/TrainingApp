@@ -33,6 +33,9 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
   const untaggedSets = range === 'week'
     ? current.untaggedSets
     : finished.reduce((sum, w) => sum + w.untaggedSets, 0) / finished.length;
+  const untaggedExercises = range === 'week'
+    ? current.untaggedIds.size
+    : new Set(finished.flatMap((w) => [...w.untaggedIds])).size;
 
   const rows = MUSCLES
     .map((muscle) => ({ muscle, sets: setsFor(muscle) }))
@@ -99,7 +102,7 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
           <Text className="flex-1 text-muted text-[11px]">
             {untaggedSets > 0
               ? `${formatSets(Math.round(untaggedSets * 10) / 10)} ${range === 'week' ? 'sets this week' : 'sets a week'} from ${
-                volume.untaggedExercises === 1 ? 'an exercise' : 'exercises'} without muscles aren't counted`
+                untaggedExercises === 1 ? 'an exercise' : 'exercises'} without muscles aren't counted`
               : 'Assign muscles to your exercises to track volume'}
           </Text>
           <Text className="text-accent-text text-[10px] font-bold tracking-[2px]">ASSIGN</Text>
