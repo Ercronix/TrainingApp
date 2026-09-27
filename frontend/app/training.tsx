@@ -148,7 +148,7 @@ export default function TrainingScreen() {
             {item.completed && (
               <View className="flex-row items-center gap-2 mt-1">
                 <Text className="text-accent-text text-[11px]">
-                  ✓ {formatSets(setsOf(item), item.repUnit)}
+                  {formatSets(setsOf(item), item.repUnit)}
                 </Text>
                 {isRecord && (
                   <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
