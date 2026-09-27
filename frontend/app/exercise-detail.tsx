@@ -241,17 +241,6 @@ export default function ExerciseDetailScreen() {
           <ExerciseAnalytics entries={progress?.entries ?? []} timed={timed} />
         )}
 
-        {!timed && !progressLoading && (
-          <View className="bg-surface rounded-md p-5 mb-2">
-            <Text className="text-muted text-[9px] tracking-[3px] mb-3">1RM CALCULATOR</Text>
-            <OneRepMaxCalculator
-              key={bestSet ? `${bestSet.weight}x${bestSet.reps}` : 'empty'}
-              initialWeight={bestSet?.weight}
-              initialReps={bestSet?.reps}
-            />
-          </View>
-        )}
-
         {/* Description */}
         <View className="bg-surface rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
@@ -299,6 +288,17 @@ export default function ExerciseDetailScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {!timed && !progressLoading && (
+          <View className="bg-surface rounded-md p-5 mb-2">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-3">1RM CALCULATOR</Text>
+            <OneRepMaxCalculator
+              key={bestSet ? `${bestSet.weight}x${bestSet.reps}` : 'empty'}
+              initialWeight={bestSet?.weight}
+              initialReps={bestSet?.reps}
+            />
+          </View>
+        )}
 
         {isLibraryView && (
           <TouchableOpacity

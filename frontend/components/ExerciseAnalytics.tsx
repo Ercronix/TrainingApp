@@ -19,10 +19,10 @@ type Metric = 'e1rm' | 'weight' | 'volume' | 'reps' | 'totalReps';
 
 const METRICS: Record<ExerciseStats['kind'], { id: Metric; label: string }[]> = {
   weighted: [
-    { id: 'e1rm', label: 'EST. 1RM' },
     { id: 'weight', label: 'WEIGHT' },
-    { id: 'volume', label: 'VOLUME' },
     { id: 'reps', label: 'REPS' },
+    { id: 'volume', label: 'VOLUME' },
+    { id: 'e1rm', label: 'EST. 1RM' },
   ],
   bodyweight: [
     { id: 'reps', label: 'REPS / SET' },
@@ -83,8 +83,9 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
   const lastDate = points[points.length - 1].date;
   const visible = points.filter((p) => lastDate - p.date <= rangeDays * DAY_MS && metricValue(p, activeMetric) > 0);
   const chartPoints: TrendPoint[] = visible.map((p) => ({ x: p.date, y: metricValue(p, activeMetric) }));
-  // The projection follows the primary metric, which is always the first option
-  const showProjection = progression && activeMetric === metrics[0].id && chartPoints.length > 1;
+  // The projection follows the primary metric (e1RM for weighted work, else the first option)
+  const primaryMetric: Metric = kind === 'weighted' ? 'e1rm' : metrics[0].id;
+  const showProjection = progression && activeMetric === primaryMetric && chartPoints.length > 1;
   const projection: TrendPoint[] = showProjection
     ? [
         { x: progression.lastDate, y: progression.trendValue },
@@ -225,7 +226,6 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       {/* Record sets */}
       <View className="bg-surface rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">RECORD SESSIONS</Text>
-        {stats.bestE1rm && <RecordRow label="Best est. 1RM" value={fmt(stats.bestE1rm.e1rm)} point={stats.bestE1rm} kind={kind} />}
         {stats.bestWeight && <RecordRow label="Heaviest weight" value={fmt(stats.bestWeight.weight)} point={stats.bestWeight} kind={kind} />}
         {stats.bestVolume && <RecordRow label="Most volume" value={`${formatNumber(stats.bestVolume.volume)} kg`} point={stats.bestVolume} kind={kind} />}
         {stats.bestReps && (
@@ -236,6 +236,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
             kind={kind}
           />
         )}
+        {stats.bestE1rm && <RecordRow label="Best est. 1RM" value={fmt(stats.bestE1rm.e1rm)} point={stats.bestE1rm} kind={kind} />}
       </View>
     </>
   );
