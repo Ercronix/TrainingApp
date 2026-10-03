@@ -21,7 +21,8 @@ interface SetDraftState {
   /** Unsaved state of the log exercise screen, by exercise log id, kept across leaving the screen and app restarts. */
   drafts: Record<string, SetDraft>;
   setDraft: (exerciseLogId: string, draft: SetDraft) => void;
-  clearDraft: (exerciseLogId: string) => void;
+  /** Drops the drafts of a session's exercises once it's completed. */
+  clearDrafts: (exerciseLogIds: string[]) => void;
   reset: () => void;
 }
 
@@ -33,9 +34,10 @@ export const useSetDraftStore = create<SetDraftState>()(
       setDraft: (exerciseLogId, draft) =>
         set((state) => ({ drafts: { ...state.drafts, [exerciseLogId]: draft } })),
 
-      clearDraft: (exerciseLogId) =>
+      clearDrafts: (exerciseLogIds) =>
         set((state) => {
-          const { [exerciseLogId]: _, ...drafts } = state.drafts;
+          const drafts = { ...state.drafts };
+          for (const id of exerciseLogIds) delete drafts[id];
           return { drafts };
         }),
 
