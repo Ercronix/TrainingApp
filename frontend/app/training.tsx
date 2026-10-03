@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
 import { useRestTimerStore } from '@/store/restTimerStore';
+import { useSetDraftStore } from '@/store/setDraftStore';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
@@ -84,6 +85,7 @@ export default function TrainingScreen() {
     const finish = (message: string) => {
       // Don't leave a rest timer running (and notifying) after the session ends
       useRestTimerStore.getState().reset();
+      useSetDraftStore.getState().clearDrafts((training?.exercises ?? []).map((e: ExerciseLog) => String(e.id)));
       alert('Done!', records.length > 0 ? `${message}\n\nNew records:\n${records.join('\n')}` : message);
       router.replace('/(tabs)');
     };
