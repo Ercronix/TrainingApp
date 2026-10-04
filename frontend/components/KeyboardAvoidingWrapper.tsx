@@ -1,4 +1,4 @@
-import { KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { KeyboardAvoidingView, ScrollView } from 'react-native';
 import type { ReactNode } from 'react';
 
 interface Props {
@@ -10,7 +10,8 @@ export default function KeyboardAvoidingWrapper({ children, scroll = true }: Pro
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // Edge-to-edge Android no longer resizes the window for the keyboard, so pad on both platforms
+      behavior="padding"
     >
       {scroll ? (
         <ScrollView

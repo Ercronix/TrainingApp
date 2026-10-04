@@ -7,11 +7,16 @@ import SwipeableRow from '@/components/SwipeableRow';
 import { useTheme } from '@/hooks/useTheme';
 import { confirm } from '@/utils/confirm';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Floating tab bar height plus its gap to the bottom edge (see app/(tabs)/_layout.tsx)
+const TAB_BAR_OFFSET = 64 + 12;
 
 export default function SplitsScreen() {
   const router = useRouter();
   const { splits, isLoading, isRefetching, refetch, activateSplit, deleteSplit } = useSplits();
   const c = useTheme();
+  const insets = useSafeAreaInsets();
 
   const handleActivate = (id: number, name: string) => {
     confirm('Activate Split', `Set "${name}" as active split?`, () => activateSplit.mutate(id), 'Activate');
@@ -113,7 +118,7 @@ export default function SplitsScreen() {
         data={splits}
         renderItem={renderSplitItem}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + TAB_BAR_OFFSET + 96 }}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />
         }
@@ -129,7 +134,7 @@ export default function SplitsScreen() {
       {/* FAB */}
       <Link href="/create-split" asChild>
         <AnimatedPressable
-          wrapperClassName="absolute right-6 bottom-20"
+          wrapperStyle={{ position: 'absolute', right: 24, bottom: insets.bottom + TAB_BAR_OFFSET + 16 }}
           className="w-14 h-14 rounded-md bg-accent justify-center items-center"
           activeOpacity={0.8}
         >
