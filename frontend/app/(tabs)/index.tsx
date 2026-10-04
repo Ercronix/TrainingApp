@@ -1,94 +1,63 @@
+import { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
-import { TrainingSplit } from '@/types';
-import { useRouter, Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSplits } from '@/hooks/useSplits';
-import SwipeableRow from '@/components/SwipeableRow';
+import { useWorkouts } from '@/hooks/useWorkouts';
+import { useHistory } from '@/hooks/useHistory';
+import { useActiveTraining } from '@/hooks/useActiveTraining';
+import { useStartTraining } from '@/hooks/useStartTraining';
 import { useTheme } from '@/hooks/useTheme';
-import { confirm } from '@/utils/confirm';
-import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { WorkoutRow } from '@/components/WorkoutRow';
+import { SplitPicker } from '@/components/SplitPicker';
+import { TrainingLog, Workout } from '@/types';
 
-export default function SplitsScreen() {
+/**
+ * The workout after the last one completed in this split, wrapping around to the first.
+ * None without a completed session, or when that session's workout was deleted since.
+ */
+function nextWorkoutOf(workouts: Workout[], history: TrainingLog[], splitId: number): Workout | null {
+  // History is newest first
+  const last = history.find((log) => log.splitId === splitId && log.isCompleted);
+  if (!last || workouts.length === 0) return null;
+  const index = workouts.findIndex((w) => w.id === last.workoutId);
+  return index < 0 ? null : workouts[(index + 1) % workouts.length];
+}
+
+export default function HomeScreen() {
   const router = useRouter();
-  const { splits, isLoading, isRefetching, refetch, activateSplit, deleteSplit } = useSplits();
   const c = useTheme();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const { splits, isLoading, isRefetching, refetch, activateSplit } = useSplits();
+  const active = splits?.find((s) => s.isActive);
+  const splitId = active?.id.toString() ?? '';
+  const workoutsQuery = useWorkouts(splitId);
+  const workouts = workoutsQuery.workouts ?? [];
+  const { history, refetch: refetchHistory } = useHistory();
+  const { activeTraining } = useActiveTraining();
+  const next = active ? nextWorkoutOf(workouts, history, active.id) : null;
+  const { startTraining, isPending: isStarting } = useStartTraining(next?.id.toString() ?? '', next?.name ?? '');
 
-  const handleActivate = (id: number, name: string) => {
-    confirm('Activate Split', `Set "${name}" as active split?`, () => activateSplit.mutate(id), 'Activate');
+  const refresh = () => {
+    void refetch();
+    void refetchHistory();
+    if (splitId) void workoutsQuery.refetch();
   };
 
-  const handleDelete = (id: number, name: string) => {
-    confirm('Delete Split', `Delete "${name}"? This will also delete all its workouts.`, () => deleteSplit.mutate(id), 'Delete');
-  };
-
-  const renderSplitItem = ({ item, index }: { item: TrainingSplit; index: number }) => (
-    <SwipeableRow
-      rightActions={[
-        {
-          icon: 'trash-outline',
-          color: c.danger,
-          backgroundColor: c.dangerMuted,
-          label: 'DELETE',
-          onPress: () => handleDelete(item.id, item.name),
-        },
-      ]}
-      leftActions={
-        !item.isActive
-          ? [
-              {
-                icon: 'flash-outline',
-                color: c.accent,
-                backgroundColor: c.accentMuted,
-                label: 'ACTIVATE',
-                onPress: () => handleActivate(item.id, item.name),
-              },
-            ]
-          : undefined
-      }
-    >
-      <TouchableOpacity
-        className={`px-5 py-5 flex-row items-center overflow-hidden relative ${
-          item.isActive ? 'bg-elevated' : 'bg-surface'
-        }`}
-        onPress={() =>
-          router.push({ pathname: '/workouts', params: { splitId: item.id.toString(), splitName: item.name, currentBlock: item.currentBlock?.toString() || '1' } })
-        }
-        activeOpacity={0.85}
-      >
-        {/* Active left stripe */}
-        {item.isActive && (
-          <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent rounded-l-md" />
-        )}
-
-        {/* Index number */}
-        <Text className="text-subtle text-[32px] font-mono-bold tracking-tighter mr-4 leading-9">
-          {String(index + 1).padStart(2, '0')}
-        </Text>
-
-        {/* Name + meta */}
-        <View className="flex-1">
-          <Text className="text-primary text-lg font-bold tracking-tight mb-1">{item.name}</Text>
-          <View className="flex-row items-center gap-3">
-            <Text className="text-muted text-[10px] tracking-widest">
-              {item.workoutCount} {item.workoutCount === 1 ? 'WORKOUT' : 'WORKOUTS'}
-            </Text>
-            {item.currentBlock && (
-              <Text className="text-accent-text text-[9px] tracking-[2px]">BLOCK {item.currentBlock}/3</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Actions */}
-        <View className="flex-row items-center gap-3">
-          {item.isActive && (
-            <View className="bg-accent px-2 py-1 rounded-sm">
-              <Text className="text-accent-fg text-[9px] font-bold tracking-widest">ACTIVE</Text>
-            </View>
-          )}
-          <Ionicons name="chevron-forward" size={18} color={c.subtle} />
-        </View>
-      </TouchableOpacity>
-    </SwipeableRow>
+  const picker = (
+    <SplitPicker
+      visible={pickerOpen}
+      splits={splits ?? []}
+      onSelect={(split) => {
+        setPickerOpen(false);
+        if (!split.isActive) activateSplit.mutate(split.id);
+      }}
+      onManage={() => {
+        setPickerOpen(false);
+        router.push('/splits' as any);
+      }}
+      onClose={() => setPickerOpen(false)}
+    />
   );
 
   if (isLoading) {
@@ -99,43 +68,137 @@ export default function SplitsScreen() {
     );
   }
 
-  return (
-    <View className="flex-1 bg-base">
-      {/* Header */}
-      <View className="px-6 pt-16 pb-6">
-        <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">YOUR PROGRAM</Text>
-        <Text className="text-primary text-[44px] font-bold leading-[46px] tracking-tighter">
-          TRAINING{'\n'}SPLITS
+  // Nothing to train yet: explain what's missing and offer the one step that fixes it
+  if (!active) {
+    const hasSplits = (splits?.length ?? 0) > 0;
+    return (
+      <View className="flex-1 bg-base px-8 justify-center">
+        <Ionicons name="barbell-outline" size={48} color={c.subtle} />
+        <Text className="text-primary text-[32px] font-bold tracking-tighter leading-9 mt-4 mb-3">
+          {hasSplits ? 'NO ACTIVE\nSPLIT' : 'NO SPLITS\nYET'}
         </Text>
+        <Text className="text-muted text-sm leading-5 mb-6">
+          {hasSplits
+            ? 'Choose the split you are training with right now. Its workouts show up here, along with the one that is up next. You can switch at any time by tapping the split name.'
+            : 'A split is your training program: the workout days you rotate through. Create one, add its workouts, and it shows up here.'}
+        </Text>
+        <TouchableOpacity
+          className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
+          onPress={() => (hasSplits ? setPickerOpen(true) : router.push('/create-split'))}
+          activeOpacity={0.85}
+        >
+          <Ionicons name={hasSplits ? 'flash' : 'add'} size={18} color={c.accentFg} />
+          <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
+            {hasSplits ? 'CHOOSE A SPLIT' : 'CREATE A SPLIT'}
+          </Text>
+        </TouchableOpacity>
+        {picker}
+      </View>
+    );
+  }
+
+  const header = (
+    <View>
+      <View className="px-2 pt-16 pb-6">
+        <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">ACTIVE SPLIT</Text>
+        <View className="flex-row items-center justify-between">
+          <TouchableOpacity
+            className="flex-row items-center gap-2 flex-1 mr-3"
+            onPress={() => setPickerOpen(true)}
+            accessibilityLabel={`${active.name}, tap to switch split`}
+          >
+            <Text className="text-primary text-[36px] font-bold tracking-tighter leading-10 flex-shrink" numberOfLines={1}>
+              {active.name}
+            </Text>
+            <Ionicons name="chevron-down" size={22} color={c.muted} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              router.push({ pathname: '/edit-split' as any, params: { splitId, currentName: active.name, currentBlock: String(active.currentBlock || 1) } })
+            }
+            accessibilityLabel="Edit split"
+          >
+            <Ionicons name="pencil-outline" size={18} color={c.muted} />
+          </TouchableOpacity>
+        </View>
+        {active.currentBlock ? (
+          <Text className="text-accent-text text-[9px] tracking-[2px] mt-1">BLOCK {active.currentBlock}/3</Text>
+        ) : null}
       </View>
 
+      {/* Resume the open session, else suggest the next workout */}
+      {activeTraining ? (
+        <View className="bg-surface rounded-md p-5 mb-6 border-l-[3px] border-accent">
+          <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">IN PROGRESS</Text>
+          <Text className="text-primary text-2xl font-bold tracking-tight mb-4">
+            {activeTraining.workoutName || activeTraining.splitName}
+          </Text>
+          <TouchableOpacity
+            className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
+            onPress={() => router.push({ pathname: '/training', params: { trainingLogId: activeTraining.id.toString() } })}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="play" size={18} color={c.accentFg} />
+            <Text className="text-accent-fg text-sm font-bold tracking-[2px]">RESUME SESSION</Text>
+          </TouchableOpacity>
+        </View>
+      ) : next ? (
+        <View className="bg-surface rounded-md p-5 mb-6 border-l-[3px] border-accent">
+          <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">NEXT UP</Text>
+          <Text className="text-primary text-2xl font-bold tracking-tight mb-1">{next.name}</Text>
+          <Text className="text-muted text-[10px] tracking-[2px] mb-4">
+            {next.exerciseCount ?? 0} {next.exerciseCount === 1 ? 'EXERCISE' : 'EXERCISES'}
+          </Text>
+          <TouchableOpacity
+            className={`bg-accent rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
+            onPress={() => startTraining(next.exerciseCount ?? 0)}
+            disabled={isStarting}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="flash" size={18} color={c.accentFg} />
+            <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
+              {isStarting ? 'STARTING...' : 'START WORKOUT'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
+      {workouts.length > 0 && (
+        <Text className="text-muted text-[10px] tracking-[4px] px-2 mb-3">WORKOUTS</Text>
+      )}
+    </View>
+  );
+
+  return (
+    <View className="flex-1 bg-base">
       <FlatList
-        data={splits}
-        renderItem={renderSplitItem}
+        data={workouts}
+        renderItem={({ item, index }) => (
+          <WorkoutRow workout={item} index={index} splitId={splitId} onDelete={(id) => workoutsQuery.deleteWorkout.mutate(id)} />
+        )}
         keyExtractor={(item) => item.id.toString()}
+        ListHeaderComponent={header}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />
-        }
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refresh} tintColor={c.accent} />}
         ListEmptyComponent={
-          <View className="items-center mt-20 gap-3">
-            <Ionicons name="barbell-outline" size={48} color={c.subtle} />
-            <Text className="text-subtle text-xl font-bold tracking-[2px]">NO SPLITS YET</Text>
-            <Text className="text-dim text-sm">Create your first training split</Text>
-          </View>
+          workoutsQuery.isLoading ? null : (
+            <View className="items-center mt-10 gap-3 px-6">
+              <Ionicons name="calendar-outline" size={48} color={c.subtle} />
+              <Text className="text-subtle text-xl font-bold tracking-[2px]">NO WORKOUT DAYS</Text>
+              <Text className="text-dim text-sm text-center">Add the days of this split, then pick one to start training.</Text>
+              <TouchableOpacity
+                className="bg-accent rounded-md px-6 py-3 flex-row items-center gap-2 mt-2"
+                onPress={() => router.push({ pathname: '/create-workout', params: { splitId } })}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add" size={16} color={c.accentFg} />
+                <Text className="text-accent-fg text-xs font-bold tracking-[2px]">ADD WORKOUT</Text>
+              </TouchableOpacity>
+            </View>
+          )
         }
       />
-
-      {/* FAB */}
-      <Link href="/create-split" asChild>
-        <AnimatedPressable
-          wrapperClassName="absolute right-6 bottom-20"
-          className="w-14 h-14 rounded-md bg-accent justify-center items-center"
-          activeOpacity={0.8}
-        >
-          <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
-        </AnimatedPressable>
-      </Link>
+      {picker}
     </View>
   );
 }

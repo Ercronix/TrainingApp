@@ -3,9 +3,7 @@ import { useLocalSearchParams, useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWorkouts } from '@/hooks/useWorkouts';
-import { confirm } from '@/utils/confirm';
-import SwipeableRow from '@/components/SwipeableRow';
-import { Workout } from '@/types';
+import { WorkoutRow } from '@/components/WorkoutRow';
 import { useTheme } from '@/hooks/useTheme';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 
@@ -15,51 +13,6 @@ export default function WorkoutsScreen() {
   const { workouts, isLoading, isRefetching, refetch, deleteWorkout } = useWorkouts(splitId);
   const insets = useSafeAreaInsets();
   const c = useTheme();
-
-  const handleDelete = (id: number, name: string) => {
-    confirm('Delete Workout', `Delete "${name}" and all its exercises?`, () => deleteWorkout.mutate(id), 'Delete');
-  };
-
-  const renderWorkoutItem = ({ item, index }: { item: Workout; index: number }) => (
-    <SwipeableRow
-      rightActions={[
-        {
-          icon: 'pencil-outline',
-          color: c.accent,
-          backgroundColor: c.accentMuted,
-          label: 'EDIT',
-          onPress: () =>
-            router.push({ pathname: '/edit-workout' as any, params: { workoutId: item.id.toString(), splitId, currentName: item.name } }),
-        },
-        {
-          icon: 'trash-outline',
-          color: c.danger,
-          backgroundColor: c.dangerMuted,
-          label: 'DELETE',
-          onPress: () => handleDelete(item.id, item.name),
-        },
-      ]}
-    >
-      <TouchableOpacity
-        className="bg-surface rounded-l-md px-5 py-5 flex-row items-center gap-3"
-        onPress={() =>
-          router.push({ pathname: '/workout-detail' as any, params: { workoutId: item.id.toString(), workoutName: item.name, splitId } })
-        }
-        activeOpacity={0.85}
-      >
-        <Text className="text-dim text-[28px] font-mono-bold tracking-tighter min-w-[36px]">
-          {String(index + 1).padStart(2, '0')}
-        </Text>
-        <View className="flex-1">
-          <Text className="text-primary text-lg font-bold tracking-tight mb-1">{item.name}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">
-            {item.exerciseCount ?? 0} {item.exerciseCount === 1 ? 'EXERCISE' : 'EXERCISES'}
-          </Text>
-        </View>
-        <Ionicons name="chevron-forward" size={18} color={c.subtle} />
-      </TouchableOpacity>
-    </SwipeableRow>
-  );
 
   return (
     <View className="flex-1 bg-base">
@@ -94,7 +47,9 @@ export default function WorkoutsScreen() {
       ) : (
         <FlatList
           data={workouts}
-          renderItem={renderWorkoutItem}
+          renderItem={({ item, index }) => (
+            <WorkoutRow workout={item} index={index} splitId={splitId} onDelete={(id) => deleteWorkout.mutate(id)} />
+          )}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 + insets.bottom }}
           refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}

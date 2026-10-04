@@ -81,6 +81,7 @@ function AppLayout() {
               <Stack.Screen name="account"        options={{ presentation: 'modal', headerShown: false }} />
 
               {/* Screens */}
+              <Stack.Screen name="splits"          options={{ headerShown: false }} />
               <Stack.Screen name="workouts"        options={{ headerShown: false }} />
               <Stack.Screen name="workout-detail"  options={{ headerShown: false }} />
               <Stack.Screen name="exercise-detail" options={{ headerShown: false }} />
