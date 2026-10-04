@@ -11,6 +11,10 @@ import { useTheme } from '@/hooks/useTheme';
 import { WorkoutRow } from '@/components/WorkoutRow';
 import { SplitPicker } from '@/components/SplitPicker';
 import { TrainingLog, Workout } from '@/types';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Floating tab bar height plus its gap to the bottom edge (see app/(tabs)/_layout.tsx)
+const TAB_BAR_OFFSET = 64 + 12;
 
 /**
  * The workout after the last one completed in this split, wrapping around to the first.
@@ -27,6 +31,7 @@ function nextWorkoutOf(workouts: Workout[], history: TrainingLog[], splitId: num
 export default function HomeScreen() {
   const router = useRouter();
   const c = useTheme();
+  const insets = useSafeAreaInsets();
   const [pickerOpen, setPickerOpen] = useState(false);
   const { splits, isLoading, isRefetching, refetch, activateSplit } = useSplits();
   const active = splits?.find((s) => s.isActive);
@@ -178,7 +183,7 @@ export default function HomeScreen() {
         )}
         keyExtractor={(item) => item.id.toString()}
         ListHeaderComponent={header}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + TAB_BAR_OFFSET + 24 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refresh} tintColor={c.accent} />}
         ListEmptyComponent={
           workoutsQuery.isLoading ? null : (
