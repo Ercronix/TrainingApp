@@ -84,8 +84,18 @@ export default function LogExerciseModal() {
   const queryClient = useQueryClient();
   const [log] = useState(() => queryClient.getQueryData<TrainingLog>(QUERY_KEYS.training(trainingLogId))
     ?.exercises.find((e) => e.id === Number(exerciseLogId)));
-  // State left unsaved on an earlier visit wins over the prefill
-  const [draft] = useState(() => useSetDraftStore.getState().drafts[exerciseLogId]);
+  // State left on an earlier visit wins over the prefill, unless the sets it logged no longer
+  // match the server's (e.g. the exercise was ticked off on the training screen since): it
+  // would otherwise be saved back over them
+  const [draft] = useState(() => {
+    const saved = useSetDraftStore.getState().drafts[exerciseLogId];
+    if (!saved) return undefined;
+    const draftSets = saved.rows.filter((r) => r.done).map(toSet);
+    // A done set with invalid values was never saved, so there is nothing to compare
+    if (draftSets.some((s) => s == null)) return saved;
+    const serverSets = (log?.sets ?? []).map((s) => toSet(toRow(s, true)));
+    return JSON.stringify(draftSets) === JSON.stringify(serverSets) ? saved : undefined;
+  });
   const [rows, setRows] = useState<SetRow[]>(() => draft?.rows ?? initialRows(log));
   // The set being edited: the first one not done yet
   const [focused, setFocused] = useState(() => Math.max(0, rows.findIndex((r) => !r.done)));
