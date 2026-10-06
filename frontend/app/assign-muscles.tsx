@@ -57,7 +57,7 @@ export default function AssignMusclesScreen() {
   const renderItem = ({ item }: { item: LibraryExercise }) => {
     const matches = matchesById.get(item.id) ?? [];
     return (
-      <View className="bg-surface rounded-md mb-2 overflow-hidden">
+      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md mb-2 overflow-hidden">
         <TouchableOpacity className="flex-row items-center px-5 pt-4 pb-2" onPress={() => openEntry(item)} activeOpacity={0.85}>
           <Text className="flex-1 text-primary text-[17px] font-bold tracking-tight">{item.name}</Text>
           <Text className="text-muted text-[9px] tracking-[2px] mr-1">SET BY HAND</Text>

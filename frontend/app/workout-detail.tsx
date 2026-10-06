@@ -12,6 +12,7 @@ import { Exercise } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { AnimatedPressable } from '@/components/AnimatedPressable';
 
+import { Tactile } from '@/components/Tactile';
 export default function WorkoutDetailScreen() {
   const { workoutId, workoutName, splitId } = useLocalSearchParams<{
     workoutId: string; workoutName: string; splitId: string;
@@ -148,8 +149,8 @@ export default function WorkoutDetailScreen() {
 
       {/* Start Training */}
       {!reorderMode && exercises.length > 0 && (
-        <TouchableOpacity
-          className={`mx-4 mb-3 bg-accent rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
+        <Tactile
+          className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`} containerClassName="mx-4 mb-3"
           onPress={() => startTraining(exercises.length)}
           disabled={isStarting}
           activeOpacity={0.85}
@@ -158,7 +159,7 @@ export default function WorkoutDetailScreen() {
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
             {isStarting ? 'STARTING...' : 'START TRAINING'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       )}
 
       {isLoading ? (

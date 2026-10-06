@@ -16,8 +16,9 @@ import { formatDaysAgo } from '@/utils/dates';
 import { TrainingLog, Workout } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Tactile } from '@/components/Tactile';
 // Floating tab bar height plus its gap to the bottom edge (see app/(tabs)/_layout.tsx)
-const TAB_BAR_OFFSET = 64 + 12;
+const TAB_BAR_OFFSET = 72 + 12;
 
 /**
  * The workout after the last one completed in this split, wrapping around to the first. The
@@ -119,9 +120,9 @@ export default function HomeScreen() {
             ? 'Choose the split you are training with right now. Its workouts show up here, along with the one that is up next. You can switch at any time by tapping the split name.'
             : 'A split is your training program: the workout days you rotate through. Create one, add its workouts, and it shows up here.'}
         </Text>
-        <TouchableOpacity
+        <Tactile
           ref={chooseButtonRef}
-          className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
+          className="rounded-md py-4 flex-row items-center justify-center gap-2"
           onPress={() => (hasSplits ? openPicker(chooseButtonRef.current) : router.push('/create-split'))}
           activeOpacity={0.85}
         >
@@ -129,7 +130,7 @@ export default function HomeScreen() {
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
             {hasSplits ? 'CHOOSE A SPLIT' : 'CREATE A SPLIT'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
         {picker}
       </View>
     );
@@ -171,22 +172,22 @@ export default function HomeScreen() {
 
       {/* Resume the open session, else suggest the next workout */}
       {activeTraining ? (
-        <View className="bg-surface rounded-md p-5 mb-6 border-2 border-accent">
+        <View className="bg-surface rounded-md p-5 mb-6 border-2 border-b-[6px] border-accent">
           <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">IN PROGRESS</Text>
           <Text className="text-primary text-2xl font-bold tracking-tight mb-4">
             {activeTraining.workoutName || activeTraining.splitName}
           </Text>
-          <TouchableOpacity
-            className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
+          <Tactile
+            className="rounded-md py-4 flex-row items-center justify-center gap-2"
             onPress={() => router.push({ pathname: '/training', params: { trainingLogId: activeTraining.id.toString() } })}
             activeOpacity={0.85}
           >
             <Ionicons name="play" size={18} color={c.accentFg} />
             <Text className="text-accent-fg text-sm font-bold tracking-[2px]">RESUME SESSION</Text>
-          </TouchableOpacity>
+          </Tactile>
         </View>
       ) : next ? (
-        <View className="bg-surface rounded-md p-5 mb-6 gap-4">
+        <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-6 gap-4">
           <View className="flex-row justify-between items-start gap-3">
             <View className="flex-1">
               <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">NEXT UP</Text>
@@ -219,8 +220,8 @@ export default function HomeScreen() {
               )}
             </View>
           )}
-          <TouchableOpacity
-            className={`bg-accent rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
+          <Tactile
+            className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
             onPress={() => startTraining(next.exerciseCount ?? 0)}
             disabled={isStarting}
             activeOpacity={0.85}
@@ -229,7 +230,7 @@ export default function HomeScreen() {
             <Text className="text-accent-fg text-sm font-bold tracking-[2px]" numberOfLines={1}>
               {isStarting ? 'STARTING...' : `START ${next.name.toUpperCase()}`}
             </Text>
-          </TouchableOpacity>
+          </Tactile>
         </View>
       ) : null}
 
@@ -263,14 +264,14 @@ export default function HomeScreen() {
               <Ionicons name="calendar-outline" size={48} color={c.subtle} />
               <Text className="text-subtle text-xl font-bold tracking-[2px]">NO WORKOUT DAYS</Text>
               <Text className="text-dim text-sm text-center">Add the days of this split, then pick one to start training.</Text>
-              <TouchableOpacity
-                className="bg-accent rounded-md px-6 py-3 flex-row items-center gap-2 mt-2"
+              <Tactile
+                className="rounded-md px-6 py-3 flex-row items-center gap-2" containerClassName="mt-2"
                 onPress={() => router.push({ pathname: '/create-workout', params: { splitId } })}
                 activeOpacity={0.85}
               >
                 <Ionicons name="add" size={16} color={c.accentFg} />
                 <Text className="text-accent-fg text-xs font-bold tracking-[2px]">ADD WORKOUT</Text>
-              </TouchableOpacity>
+              </Tactile>
             </View>
           )
         }

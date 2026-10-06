@@ -25,11 +25,14 @@ export default function TabsLayout() {
                     left: 16,
                     right: 16,
                     bottom: insets.bottom + 12,
-                    height: 64,
-                    borderTopWidth: 0,
+                    // 64 of content plus the 2px top and 6px bottom border
+                    height: 72,
                     borderRadius: 24,
-                    borderWidth: 1,
-                    borderColor: c.elevated,
+                    // Raised like the cards: a rim with a thicker bottom lip
+                    borderWidth: 2,
+                    borderTopWidth: 2,
+                    borderBottomWidth: 6,
+                    borderColor: c.edge,
                     backgroundColor: 'transparent',
                     paddingBottom: 5,
                     paddingTop: 8,

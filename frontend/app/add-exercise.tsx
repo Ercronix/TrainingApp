@@ -12,6 +12,7 @@ import { MuscleSummary } from '@/components/MusclePicker';
 import { useCatalog } from '@/hooks/useCatalog';
 import { CatalogExercise } from '@/types';
 
+import { Tactile } from '@/components/Tactile';
 export default function AddExerciseScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
   const router = useRouter();
@@ -180,15 +181,15 @@ export default function AddExerciseScreen() {
           editable={!isPending}
         />
 
-        <TouchableOpacity
-          className={`bg-accent rounded-md py-4 flex-row items-center justify-center gap-2 mb-10 ${isPending ? 'opacity-50' : ''}`}
+        <Tactile
+          className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${isPending ? 'opacity-50' : ''}`} containerClassName="mb-10"
           onPress={handleAdd}
           disabled={isPending}
           activeOpacity={0.85}
         >
           <Ionicons name="add" size={18} color={c.accentFg} />
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">{isPending ? 'ADDING...' : 'ADD EXERCISE'}</Text>
-        </TouchableOpacity>
+        </Tactile>
       </ScrollView>
       </KeyboardAvoidingView>
     </View>

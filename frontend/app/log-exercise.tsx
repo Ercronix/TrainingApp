@@ -19,6 +19,7 @@ import { formatKg } from '@/utils/strength';
 import { usesPlates } from '@/constants/equipment';
 import { ExerciseLog, SetLog, TrainingLog } from '@/types';
 
+import { Tactile } from '@/components/Tactile';
 const emptyRow: SetRow = { weight: '', reps: '', rpe: '', warmup: false, done: false };
 
 const toRow = (s: SetLog, logged: boolean): SetRow => ({
@@ -288,14 +289,16 @@ export default function LogExerciseModal() {
   const invalid = (row: SetRow) => row.done && toSet(row) == null;
 
   const stepButton = (icon: 'remove' | 'add', onPress: () => void, label: string, disabled = false) => (
-    <TouchableOpacity
-      className="w-11 h-11 rounded-sm bg-elevated justify-center items-center"
+    <Tactile
+      variant="elevated"
+      depth={3}
+      className="w-11 h-10 rounded-sm justify-center items-center"
       onPress={onPress}
       disabled={disabled}
       accessibilityLabel={label}
     >
       <Ionicons name={icon} size={20} color={disabled ? c.subtle : c.accent} />
-    </TouchableOpacity>
+    </Tactile>
   );
 
   const valueInput = (value: string, onChange: (v: string) => void, placeholder: string, keyboardType: 'decimal-pad' | 'number-pad', editable = true) => (
@@ -332,7 +335,7 @@ export default function LogExerciseModal() {
   // A set not being edited: its values at a glance, tap to edit, check to log, swipe to delete
   const compactRow = (row: SetRow, i: number) => (
     <View
-      className={`flex-row items-center h-14 rounded-md pl-3 ${row.done ? 'bg-surface-done' : 'bg-surface'} ${invalid(row) ? 'border-2 border-danger' : ''}`}
+      className={`flex-row items-center h-16 rounded-md pl-3 border-2 border-b-[6px] ${row.done ? 'bg-surface-done' : 'bg-surface'} ${invalid(row) ? 'border-danger' : row.done ? 'border-edge-done' : 'border-edge'}`}
     >
       <TouchableOpacity
         className="flex-1 h-full flex-row items-center"
@@ -369,20 +372,22 @@ export default function LogExerciseModal() {
   const expandedRow = (row: SetRow, i: number) => {
     const rowTiming = timing?.index === i;
     return (
-      <View className={`bg-surface rounded-md p-3 mb-2 gap-4 border-2 ${invalid(row) ? 'border-danger' : 'border-accent'}`}>
+      <View className={`bg-surface rounded-md p-3 mb-2 gap-4 border-2 border-b-[6px] ${invalid(row) ? 'border-danger' : 'border-accent'}`}>
         <View className="flex-row items-center gap-3">
           {badge(row, i)}
           <Text className="flex-1 text-primary text-base font-bold tracking-tight" numberOfLines={1}>
             {row.warmup ? 'Warm-up' : `Set ${labels[i]}`}
             {previous[i] && <Text className="text-muted text-xs font-normal">  last {previousLabel(i)}</Text>}
           </Text>
-          <TouchableOpacity
-            className={`rounded-full px-3 py-1.5 border ${row.warmup ? 'bg-elevated border-elevated' : 'border-elevated'}`}
+          <Tactile
+            variant={row.warmup ? 'accent' : 'elevated'}
+            depth={3}
+            className="rounded-sm px-3 py-1.5"
             onPress={() => toggleWarmup(i)}
             accessibilityLabel={row.warmup ? 'Warm-up set, tap to make it a working set' : 'Working set, tap to make it a warm-up'}
           >
-            <Text className={`text-[10px] font-bold tracking-[2px] ${row.warmup ? 'text-primary' : 'text-muted'}`}>WARM-UP</Text>
-          </TouchableOpacity>
+            <Text className={`text-[10px] font-bold tracking-[2px] ${row.warmup ? 'text-accent-fg' : 'text-muted'}`}>WARM-UP</Text>
+          </Tactile>
           <TouchableOpacity
             className="w-9 h-9 rounded-full bg-danger-muted justify-center items-center"
             style={rows.length === 1 ? { opacity: 0.4 } : undefined}
@@ -439,14 +444,17 @@ export default function LogExerciseModal() {
           {RPE_OPTIONS.map((value) => {
             const selected = parseNumber(row.rpe) === Number(value);
             return (
-              <TouchableOpacity
+              <Tactile
                 key={value}
-                className={`flex-1 h-10 rounded-sm justify-center items-center ${selected ? 'bg-accent' : 'bg-elevated'}`}
+                variant={selected ? 'accent' : 'elevated'}
+                depth={3}
+                containerClassName="flex-1"
+                className="h-10 rounded-sm justify-center items-center"
                 onPress={() => updateRow(i, { rpe: selected ? '' : value })}
                 accessibilityLabel={selected ? `RPE ${value}, tap to clear` : `RPE ${value}`}
               >
                 <Text className={`text-xs font-mono-bold ${selected ? 'text-accent-fg' : 'text-muted'}`}>{value}</Text>
-              </TouchableOpacity>
+              </Tactile>
             );
           })}
         </View>
@@ -457,8 +465,8 @@ export default function LogExerciseModal() {
         {showPlates && <PlateCalculator weight={row.weight || (log?.plannedWeight != null ? String(log.plannedWeight) : '')} />}
 
         {isTimed && !row.done ? (
-          <TouchableOpacity
-            className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
+          <Tactile
+            className="rounded-md py-4 flex-row items-center justify-center gap-2"
             style={timing != null && !rowTiming ? { opacity: 0.5 } : undefined}
             onPress={() => toggleTiming(i)}
             disabled={timing != null && !rowTiming}
@@ -469,24 +477,25 @@ export default function LogExerciseModal() {
             <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
               {rowTiming ? 'STOP & LOG SET' : 'START TIMER'}
             </Text>
-          </TouchableOpacity>
+          </Tactile>
         ) : row.done ? (
-          <TouchableOpacity
-            className="bg-base rounded-md py-4 flex-row items-center justify-center gap-2"
+          <Tactile
+            variant="elevated"
+            className="rounded-md py-4 flex-row items-center justify-center gap-2"
             onPress={() => toggleDone(i)}
           >
             <Ionicons name="arrow-undo" size={18} color={c.muted} />
             <Text className="text-muted text-sm font-bold tracking-[2px]">UNDO SET</Text>
-          </TouchableOpacity>
+          </Tactile>
         ) : (
-          <TouchableOpacity
-            className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
+          <Tactile
+            className="rounded-md py-4 flex-row items-center justify-center gap-2"
             onPress={() => toggleDone(i)}
             activeOpacity={0.85}
           >
             <Ionicons name="checkmark" size={18} color={c.accentFg} />
             <Text className="text-accent-fg text-sm font-bold tracking-[2px]">LOG SET</Text>
-          </TouchableOpacity>
+          </Tactile>
         )}
       </View>
     );
@@ -579,16 +588,16 @@ export default function LogExerciseModal() {
         <View className="flex-1" />
 
         {/* Sets are saved as they're logged, so this only closes the screen (and completes the exercise once all are logged) */}
-        <TouchableOpacity
-          className={`rounded-md py-5 flex-row items-center justify-center gap-2 ${allDone ? 'bg-accent' : 'bg-surface'}`}
+        <Tactile
+          variant={allDone ? 'accent' : 'surface'}
+          className="rounded-md py-5 flex-row items-center justify-center gap-2"
           onPress={finish}
-          activeOpacity={0.85}
         >
           <Ionicons name="checkmark-done" size={18} color={allDone ? c.accentFg : c.accent} />
           <Text className={`text-sm font-bold tracking-[2px] ${allDone ? 'text-accent-fg' : 'text-primary'}`}>
             DONE{doneRows.length > 0 ? ` · ${doneRows.length} ${doneRows.length === 1 ? 'SET' : 'SETS'} LOGGED` : ''}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       </View>
       </KeyboardAvoidingWrapper>
     </View>

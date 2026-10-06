@@ -132,7 +132,7 @@ export default function HistoryDetailScreen() {
       </View>
 
       {/* Stats row */}
-      <View className="flex-row mx-4 mb-3 bg-surface rounded-md py-4">
+      <View className="flex-row mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md py-4">
         <View className="flex-1 items-center">
           <Text className="text-primary text-[22px] font-mono-bold tracking-tight mb-0.5">
             {formatDuration(training?.durationSeconds)}
@@ -157,7 +157,7 @@ export default function HistoryDetailScreen() {
 
       {/* Session notes */}
       {training?.notes && (
-        <View className="mx-4 mb-3 bg-surface rounded-md p-4">
+        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-4">
           <Text className="text-muted text-[9px] tracking-[3px] mb-2">SESSION NOTES</Text>
           <Text className="text-muted text-sm leading-5">{training.notes}</Text>
         </View>

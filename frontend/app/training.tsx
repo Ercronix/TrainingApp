@@ -11,6 +11,7 @@ import { useSetDraftStore } from '@/store/setDraftStore';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { Tactile } from '@/components/Tactile';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
@@ -127,7 +128,7 @@ export default function TrainingScreen() {
     const previous = previousSetsOf(item);
     return (
       <View
-        className={`rounded-md mb-2 flex-row items-center overflow-hidden ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-2 border-accent' : ''} ${syncing ? 'opacity-50' : ''}`}
+        className={`rounded-md mb-2 flex-row items-center overflow-hidden border-2 border-b-[6px] ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
       >
         {/* The whole row opens the log screen */}
         <TouchableOpacity
@@ -263,17 +264,17 @@ export default function TrainingScreen() {
           <RestTimer />
         </View>
         {/* Becomes the main action once every exercise is done */}
-        <TouchableOpacity
-          className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${allDone ? 'bg-accent' : 'border border-elevated'} ${completeTraining.isPending ? 'opacity-50' : ''}`}
+        <Tactile
+          variant={allDone ? 'accent' : 'surface'}
+          className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${completeTraining.isPending ? 'opacity-50' : ''}`}
           onPress={handleComplete}
           disabled={completeTraining.isPending}
-          activeOpacity={0.85}
         >
           <Ionicons name="checkmark-done" size={18} color={allDone ? c.accentFg : c.primary} />
           <Text className={`text-sm font-bold tracking-[2px] ${allDone ? 'text-accent-fg' : 'text-primary'}`}>
             {completeTraining.isPending ? 'SAVING...' : 'COMPLETE SESSION'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       </View>
     </View>
   );

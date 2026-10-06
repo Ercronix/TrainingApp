@@ -47,7 +47,7 @@ export function WorkoutRow({ workout, index, splitId, onDelete, lastDoneAt, isNe
       ]}
     >
       <TouchableOpacity
-        className="bg-surface rounded-l-md px-5 py-5 flex-row items-center gap-3"
+        className="bg-surface rounded-md border-2 border-edge border-b-[6px] px-5 py-5 flex-row items-center gap-3"
         onPress={() =>
           router.push({ pathname: '/workout-detail' as any, params: { workoutId: workout.id.toString(), workoutName: workout.name, splitId } })
         }

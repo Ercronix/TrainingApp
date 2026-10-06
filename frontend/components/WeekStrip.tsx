@@ -35,7 +35,7 @@ export function WeekStrip({ history }: Props) {
   const sessions = trained.filter((t) => t != null).length;
 
   return (
-    <View className="bg-surface rounded-md px-4 py-3.5 mb-3 gap-2.5">
+    <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md px-4 py-3.5 mb-3 gap-2.5">
       <View className="flex-row justify-between items-baseline">
         <Text className="text-muted text-[10px] tracking-[3px]">THIS WEEK</Text>
         <Text className="text-muted text-xs">

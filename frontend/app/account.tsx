@@ -9,6 +9,7 @@ import { alert, confirm } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
+import { Tactile } from '@/components/Tactile';
 type Pending = 'details' | 'password' | 'delete' | null;
 
 export default function AccountModal() {
@@ -107,7 +108,7 @@ export default function AccountModal() {
           </Text>
 
           {/* Details */}
-          <View className="bg-surface rounded-md p-5 mb-3">
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-3">
             <Text className="text-muted text-[10px] tracking-[3px] mb-4">DETAILS</Text>
             <Field label="USERNAME" value={username} onChangeText={setUsername} editable={!busy} />
             <Field label="EMAIL" value={email} onChangeText={setEmail} keyboardType="email-address" editable={!busy} />
@@ -123,8 +124,8 @@ export default function AccountModal() {
                 keyboardAppearance="dark"
                 editable={!busy}
               />
-              <TouchableOpacity
-                className={`bg-accent rounded-md px-5 justify-center ${busy ? 'opacity-50' : ''}`}
+              <Tactile
+                className={`rounded-md px-5 justify-center ${busy ? 'opacity-50' : ''}`}
                 onPress={saveDetails}
                 disabled={busy}
                 activeOpacity={0.85}
@@ -132,18 +133,18 @@ export default function AccountModal() {
                 <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
                   {pending === 'details' ? 'SAVING...' : 'SAVE'}
                 </Text>
-              </TouchableOpacity>
+              </Tactile>
             </View>
           </View>
 
           {/* Password */}
-          <View className="bg-surface rounded-md p-5 mb-3">
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-3">
             <Text className="text-muted text-[10px] tracking-[3px] mb-4">PASSWORD</Text>
             <Field label="CURRENT PASSWORD" value={currentPassword} onChangeText={setCurrentPassword} secure editable={!busy} />
             <Field label="NEW PASSWORD" value={newPassword} onChangeText={setNewPassword} secure editable={!busy} />
             <Field label="CONFIRM NEW PASSWORD" value={confirmPassword} onChangeText={setConfirmPassword} secure editable={!busy} />
-            <TouchableOpacity
-              className={`bg-accent rounded-md py-4 items-center mt-1 ${busy ? 'opacity-50' : ''}`}
+            <Tactile
+              className={`rounded-md py-4 items-center ${busy ? 'opacity-50' : ''}`} containerClassName="mt-1"
               onPress={changePassword}
               disabled={busy}
               activeOpacity={0.85}
@@ -151,11 +152,11 @@ export default function AccountModal() {
               <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
                 {pending === 'password' ? 'CHANGING...' : 'CHANGE PASSWORD'}
               </Text>
-            </TouchableOpacity>
+            </Tactile>
           </View>
 
           {/* Delete */}
-          <View className="bg-surface rounded-md p-5">
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
             <Text className="text-danger text-[10px] tracking-[3px] mb-2">DELETE ACCOUNT</Text>
             <Text className="text-muted text-xs mb-4">
               Permanently deletes your account and all of your data. Export your history from the profile first if you want to keep it.

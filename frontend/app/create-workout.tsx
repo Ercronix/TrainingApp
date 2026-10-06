@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
+import { Tactile } from '@/components/Tactile';
 export default function CreateWorkoutModal() {
   const { splitId } = useLocalSearchParams<{ splitId: string }>();
   const [name, setName] = useState('');
@@ -42,8 +43,8 @@ export default function CreateWorkoutModal() {
           editable={!isPending}
         />
 
-        <TouchableOpacity
-          className={`bg-accent rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
+        <Tactile
+          className={`rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
           onPress={() => createWorkout(name)}
           disabled={isPending}
           activeOpacity={0.85}
@@ -51,7 +52,7 @@ export default function CreateWorkoutModal() {
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
             {isPending ? 'CREATING...' : 'CREATE WORKOUT'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       </View>
       </KeyboardAvoidingWrapper>
     </View>

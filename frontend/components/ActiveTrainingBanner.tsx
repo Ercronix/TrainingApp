@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { usePathname, useRouter, useSegments } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,6 +6,7 @@ import { useActiveTraining } from '@/hooks/useActiveTraining';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
 import { useTheme } from '@/hooks/useTheme';
 
+import { Tactile } from '@/components/Tactile';
 // Screens the banner stays off: the session itself and the modals
 const HIDDEN_ROUTES = new Set([
   '/training', '/add-exercise', '/log-exercise', '/create-split', '/create-workout',
@@ -13,7 +14,7 @@ const HIDDEN_ROUTES = new Set([
 ]);
 
 // Height of the floating tab bar plus its gap to the bottom edge (see app/(tabs)/_layout.tsx)
-const TAB_BAR_OFFSET = 64 + 12;
+const TAB_BAR_OFFSET = 72 + 12;
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--';
@@ -41,8 +42,8 @@ export function ActiveTrainingBanner() {
 
   return (
     <View style={{ position: 'absolute', left: 16, bottom }} pointerEvents="box-none">
-      <TouchableOpacity
-        className="bg-accent rounded-full h-10 px-4 flex-row items-center gap-2"
+      <Tactile
+        className="rounded-full h-10 px-4 flex-row items-center gap-2"
         style={{ shadowColor: '#131313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 }}
         onPress={() =>
           router.push({ pathname: '/training', params: { trainingLogId: activeTraining.id.toString() } })
@@ -52,7 +53,7 @@ export function ActiveTrainingBanner() {
       >
         <Ionicons name="flash" size={14} color={c.accentFg} />
         <Text className="text-accent-fg text-xs font-mono-bold">{formatElapsed(elapsedSeconds)}</Text>
-      </TouchableOpacity>
+      </Tactile>
     </View>
   );
 }

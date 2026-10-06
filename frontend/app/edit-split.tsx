@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
+import { Tactile } from '@/components/Tactile';
 export default function EditSplitModal() {
   const { splitId, currentName, currentBlock } = useLocalSearchParams<{ splitId: string; currentName: string; currentBlock: string }>();
   const router = useRouter();
@@ -57,8 +58,8 @@ export default function EditSplitModal() {
           ))}
         </View>
 
-        <TouchableOpacity
-          className={`bg-accent rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
+        <Tactile
+          className={`rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
           onPress={() => save(name, block)}
           disabled={isPending}
           activeOpacity={0.85}
@@ -66,7 +67,7 @@ export default function EditSplitModal() {
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
             {isPending ? 'SAVING...' : 'SAVE CHANGES'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       </View>
       </KeyboardAvoidingWrapper>
     </View>

@@ -20,7 +20,7 @@ export default function OneRepMaxScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-          <View className="bg-surface rounded-md p-5">
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
             <OneRepMaxCalculator />
           </View>
         </ScrollView>

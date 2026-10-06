@@ -14,6 +14,7 @@ import { THEMES } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { isValidHex } from '@/utils/color';
 
+import { Tactile } from '@/components/Tactile';
 const ACCENT_SWATCHES = [
   '#f38ba8', // rose
   '#fab387', // peach
@@ -98,7 +99,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Avatar card */}
-      <View className="mx-4 mb-3 bg-surface rounded-md p-8 items-center">
+      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-8 items-center">
         <View className="w-20 h-20 rounded-full bg-accent items-center justify-center mb-4">
           <Text className="text-accent-fg text-[36px] font-bold tracking-tighter leading-10">
             {(user?.username || 'U')[0].toUpperCase()}
@@ -111,7 +112,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Info rows */}
-      <View className="mx-4 mb-3 bg-surface rounded-md px-5">
+      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md px-5">
         <View className="flex-row items-center justify-between py-4">
           <View className="flex-row items-center gap-2">
             <Ionicons name="person-outline" size={16} color={c.muted} />
@@ -143,7 +144,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Theme picker */}
-      <View className="mx-4 mb-3 bg-surface rounded-md p-5">
+      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
         <Text className="text-muted text-[10px] tracking-[3px] mb-4">THEME</Text>
         <View className="flex-row flex-wrap gap-4">
           {THEMES.map((t) => {
@@ -184,7 +185,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Accent picker */}
-      <View className="mx-4 mb-3 bg-surface rounded-md p-5">
+      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-muted text-[10px] tracking-[3px]">ACCENT</Text>
           {customAccent && (
@@ -231,19 +232,19 @@ export default function ProfileScreen() {
             className="flex-1 bg-base rounded-sm px-3 py-2.5 text-primary text-sm"
             onSubmitEditing={() => applyCustomAccent(accentInput)}
           />
-          <TouchableOpacity
+          <Tactile
             onPress={() => applyCustomAccent(accentInput)}
             activeOpacity={0.85}
-            className="bg-accent px-4 py-2.5 rounded-sm"
+            className="px-4 py-2.5 rounded-sm"
           >
             <Text className="text-accent-fg text-[10px] font-bold tracking-widest">SET</Text>
-          </TouchableOpacity>
+          </Tactile>
         </View>
       </View>
 
       {/* Account management */}
       <TouchableOpacity
-        className="mx-4 mb-3 bg-surface rounded-md py-5 flex-row items-center justify-center gap-2"
+        className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 flex-row items-center justify-center gap-2"
         onPress={() => router.push('/account' as any)}
         activeOpacity={0.85}
       >
@@ -253,7 +254,7 @@ export default function ProfileScreen() {
 
       {/* Exercise library */}
       <TouchableOpacity
-        className="mx-4 mb-3 bg-surface rounded-md py-5 flex-row items-center justify-center gap-2"
+        className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 flex-row items-center justify-center gap-2"
         onPress={() => router.push('/library' as any)}
         activeOpacity={0.85}
       >
@@ -263,7 +264,7 @@ export default function ProfileScreen() {
 
       {/* Export */}
       <TouchableOpacity
-        className={`mx-4 mb-3 bg-surface rounded-md py-5 flex-row items-center justify-center gap-2 ${exporting ? 'opacity-50' : ''}`}
+        className={`mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 flex-row items-center justify-center gap-2 ${exporting ? 'opacity-50' : ''}`}
         onPress={handleExport}
         disabled={exporting}
         activeOpacity={0.85}
@@ -276,7 +277,7 @@ export default function ProfileScreen() {
 
       {/* Logout */}
       <TouchableOpacity
-        className="mx-4 bg-surface rounded-md py-5 flex-row items-center justify-center gap-2"
+        className="mx-4 bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 flex-row items-center justify-center gap-2"
         onPress={handleLogout}
         activeOpacity={0.85}
       >

@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { Tactile } from '@/components/Tactile';
 import { useRestTimerStore } from '@/store/restTimerStore';
 
 /** Seconds left on the rest timer, re-rendering while it runs. */
@@ -57,7 +58,7 @@ export function RestTimer() {
   const progress = ((customDuration - seconds) / customDuration) * 100;
 
   return (
-    <View className="bg-surface rounded-md">
+    <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md">
       <View className="flex-row items-center gap-2 pl-4 pr-2 py-2">
         <TouchableOpacity
           className="flex-1 gap-1.5 py-1"
@@ -77,22 +78,24 @@ export function RestTimer() {
             <View className={`h-full rounded-full ${isUrgent ? 'bg-danger' : 'bg-info'}`} style={{ width: `${progress}%` }} />
           </View>
         </TouchableOpacity>
-        <TouchableOpacity
-          className={`w-11 h-11 rounded-sm justify-center items-center ${isRunning ? 'bg-elevated' : 'bg-accent'}`}
+        <Tactile
+          variant={isRunning ? 'elevated' : 'accent'}
+          depth={3}
+          className="w-11 h-11 rounded-sm justify-center items-center"
           onPress={() => (isRunning ? pause() : start())}
           accessibilityLabel={isRunning ? 'Pause rest timer' : 'Start rest timer'}
-          activeOpacity={0.85}
         >
           <Ionicons name={isRunning ? 'pause' : 'play'} size={18} color={isRunning ? c.primary : c.accentFg} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          className="w-11 h-11 rounded-sm justify-center items-center bg-elevated"
+        </Tactile>
+        <Tactile
+          variant="elevated"
+          depth={3}
+          className="w-11 h-11 rounded-sm justify-center items-center"
           onPress={reset}
           accessibilityLabel="Reset rest timer"
-          activeOpacity={0.85}
         >
           <Ionicons name="refresh" size={16} color={c.muted} />
-        </TouchableOpacity>
+        </Tactile>
       </View>
 
       {showPresets && (
