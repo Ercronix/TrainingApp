@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 import { PlateCalculator } from '@/components/PlateCalculator';
+import SwipeableRow from '@/components/SwipeableRow';
 import { RestCountdown } from '@/components/RestTimer';
 import { useRestTimerStore } from '@/store/restTimerStore';
 import { SetDraft, SetRow, useSetDraftStore } from '@/store/setDraftStore';
@@ -184,6 +185,21 @@ export default function LogExerciseModal() {
     saveSetsRef.current(sets, completed);
   }, []);
 
+  // Closing with every set logged marks the exercise done, even short of or without a plan
+  const allDone = rows.length > 0 && rows.every((r) => r.done) && !hasInvalid;
+  const finish = () => {
+    if (allDone) {
+      const sets = doneSets as SetLog[];
+      const key = keyOf({ sets, completed: true });
+      pending.current = null;
+      if (key !== lastSaved.current) {
+        lastSaved.current = key;
+        saveSetsRef.current(sets, true);
+      }
+    }
+    router.back();
+  };
+
   const updateRow = (index: number, patch: Partial<SetRow>) =>
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
 
@@ -260,12 +276,11 @@ export default function LogExerciseModal() {
   for (const r of rows) labels.push(r.warmup ? 'W' : String(++workingNumber));
 
   const current = rows[focused];
-  const currentTiming = timing?.index === focused;
   const invalid = (row: SetRow) => row.done && toSet(row) == null;
 
   const stepButton = (icon: 'remove' | 'add', onPress: () => void, label: string, disabled = false) => (
     <TouchableOpacity
-      className="w-14 h-14 rounded bg-surface justify-center items-center"
+      className="w-14 h-14 rounded-sm bg-base justify-center items-center"
       onPress={onPress}
       disabled={disabled}
       accessibilityLabel={label}
@@ -273,6 +288,185 @@ export default function LogExerciseModal() {
       <Ionicons name={icon} size={24} color={disabled ? c.elevated : c.accent} />
     </TouchableOpacity>
   );
+
+  const valueInput = (value: string, onChange: (v: string) => void, placeholder: string, keyboardType: 'decimal-pad' | 'number-pad', editable = true) => (
+    // min-w-0: on web an <input> won't shrink below its default ~20ch width, overflowing the row
+    <TextInput
+      className="flex-1 min-w-0 h-14 bg-base rounded-sm px-3 text-primary text-2xl font-bold tracking-tight text-center"
+      placeholder={placeholder}
+      placeholderTextColor={c.elevated}
+      value={value}
+      editable={editable}
+      onChangeText={onChange}
+      keyboardType={keyboardType}
+      keyboardAppearance="dark"
+    />
+  );
+
+  // Set number in a circle: filled once done, grey for warm-ups
+  const badge = (row: SetRow, i: number) => (
+    <View className={`w-8 h-8 rounded-full justify-center items-center ${row.done ? 'bg-accent' : row.warmup ? 'bg-elevated' : 'bg-accent/10'}`}>
+      <Text className={`text-sm font-bold ${row.done ? 'text-accent-fg' : row.warmup ? 'text-muted' : 'text-accent-text'}`}>
+        {labels[i]}
+      </Text>
+    </View>
+  );
+
+  // A set not being edited: its values at a glance, tap to edit, check to log, swipe to delete
+  const compactRow = (row: SetRow, i: number) => (
+    <View
+      className={`flex-row items-center h-14 rounded-md pl-3 ${row.done ? 'bg-surface-done' : 'bg-surface'} ${invalid(row) ? 'border-2 border-danger' : ''}`}
+    >
+      <TouchableOpacity
+        className="flex-1 h-full flex-row items-center"
+        onPress={() => setFocused(i)}
+        accessibilityLabel={`Edit set ${i + 1}`}
+      >
+        <View className="w-12">{badge(row, i)}</View>
+        <Text className={`flex-1 text-lg font-bold tracking-tight ${row.done ? 'text-primary' : 'text-muted'}`}>
+          {row.weight || log?.plannedWeight || 0}<Text className="text-muted text-xs font-normal"> kg</Text>
+        </Text>
+        <Text className={`flex-1 text-lg font-bold tracking-tight ${row.done ? 'text-primary' : 'text-muted'}`}>
+          {timing?.index === i ? elapsed : row.reps || log?.plannedReps || 0}
+          <Text className="text-muted text-xs font-normal"> {unitShort}</Text>
+          {row.rpe.trim() !== '' && <Text className="text-muted text-xs font-normal">  @{row.rpe}</Text>}
+        </Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        className="w-14 h-14 justify-center items-center"
+        onPress={() => toggleDone(i)}
+        disabled={timing?.index === i}
+        accessibilityLabel={row.done ? `Mark set ${i + 1} as not done` : `Log set ${i + 1} as shown and start rest`}
+      >
+        <Ionicons
+          name={row.done ? 'checkmark-circle' : 'ellipse-outline'}
+          size={30}
+          color={row.done ? c.accent : c.muted}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+
+  // The set being edited, opened up in place in the list
+  const expandedRow = (row: SetRow, i: number) => {
+    const rowTiming = timing?.index === i;
+    return (
+      <View className={`bg-surface rounded-md p-4 mb-2 gap-4 border-2 ${invalid(row) ? 'border-danger' : 'border-accent'}`}>
+        <View className="flex-row items-center gap-3">
+          {badge(row, i)}
+          <Text className="flex-1 text-primary text-base font-bold tracking-tight">
+            {row.warmup ? 'Warm-up' : `Set ${labels[i]}`}
+          </Text>
+          <TouchableOpacity
+            className={`rounded-full px-3 py-1.5 border ${row.warmup ? 'bg-elevated border-elevated' : 'border-elevated'}`}
+            onPress={() => toggleWarmup(i)}
+            accessibilityLabel={row.warmup ? 'Warm-up set, tap to make it a working set' : 'Working set, tap to make it a warm-up'}
+          >
+            <Text className={`text-[10px] font-bold tracking-[2px] ${row.warmup ? 'text-primary' : 'text-muted'}`}>WARM-UP</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className="w-9 h-9 rounded-full bg-danger-muted justify-center items-center"
+            style={rows.length === 1 ? { opacity: 0.4 } : undefined}
+            onPress={() => removeSet(i)}
+            disabled={rows.length === 1}
+            accessibilityLabel={`Remove set ${i + 1}`}
+          >
+            <Ionicons name="trash-outline" size={16} color={c.danger} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Weight */}
+        <View>
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-muted text-[9px] tracking-[2px]">KG</Text>
+            <View className="flex-row items-center gap-2">
+              <Text className="text-muted text-[9px] tracking-[2px]">STEP</Text>
+              <TouchableOpacity
+                onPress={() => libraryExerciseId && useStepSizeStore.getState().adjustStep(libraryExerciseId, -STEP_INCREMENT_KG)}
+                disabled={!libraryExerciseId}
+                accessibilityLabel="Decrease weight step"
+              >
+                <Ionicons name="remove-circle-outline" size={18} color={c.muted} />
+              </TouchableOpacity>
+              <Text className="text-primary text-xs font-bold min-w-[32px] text-center">{formatNumber(step)}</Text>
+              <TouchableOpacity
+                onPress={() => libraryExerciseId && useStepSizeStore.getState().adjustStep(libraryExerciseId, STEP_INCREMENT_KG)}
+                disabled={!libraryExerciseId}
+                accessibilityLabel="Increase weight step"
+              >
+                <Ionicons name="add-circle-outline" size={18} color={c.muted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          <View className="flex-row items-center gap-2">
+            {stepButton('remove', () => stepWeight(i, -1), `Decrease weight by ${formatNumber(step)} kg`)}
+            {valueInput(row.weight, (weight) => updateRow(i, { weight }), log?.plannedWeight != null ? String(log.plannedWeight) : '0', 'decimal-pad')}
+            {stepButton('add', () => stepWeight(i, 1), `Increase weight by ${formatNumber(step)} kg`)}
+          </View>
+        </View>
+
+        {/* Reps or seconds */}
+        <View>
+          <Text className="text-muted text-[9px] tracking-[2px] mb-2">{unitShort.toUpperCase()}</Text>
+          <View className="flex-row items-center gap-2">
+            {stepButton('remove', () => stepReps(i, -1), `Decrease ${unitShort}`, rowTiming)}
+            {valueInput(rowTiming ? String(elapsed) : row.reps, (reps) => updateRow(i, { reps }), log?.plannedReps != null ? String(log.plannedReps) : '0', 'number-pad', !rowTiming)}
+            {stepButton('add', () => stepReps(i, 1), `Increase ${unitShort}`, rowTiming)}
+          </View>
+        </View>
+
+        {/* RPE */}
+        <View className="flex-row items-center gap-3">
+          <Text className="text-muted text-[9px] tracking-[2px]">RPE</Text>
+          <TextInput
+            className="w-20 h-10 bg-base rounded-sm px-3 text-primary text-base font-bold text-center"
+            placeholder="–"
+            placeholderTextColor={c.elevated}
+            value={row.rpe}
+            onChangeText={(rpe) => updateRow(i, { rpe })}
+            keyboardType="decimal-pad"
+            keyboardAppearance="dark"
+          />
+          {invalid(row) && (
+            <Text className="text-danger text-[11px] flex-1">Check the values; this set isn&apos;t saved yet.</Text>
+          )}
+        </View>
+
+        {isTimed && !row.done ? (
+          <TouchableOpacity
+            className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
+            style={timing != null && !rowTiming ? { opacity: 0.5 } : undefined}
+            onPress={() => toggleTiming(i)}
+            disabled={timing != null && !rowTiming}
+            accessibilityLabel={rowTiming ? `Stop timing set ${i + 1}` : `Start timing set ${i + 1}`}
+            activeOpacity={0.85}
+          >
+            <Ionicons name={rowTiming ? 'stop' : 'play'} size={18} color={c.accentFg} />
+            <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
+              {rowTiming ? 'STOP & LOG SET' : 'START TIMER'}
+            </Text>
+          </TouchableOpacity>
+        ) : row.done ? (
+          <TouchableOpacity
+            className="bg-base rounded-md py-4 flex-row items-center justify-center gap-2"
+            onPress={() => toggleDone(i)}
+          >
+            <Ionicons name="arrow-undo" size={18} color={c.muted} />
+            <Text className="text-muted text-sm font-bold tracking-[2px]">UNDO SET</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
+            onPress={() => toggleDone(i)}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="checkmark" size={18} color={c.accentFg} />
+            <Text className="text-accent-fg text-sm font-bold tracking-[2px]">LOG SET</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
 
   return (
     <View className="flex-1 bg-base">
@@ -307,56 +501,37 @@ export default function LogExerciseModal() {
           <RestCountdown />
         </View>
 
-        {/* Sets: tap the circle to log a set as shown, tap the row to adjust it */}
-        {rows.map((row, i) => {
-          const isFocused = i === focused;
-          const borderClass = invalid(row) ? 'border-2 border-danger' : isFocused ? 'border-2 border-accent' : 'border-2 border-transparent';
-          return (
-            <View key={i} className={`flex-row items-center gap-2 mb-2 rounded-md ${row.done ? 'bg-surface-done' : 'bg-surface'} ${borderClass}`}>
-              {/* Tap to switch between warm-up and working set */}
-              <TouchableOpacity
-                className={`w-10 h-14 rounded-l justify-center items-center ${row.done ? 'bg-accent' : row.warmup ? 'bg-elevated' : 'bg-accent/10'}`}
-                onPress={() => toggleWarmup(i)}
-                accessibilityLabel={row.warmup ? 'Warm-up set, tap to make it a working set' : 'Working set, tap to make it a warm-up'}
-              >
-                <Text className={`text-sm font-bold ${row.done ? 'text-accent-fg' : row.warmup ? 'text-muted' : 'text-accent-text'}`}>
-                  {labels[i]}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-1 h-14 flex-row items-center gap-4"
-                onPress={() => setFocused(i)}
-                accessibilityLabel={`Edit set ${i + 1}`}
-              >
-                <Text className="text-primary text-lg font-bold tracking-tight">
-                  {row.weight || log?.plannedWeight || 0}<Text className="text-muted text-xs font-normal"> kg</Text>
-                </Text>
-                <Text className="text-primary text-lg font-bold tracking-tight">
-                  {timing?.index === i ? elapsed : row.reps || log?.plannedReps || 0}
-                  <Text className="text-muted text-xs font-normal"> {unitShort}</Text>
-                </Text>
-                {row.rpe.trim() !== '' && (
-                  <Text className="text-muted text-xs">RPE {row.rpe}</Text>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="w-14 h-14 justify-center items-center"
-                onPress={() => toggleDone(i)}
-                disabled={timing?.index === i}
-                accessibilityLabel={row.done ? `Mark set ${i + 1} as not done` : `Log set ${i + 1} as shown and start rest`}
-              >
-                <Ionicons
-                  name={row.done ? 'checkmark-circle' : 'checkmark-circle-outline'}
-                  size={34}
-                  color={row.done ? c.accent : c.muted}
-                />
-              </TouchableOpacity>
-            </View>
-          );
-        })}
+        {/* Column labels for the compact rows */}
+        <View className="flex-row items-center pl-3 mb-2">
+          <Text className="w-12 text-muted text-[9px] tracking-[2px]">SET</Text>
+          <Text className="flex-1 text-muted text-[9px] tracking-[2px]">KG</Text>
+          <Text className="flex-1 text-muted text-[9px] tracking-[2px]">{unitShort.toUpperCase()}</Text>
+          <View className="w-14" />
+        </View>
+
+        {rows.map((row, i) =>
+          i === focused ? (
+            <View key={i}>{expandedRow(row, i)}</View>
+          ) : rows.length > 1 ? (
+            <SwipeableRow
+              key={i}
+              rightActions={[{
+                icon: 'trash-outline',
+                color: c.danger,
+                backgroundColor: c.dangerMuted,
+                label: 'DELETE',
+                onPress: () => removeSet(i),
+              }]}
+            >
+              {compactRow(row, i)}
+            </SwipeableRow>
+          ) : (
+            <View key={i} className="mb-2">{compactRow(row, i)}</View>
+          ),
+        )}
 
         <TouchableOpacity
-          className="bg-surface rounded-md py-3 flex-row items-center justify-center gap-2 mt-1 mb-5"
+          className="border border-dashed border-elevated rounded-md py-3 flex-row items-center justify-center gap-2 mb-5"
           onPress={addSet}
           activeOpacity={0.85}
         >
@@ -364,136 +539,17 @@ export default function LogExerciseModal() {
           <Text className="text-primary text-xs font-bold tracking-[2px]">ADD SET</Text>
         </TouchableOpacity>
 
-        {/* Editor of the focused set */}
-        {current && (
-          <View className="bg-surface rounded-md p-4 mb-5 gap-4">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-accent-text text-[10px] tracking-[3px]">
-                {current.warmup ? 'WARM-UP SET' : `SET ${labels[focused]}`}
-              </Text>
-              <TouchableOpacity
-                onPress={() => removeSet(focused)}
-                disabled={rows.length === 1}
-                accessibilityLabel={`Remove set ${focused + 1}`}
-                className="flex-row items-center gap-1"
-              >
-                <Ionicons name="trash-outline" size={14} color={rows.length === 1 ? c.elevated : c.muted} />
-                <Text className={`text-[10px] tracking-[2px] ${rows.length === 1 ? 'text-dim' : 'text-muted'}`}>REMOVE</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Weight */}
-            <View>
-              <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-muted text-[9px] tracking-[2px]">KG</Text>
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-muted text-[9px] tracking-[2px]">STEP</Text>
-                  <TouchableOpacity
-                    onPress={() => libraryExerciseId && useStepSizeStore.getState().adjustStep(libraryExerciseId, -STEP_INCREMENT_KG)}
-                    disabled={!libraryExerciseId}
-                    accessibilityLabel="Decrease weight step"
-                  >
-                    <Ionicons name="remove-circle-outline" size={18} color={c.muted} />
-                  </TouchableOpacity>
-                  <Text className="text-primary text-xs font-bold min-w-[32px] text-center">{formatNumber(step)}</Text>
-                  <TouchableOpacity
-                    onPress={() => libraryExerciseId && useStepSizeStore.getState().adjustStep(libraryExerciseId, STEP_INCREMENT_KG)}
-                    disabled={!libraryExerciseId}
-                    accessibilityLabel="Increase weight step"
-                  >
-                    <Ionicons name="add-circle-outline" size={18} color={c.muted} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-              <View className="flex-row items-center gap-2">
-                {stepButton('remove', () => stepWeight(focused, -1), `Decrease weight by ${formatNumber(step)} kg`)}
-                {/* min-w-0: on web an <input> won't shrink below its default ~20ch width, overflowing the row */}
-                <TextInput
-                  className="flex-1 min-w-0 h-14 bg-base rounded px-3 text-primary text-2xl font-bold tracking-tight text-center"
-                  placeholder={log?.plannedWeight != null ? String(log.plannedWeight) : '0'}
-                  placeholderTextColor={c.elevated}
-                  value={current.weight}
-                  onChangeText={(weight) => updateRow(focused, { weight })}
-                  keyboardType="decimal-pad"
-                  keyboardAppearance="dark"
-                />
-                {stepButton('add', () => stepWeight(focused, 1), `Increase weight by ${formatNumber(step)} kg`)}
-              </View>
-            </View>
-
-            {/* Reps or seconds */}
-            <View>
-              <Text className="text-muted text-[9px] tracking-[2px] mb-2">{unitShort.toUpperCase()}</Text>
-              <View className="flex-row items-center gap-2">
-                {stepButton('remove', () => stepReps(focused, -1), `Decrease ${unitShort}`, currentTiming)}
-                <TextInput
-                  className="flex-1 min-w-0 h-14 bg-base rounded px-3 text-primary text-2xl font-bold tracking-tight text-center"
-                  placeholder={log?.plannedReps != null ? String(log.plannedReps) : '0'}
-                  placeholderTextColor={c.elevated}
-                  value={currentTiming ? String(elapsed) : current.reps}
-                  editable={!currentTiming}
-                  onChangeText={(reps) => updateRow(focused, { reps })}
-                  keyboardType="number-pad"
-                  keyboardAppearance="dark"
-                />
-                {stepButton('add', () => stepReps(focused, 1), `Increase ${unitShort}`, currentTiming)}
-              </View>
-            </View>
-
-            {/* RPE */}
-            <View className="flex-row items-center gap-3">
-              <Text className="text-muted text-[9px] tracking-[2px]">RPE</Text>
-              <TextInput
-                className="w-20 h-10 bg-base rounded px-3 text-primary text-base font-bold text-center"
-                placeholder="–"
-                placeholderTextColor={c.elevated}
-                value={current.rpe}
-                onChangeText={(rpe) => updateRow(focused, { rpe })}
-                keyboardType="decimal-pad"
-                keyboardAppearance="dark"
-              />
-              {invalid(current) && (
-                <Text className="text-danger text-[11px] flex-1">Check the values; this set isn&apos;t saved yet.</Text>
-              )}
-            </View>
-
-            {isTimed && !current.done ? (
-              <TouchableOpacity
-                className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${currentTiming ? 'bg-accent' : 'bg-accent/10'}`}
-                onPress={() => toggleTiming(focused)}
-                disabled={timing != null && !currentTiming}
-                accessibilityLabel={currentTiming ? `Stop timing set ${focused + 1}` : `Start timing set ${focused + 1}`}
-              >
-                <Ionicons name={currentTiming ? 'stop' : 'play'} size={18} color={currentTiming ? c.accentFg : c.accent} />
-                <Text className={`text-sm font-bold tracking-[2px] ${currentTiming ? 'text-accent-fg' : 'text-accent-text'}`}>
-                  {currentTiming ? 'STOP & LOG SET' : 'START TIMER'}
-                </Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${current.done ? 'bg-base' : 'bg-accent/10'}`}
-                onPress={() => toggleDone(focused)}
-              >
-                <Ionicons name={current.done ? 'arrow-undo' : 'checkmark'} size={18} color={current.done ? c.muted : c.accent} />
-                <Text className={`text-sm font-bold tracking-[2px] ${current.done ? 'text-muted' : 'text-accent-text'}`}>
-                  {current.done ? 'UNDO SET' : 'LOG SET'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
-
         <PlateCalculator weight={current?.weight ?? ''} />
-        <View className="h-3" />
+        <View className="flex-1" />
 
-        {/* Sets are saved as they're logged, so this only closes the screen */}
+        {/* Sets are saved as they're logged, so this only closes the screen (and completes the exercise once all are logged) */}
         <TouchableOpacity
-          className="bg-accent rounded-md py-5 flex-row items-center justify-center gap-2"
-          onPress={() => router.back()}
+          className={`rounded-md py-5 flex-row items-center justify-center gap-2 ${allDone ? 'bg-accent' : 'bg-surface'}`}
+          onPress={finish}
           activeOpacity={0.85}
         >
-          <Ionicons name="checkmark-done" size={18} color={c.accentFg} />
-          <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
+          <Ionicons name="checkmark-done" size={18} color={allDone ? c.accentFg : c.accent} />
+          <Text className={`text-sm font-bold tracking-[2px] ${allDone ? 'text-accent-fg' : 'text-primary'}`}>
             DONE{doneRows.length > 0 ? ` · ${doneRows.length} ${doneRows.length === 1 ? 'SET' : 'SETS'} LOGGED` : ''}
           </Text>
         </TouchableOpacity>
