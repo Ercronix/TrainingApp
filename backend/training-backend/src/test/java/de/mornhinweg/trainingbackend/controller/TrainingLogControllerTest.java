@@ -14,6 +14,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -66,6 +67,20 @@ class TrainingLogControllerTest {
 
     assertEquals((String) JsonPath.read(session, "$.startedAt"), JsonPath.read(session, "$.completedAt"));
     assertEquals(0, (Integer) JsonPath.read(session, "$.durationSeconds"));
+  }
+
+  @Test
+  void timestampsAreSentAsUtc() throws Exception {
+    String token = register();
+    long splitId = id(perform(token, post("/api/splits"), "{\"name\":\"PPL\"}"));
+    long workoutId = id(perform(token, post("/api/workouts/split/" + splitId), "{\"name\":\"Push\"}"));
+    String session = perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutId + "}")
+        .andReturn().getResponse().getContentAsString();
+
+    // With the zone, so clients don't read it as their own local time
+    String startedAt = JsonPath.read(session, "$.startedAt");
+    long secondsAgo = java.time.Duration.between(java.time.Instant.parse(startedAt), java.time.Instant.now()).getSeconds();
+    assertTrue(secondsAgo >= 0 && secondsAgo < 60, "startedAt " + startedAt + " is " + secondsAgo + "s ago");
   }
 
   @Test
