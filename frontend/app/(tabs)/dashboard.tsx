@@ -137,29 +137,14 @@ export default function DashboardScreen() {
       </View>
 
       {/* Stats Grid */}
-      <View className="flex-row flex-wrap mx-3 mb-3 gap-1">
-        <View className="bg-surface rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
-          <Ionicons name="barbell-outline" size={20} color={c.accent} />
-          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.sessions[timeRange]}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">SESSIONS</Text>
+      <View className="mx-4 mb-3 gap-2">
+        <View className="flex-row gap-2">
+          <StatTile icon="barbell-outline" color={c.accent} textClass="text-accent-text" value={String(stats.sessions[timeRange])} label="SESSIONS" />
+          <StatTile icon="fitness-outline" color={c.info} textClass="text-info" value={String(stats.volume[timeRange])} label="KG VOLUME" />
         </View>
-
-        <View className="bg-elevated rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
-          <Ionicons name="fitness-outline" size={20} color={c.info} />
-          <Text className="text-info text-[28px] font-mono-bold tracking-tighter">{stats.volume[timeRange]}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">KG VOLUME</Text>
-        </View>
-
-        <View className="bg-surface rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
-          <Ionicons name="time-outline" size={20} color={c.danger} />
-          <Text className="text-danger text-[28px] font-mono-bold tracking-tighter">{formatSeconds(stats.durationSeconds[timeRange])}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">TIME TRAINED</Text>
-        </View>
-
-        <View className="bg-elevated rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
-          <Ionicons name="trending-up-outline" size={20} color={c.accent} />
-          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.averageVolume[timeRange]}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">AVG / SESSION</Text>
+        <View className="flex-row gap-2">
+          <StatTile icon="time-outline" color={c.danger} textClass="text-danger" value={formatSeconds(stats.durationSeconds[timeRange])} label="TIME TRAINED" />
+          <StatTile icon="trending-up-outline" color={c.accent} textClass="text-accent-text" value={String(stats.averageVolume[timeRange])} label="AVG / SESSION" />
         </View>
       </View>
 
@@ -338,6 +323,27 @@ function NumberCell({ value, label, accent }: { value: string; label: string; ac
         {value}
       </Text>
       <Text className="text-muted text-[8px] tracking-[1.5px] mt-0.5">{label}</Text>
+    </View>
+  );
+}
+
+interface StatTileProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  color: string;
+  textClass: string;
+  value: string;
+  label: string;
+}
+
+/** One of the equal-sized tiles in the stats grid; long values shrink instead of wrapping. */
+function StatTile({ icon, color, textClass, value, label }: StatTileProps) {
+  return (
+    <View className="flex-1 bg-surface rounded-md p-5 gap-1.5">
+      <Ionicons name={icon} size={20} color={color} />
+      <Text className={`${textClass} text-[28px] font-mono-bold tracking-tighter`} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Text>
+      <Text className="text-muted text-[9px] tracking-[2px]" numberOfLines={1}>{label}</Text>
     </View>
   );
 }
