@@ -305,7 +305,7 @@ export default function LogExerciseModal() {
 
   // Set number in a circle: filled once done, grey for warm-ups
   const badge = (row: SetRow, i: number) => (
-    <View className={`w-8 h-8 rounded-full justify-center items-center ${row.done ? 'bg-accent' : row.warmup ? 'bg-elevated' : 'bg-accent/10'}`}>
+    <View className={`w-8 h-8 rounded-full justify-center items-center ${row.done ? 'bg-accent' : row.warmup ? 'bg-elevated' : 'bg-accent-muted'}`}>
       <Text className={`text-sm font-bold ${row.done ? 'text-accent-fg' : row.warmup ? 'text-muted' : 'text-accent-text'}`}>
         {labels[i]}
       </Text>
