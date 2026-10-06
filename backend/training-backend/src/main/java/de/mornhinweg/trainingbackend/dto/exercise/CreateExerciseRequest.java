@@ -19,6 +19,8 @@ public class CreateExerciseRequest {
   private Integer sets;
   private Integer reps;
   private String repUnit;
+  // Catalog vocabulary (barbell, dumbbell, ...); null leaves it unchanged, an empty string clears it
+  @Size(max = 30) private String equipment;
   private BigDecimal plannedWeight;
   // Replaces the library entry's muscles when present
   private List<@Valid MuscleTargetDto> muscles;

@@ -87,6 +87,8 @@ export default function CreateExerciseModal() {
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       videoUrl: form.videoUrl.trim() || null,
       description: form.description.trim() || null,
+      // A picked catalog exercise brings its equipment, as long as the name isn't edited again
+      equipment: !libraryMatch && catalogPick?.name === form.name.trim() ? catalogPick.equipment ?? undefined : undefined,
       // Muscles are shared by the library entry, so they are only sent when changed
       muscles: sameMuscles(muscles, libraryMatch?.muscles ?? []) ? undefined : muscles,
     }, { onSuccess: () => router.back() });

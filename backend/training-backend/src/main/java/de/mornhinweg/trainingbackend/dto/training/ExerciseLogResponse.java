@@ -23,6 +23,7 @@ public class ExerciseLogResponse {
   private Boolean completed;
   private String notes;
   private String repUnit;
+  private String equipment;
 
   // What was done for this exercise in the most recent completed session (null if never trained)
   private Integer previousSets;

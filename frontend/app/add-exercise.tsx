@@ -35,7 +35,8 @@ export default function AddExerciseScreen() {
   const { catalog } = useCatalog();
   // A picked catalog exercise brings its muscles along, as long as the name isn't edited again
   const [catalogPick, setCatalogPick] = useState<CatalogExercise | null>(null);
-  const catalogMuscles = !libraryMatch && catalogPick?.name === form.name.trim() ? catalogPick.muscles : undefined;
+  const fromCatalog = !libraryMatch && catalogPick?.name === form.name.trim() ? catalogPick : null;
+  const catalogMuscles = fromCatalog?.muscles;
 
   if (!trainingLogId) {
     return (
@@ -59,6 +60,7 @@ export default function AddExerciseScreen() {
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
+      equipment: fromCatalog?.equipment ?? undefined,
       muscles: catalogMuscles,
       addToWorkout,
     }, libraryMatch?.name ?? form.name.trim());

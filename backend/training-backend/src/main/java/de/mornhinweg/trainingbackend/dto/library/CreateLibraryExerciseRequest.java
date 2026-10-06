@@ -14,6 +14,8 @@ public class CreateLibraryExerciseRequest {
   private String videoUrl;
   private String videoId;
   private String repUnit;
+  // Catalog vocabulary (barbell, dumbbell, ...); null leaves it unchanged, an empty string clears it
+  @Size(max = 30) private String equipment;
   // Muscles the exercise trains, e.g. taken from a catalog exercise
   private List<@Valid MuscleTargetDto> muscles;
 }

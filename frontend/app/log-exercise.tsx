@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useExerciseLog } from '@/hooks/useExerciseLog';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { useLibrary } from '@/hooks/useLibrary';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 import { PlateCalculator } from '@/components/PlateCalculator';
 import SwipeableRow from '@/components/SwipeableRow';
@@ -13,7 +14,9 @@ import { useRestTimerStore } from '@/store/restTimerStore';
 import { SetDraft, SetRow, useSetDraftStore } from '@/store/setDraftStore';
 import { STEP_INCREMENT_KG, useStepSize, useStepSizeStore } from '@/store/stepSizeStore';
 import { QUERY_KEYS } from '@/constants/queryKeys';
-import { formatSets, previousSetsOf, workingSets } from '@/utils/sets';
+import { previousSetsOf, workingSets } from '@/utils/sets';
+import { formatKg } from '@/utils/strength';
+import { usesPlates } from '@/constants/equipment';
 import { ExerciseLog, SetLog, TrainingLog } from '@/types';
 
 const emptyRow: SetRow = { weight: '', reps: '', rpe: '', warmup: false, done: false };
@@ -72,6 +75,9 @@ function payloadOf(sets: SetLog[], log: ExerciseLog | undefined) {
 
 const SAVE_DEBOUNCE_MS = 600;
 
+// RPE below 7 is rarely worth logging; halves cover the common 8.5-style calls
+const RPE_OPTIONS = ['7', '7.5', '8', '8.5', '9', '9.5', '10'];
+
 const keyOf = (payload: ReturnType<typeof payloadOf>) => JSON.stringify(payload);
 
 /** Seconds a timed set aims for: its entered value, else the plan. NaN when neither is set. */
@@ -117,6 +123,10 @@ export default function LogExerciseModal() {
   const unitShort = repUnit === 'seconds' ? 'sec' : 'reps';
   const previous = log ? previousSetsOf(log) : [];
   const isTimed = repUnit === 'seconds';
+  // From the library, so a change made on the details screen shows on return
+  const { library } = useLibrary();
+  const equipment = library.find((l) => l.id === log?.libraryExerciseId)?.equipment ?? log?.equipment;
+  const showPlates = usesPlates(equipment) && !isTimed;
   const elapsed = timing ? Math.max(0, Math.floor((nowMs - timing.startedAt) / 1000)) : 0;
 
   useEffect(() => {
@@ -275,24 +285,23 @@ export default function LogExerciseModal() {
   let workingNumber = 0;
   for (const r of rows) labels.push(r.warmup ? 'W' : String(++workingNumber));
 
-  const current = rows[focused];
   const invalid = (row: SetRow) => row.done && toSet(row) == null;
 
   const stepButton = (icon: 'remove' | 'add', onPress: () => void, label: string, disabled = false) => (
     <TouchableOpacity
-      className="w-14 h-14 rounded-sm bg-base justify-center items-center"
+      className="w-11 h-11 rounded-sm bg-elevated justify-center items-center"
       onPress={onPress}
       disabled={disabled}
       accessibilityLabel={label}
     >
-      <Ionicons name={icon} size={24} color={disabled ? c.elevated : c.accent} />
+      <Ionicons name={icon} size={20} color={disabled ? c.subtle : c.accent} />
     </TouchableOpacity>
   );
 
   const valueInput = (value: string, onChange: (v: string) => void, placeholder: string, keyboardType: 'decimal-pad' | 'number-pad', editable = true) => (
     // min-w-0: on web an <input> won't shrink below its default ~20ch width, overflowing the row
     <TextInput
-      className="flex-1 min-w-0 h-14 bg-base rounded-sm px-3 text-primary text-2xl font-bold tracking-tight text-center"
+      className="flex-1 min-w-0 h-11 px-1 text-primary text-xl font-mono-bold text-center"
       placeholder={placeholder}
       placeholderTextColor={c.elevated}
       value={value}
@@ -312,6 +321,14 @@ export default function LogExerciseModal() {
     </View>
   );
 
+  // What the set at this position was last session, e.g. 80×8
+  const previousLabel = (i: number) => {
+    const p = previous[i];
+    if (!p) return '—';
+    const reps = `${p.reps}${isTimed ? 's' : ''}`;
+    return p.weight != null && Number(p.weight) > 0 ? `${formatKg(Number(p.weight))}×${reps}` : reps;
+  };
+
   // A set not being edited: its values at a glance, tap to edit, check to log, swipe to delete
   const compactRow = (row: SetRow, i: number) => (
     <View
@@ -323,6 +340,7 @@ export default function LogExerciseModal() {
         accessibilityLabel={`Edit set ${i + 1}`}
       >
         <View className="w-12">{badge(row, i)}</View>
+        <Text className="flex-1 text-muted text-xs font-mono">{previousLabel(i)}</Text>
         <Text className={`flex-1 text-lg font-bold tracking-tight ${row.done ? 'text-primary' : 'text-muted'}`}>
           {row.weight || log?.plannedWeight || 0}<Text className="text-muted text-xs font-normal"> kg</Text>
         </Text>
@@ -351,11 +369,12 @@ export default function LogExerciseModal() {
   const expandedRow = (row: SetRow, i: number) => {
     const rowTiming = timing?.index === i;
     return (
-      <View className={`bg-surface rounded-md p-4 mb-2 gap-4 border-2 ${invalid(row) ? 'border-danger' : 'border-accent'}`}>
+      <View className={`bg-surface rounded-md p-3 mb-2 gap-4 border-2 ${invalid(row) ? 'border-danger' : 'border-accent'}`}>
         <View className="flex-row items-center gap-3">
           {badge(row, i)}
-          <Text className="flex-1 text-primary text-base font-bold tracking-tight">
+          <Text className="flex-1 text-primary text-base font-bold tracking-tight" numberOfLines={1}>
             {row.warmup ? 'Warm-up' : `Set ${labels[i]}`}
+            {previous[i] && <Text className="text-muted text-xs font-normal">  last {previousLabel(i)}</Text>}
           </Text>
           <TouchableOpacity
             className={`rounded-full px-3 py-1.5 border ${row.warmup ? 'bg-elevated border-elevated' : 'border-elevated'}`}
@@ -375,62 +394,67 @@ export default function LogExerciseModal() {
           </TouchableOpacity>
         </View>
 
-        {/* Weight */}
-        <View>
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-muted text-[9px] tracking-[2px]">KG</Text>
-            <View className="flex-row items-center gap-2">
-              <Text className="text-muted text-[9px] tracking-[2px]">STEP</Text>
+        {/* Weight and reps side by side */}
+        <View className="flex-row gap-2">
+          <View className="flex-[1.3] bg-base rounded-sm p-1 gap-1">
+            <View className="flex-row items-center justify-center gap-1.5 pt-1">
+              <Text className="text-muted text-[9px] tracking-[2px]">KG · STEP</Text>
               <TouchableOpacity
                 onPress={() => libraryExerciseId && useStepSizeStore.getState().adjustStep(libraryExerciseId, -STEP_INCREMENT_KG)}
                 disabled={!libraryExerciseId}
                 accessibilityLabel="Decrease weight step"
+                hitSlop={8}
               >
-                <Ionicons name="remove-circle-outline" size={18} color={c.muted} />
+                <Ionicons name="remove-circle-outline" size={14} color={c.muted} />
               </TouchableOpacity>
-              <Text className="text-primary text-xs font-bold min-w-[32px] text-center">{formatNumber(step)}</Text>
+              <Text className="text-primary text-[10px] font-bold">{formatNumber(step)}</Text>
               <TouchableOpacity
                 onPress={() => libraryExerciseId && useStepSizeStore.getState().adjustStep(libraryExerciseId, STEP_INCREMENT_KG)}
                 disabled={!libraryExerciseId}
                 accessibilityLabel="Increase weight step"
+                hitSlop={8}
               >
-                <Ionicons name="add-circle-outline" size={18} color={c.muted} />
+                <Ionicons name="add-circle-outline" size={14} color={c.muted} />
               </TouchableOpacity>
             </View>
+            <View className="flex-row items-center">
+              {stepButton('remove', () => stepWeight(i, -1), `Decrease weight by ${formatNumber(step)} kg`)}
+              {valueInput(row.weight, (weight) => updateRow(i, { weight }), log?.plannedWeight != null ? String(log.plannedWeight) : '0', 'decimal-pad')}
+              {stepButton('add', () => stepWeight(i, 1), `Increase weight by ${formatNumber(step)} kg`)}
+            </View>
           </View>
-          <View className="flex-row items-center gap-2">
-            {stepButton('remove', () => stepWeight(i, -1), `Decrease weight by ${formatNumber(step)} kg`)}
-            {valueInput(row.weight, (weight) => updateRow(i, { weight }), log?.plannedWeight != null ? String(log.plannedWeight) : '0', 'decimal-pad')}
-            {stepButton('add', () => stepWeight(i, 1), `Increase weight by ${formatNumber(step)} kg`)}
-          </View>
-        </View>
-
-        {/* Reps or seconds */}
-        <View>
-          <Text className="text-muted text-[9px] tracking-[2px] mb-2">{unitShort.toUpperCase()}</Text>
-          <View className="flex-row items-center gap-2">
-            {stepButton('remove', () => stepReps(i, -1), `Decrease ${unitShort}`, rowTiming)}
-            {valueInput(rowTiming ? String(elapsed) : row.reps, (reps) => updateRow(i, { reps }), log?.plannedReps != null ? String(log.plannedReps) : '0', 'number-pad', !rowTiming)}
-            {stepButton('add', () => stepReps(i, 1), `Increase ${unitShort}`, rowTiming)}
+          <View className="flex-1 bg-base rounded-sm p-1 gap-1">
+            <Text className="text-muted text-[9px] tracking-[2px] text-center pt-1">{unitShort.toUpperCase()}</Text>
+            <View className="flex-row items-center">
+              {stepButton('remove', () => stepReps(i, -1), `Decrease ${unitShort}`, rowTiming)}
+              {valueInput(rowTiming ? String(elapsed) : row.reps, (reps) => updateRow(i, { reps }), log?.plannedReps != null ? String(log.plannedReps) : '0', 'number-pad', !rowTiming)}
+              {stepButton('add', () => stepReps(i, 1), `Increase ${unitShort}`, rowTiming)}
+            </View>
           </View>
         </View>
 
-        {/* RPE */}
-        <View className="flex-row items-center gap-3">
-          <Text className="text-muted text-[9px] tracking-[2px]">RPE</Text>
-          <TextInput
-            className="w-20 h-10 bg-base rounded-sm px-3 text-primary text-base font-bold text-center"
-            placeholder="–"
-            placeholderTextColor={c.elevated}
-            value={row.rpe}
-            onChangeText={(rpe) => updateRow(i, { rpe })}
-            keyboardType="decimal-pad"
-            keyboardAppearance="dark"
-          />
-          {invalid(row) && (
-            <Text className="text-danger text-[11px] flex-1">Check the values; this set isn&apos;t saved yet.</Text>
-          )}
+        {/* RPE: tap the selected one again to clear it */}
+        <View className="flex-row items-center gap-1">
+          <Text className="text-muted text-[9px] tracking-[2px] w-9">RPE</Text>
+          {RPE_OPTIONS.map((value) => {
+            const selected = parseNumber(row.rpe) === Number(value);
+            return (
+              <TouchableOpacity
+                key={value}
+                className={`flex-1 h-10 rounded-sm justify-center items-center ${selected ? 'bg-accent' : 'bg-elevated'}`}
+                onPress={() => updateRow(i, { rpe: selected ? '' : value })}
+                accessibilityLabel={selected ? `RPE ${value}, tap to clear` : `RPE ${value}`}
+              >
+                <Text className={`text-xs font-mono-bold ${selected ? 'text-accent-fg' : 'text-muted'}`}>{value}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
+        {invalid(row) && (
+          <Text className="text-danger text-[11px]">Check the values; this set isn&apos;t saved yet.</Text>
+        )}
+
+        {showPlates && <PlateCalculator weight={row.weight || (log?.plannedWeight != null ? String(log.plannedWeight) : '')} />}
 
         {isTimed && !row.done ? (
           <TouchableOpacity
@@ -472,30 +496,42 @@ export default function LogExerciseModal() {
     <View className="flex-1 bg-base">
       <KeyboardAvoidingWrapper>
       {/* Header */}
-      <View className="flex-row justify-between items-center px-6 pt-14 pb-5">
+      <View className="flex-row justify-between items-center px-5 pt-14 pb-5">
         <TouchableOpacity onPress={() => router.back()}>
           <Ionicons name="close" size={22} color={c.muted} />
         </TouchableOpacity>
         <Text className="text-muted text-[10px] tracking-[4px]">LOG EXERCISE</Text>
-        <View className="w-6" />
+        {/* Notes, video, muscles, equipment and history */}
+        <TouchableOpacity
+          onPress={() =>
+            log && router.push({
+              pathname: '/exercise-detail' as any,
+              params: {
+                exerciseId: log.exerciseId?.toString() ?? '', exerciseName: log.exerciseName,
+                libraryExerciseId: log.libraryExerciseId?.toString() ?? '', description: '', videoUrl: '',
+                sets: log.plannedSets?.toString() || '', reps: log.plannedReps?.toString() || '',
+                weight: log.plannedWeight?.toString() || '', workoutId: log.workoutId?.toString() ?? '',
+              },
+            })
+          }
+          disabled={!log}
+          accessibilityLabel="Exercise details"
+        >
+          <Ionicons name="information-circle-outline" size={22} color={c.muted} />
+        </TouchableOpacity>
       </View>
 
-      <View className="flex-1 px-6 pb-10">
-        <Text className="text-primary text-[32px] font-bold tracking-tighter leading-9 mb-4">
+      <View className="flex-1 px-4 pb-10">
+        <Text className="text-primary text-[32px] font-bold tracking-tighter leading-9 mb-4 px-1">
           {log?.exerciseName ?? exerciseName}
         </Text>
 
-        <View className="flex-row flex-wrap gap-2 mb-6">
+        <View className="flex-row flex-wrap gap-2 mb-6 px-1">
           {log?.plannedSets != null && log.plannedReps != null && (
-            <View className="bg-accent/10 rounded-sm px-3 py-2">
+            <View className="bg-accent-muted rounded-sm px-3 py-2">
               <Text className="text-accent-text text-[11px] tracking-widest">
                 TARGET: {log.plannedSets} × {log.plannedReps} {unitShort}{log.plannedWeight ? ` @ ${log.plannedWeight} kg` : ''}
               </Text>
-            </View>
-          )}
-          {previous.length > 0 && (
-            <View className="bg-surface rounded-sm px-3 py-2">
-              <Text className="text-muted text-[11px] tracking-widest">LAST: {formatSets(previous, repUnit)}</Text>
             </View>
           )}
           <RestCountdown />
@@ -504,6 +540,7 @@ export default function LogExerciseModal() {
         {/* Column labels for the compact rows */}
         <View className="flex-row items-center pl-3 mb-2">
           <Text className="w-12 text-muted text-[9px] tracking-[2px]">SET</Text>
+          <Text className="flex-1 text-muted text-[9px] tracking-[2px]">PREVIOUS</Text>
           <Text className="flex-1 text-muted text-[9px] tracking-[2px]">KG</Text>
           <Text className="flex-1 text-muted text-[9px] tracking-[2px]">{unitShort.toUpperCase()}</Text>
           <View className="w-14" />
@@ -539,7 +576,6 @@ export default function LogExerciseModal() {
           <Text className="text-primary text-xs font-bold tracking-[2px]">ADD SET</Text>
         </TouchableOpacity>
 
-        <PlateCalculator weight={current?.weight ?? ''} />
         <View className="flex-1" />
 
         {/* Sets are saved as they're logged, so this only closes the screen (and completes the exercise once all are logged) */}

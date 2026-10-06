@@ -15,6 +15,7 @@ import { confirm } from '@/utils/confirm';
 import { MusclePicker, MuscleSummary } from '@/components/MusclePicker';
 import { CatalogSuggestions } from '@/components/CatalogSuggestions';
 import { useCatalog } from '@/hooks/useCatalog';
+import { EQUIPMENT_OPTIONS } from '@/constants/equipment';
 import { MuscleTarget } from '@/types';
 
 export default function ExerciseDetailScreen() {
@@ -54,6 +55,11 @@ export default function ExerciseDetailScreen() {
   const saveMuscles = () => {
     if (libraryId == null) return;
     updateEntry.mutate({ id: libraryId, data: { muscles } }, { onSuccess: () => setEditingMuscles(false) });
+  };
+  // Saved on tap; tapping the selected one clears it
+  const pickEquipment = (option: string) => {
+    if (libraryId == null) return;
+    updateEntry.mutate({ id: libraryId, data: { equipment: entry?.equipment === option ? '' : option } });
   };
   // Seed the calculator with the set behind the best estimated 1RM
   let bestSet: { weight: number; reps: number } | undefined;
@@ -119,17 +125,17 @@ export default function ExerciseDetailScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
 
         {/* Planned */}
-        {(sets || reps || weight) && (
+        {!!(sets || reps || weight) && (
           <View className="bg-surface rounded-md p-5 mb-2">
             <Text className="text-muted text-[9px] tracking-[3px] mb-3">PLANNED</Text>
             <View className="flex-row gap-6">
-              {sets && reps && (
+              {!!sets && !!reps && (
                 <View>
                   <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{sets}×{reps}</Text>
                   <Text className="text-muted text-[9px] tracking-[2px] mt-1">SETS × REPS</Text>
                 </View>
               )}
-              {weight && (
+              {!!weight && (
                 <View>
                   <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{weight}</Text>
                   <Text className="text-muted text-[9px] tracking-[2px] mt-1">KG TARGET</Text>
@@ -181,6 +187,34 @@ export default function ExerciseDetailScreen() {
                 <Ionicons name="body-outline" size={28} color={c.elevated} />
                 <Text className="text-elevated text-[10px] tracking-[2px]">TAP TO SET MUSCLES</Text>
               </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Equipment */}
+        {entry && (
+          <View className="bg-surface rounded-md p-5 mb-2">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-3">EQUIPMENT</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {EQUIPMENT_OPTIONS.map((option) => {
+                const selected = entry.equipment === option;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    className={`rounded-sm px-3 py-2 ${selected ? 'bg-accent' : 'bg-elevated'}`}
+                    onPress={() => pickEquipment(option)}
+                    disabled={updateEntry.isPending}
+                    accessibilityLabel={selected ? `${option}, selected, tap to clear` : `Set equipment to ${option}`}
+                  >
+                    <Text className={`text-[10px] font-bold tracking-[2px] ${selected ? 'text-accent-fg' : 'text-muted'}`}>
+                      {option.toUpperCase()}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {entry.equipment === 'barbell' && (
+              <Text className="text-muted text-[11px] mt-3">The log screen shows the plates to load for each set.</Text>
             )}
           </View>
         )}

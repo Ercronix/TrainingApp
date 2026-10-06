@@ -336,6 +336,17 @@ export interface ExerciseTrend {
   progression: Progression | null;
 }
 
+/** A session that beat every earlier session of an exercise. */
+export interface RecentRecord {
+  libraryExerciseId: number;
+  name: string;
+  kind: ExerciseKind;
+  /** The primary metric: top weight, or reps / seconds for bodyweight and timed work. */
+  value: number;
+  previous: number;
+  date: number;
+}
+
 export interface TrainingAnalytics {
   weeks: WeekBucket[];
   lifetime: {
@@ -356,6 +367,8 @@ export interface TrainingAnalytics {
   /** Volume of the last 4 weeks against the 4 before, in %. */
   volumeChangePct: number | null;
   prsLast30Days: number;
+  /** The latest record of each exercise from the last 30 days, newest first. */
+  recentRecords: RecentRecord[];
   /** Completed sessions per weekday, Monday first. */
   weekdayCounts: number[];
   trends: ExerciseTrend[];
@@ -422,18 +435,24 @@ export function computeTrainingAnalytics(logs: TrainingLog[], weekCount = 12, no
 
   // Personal records: sessions that beat every earlier session of the same exercise
   let prsLast30Days = 0;
+  const recentRecords: RecentRecord[] = [];
   const trends: ExerciseTrend[] = [];
   for (const [libraryExerciseId, group] of byExercise) {
     const stats = computeExerciseStats(group.entries, group.timed);
     if (!stats) continue;
     let running = -Infinity;
+    let latestRecord: RecentRecord | null = null;
     stats.points.forEach((p, i) => {
       const v = primaryValue(p, stats.kind);
       if (v > running) {
-        if (i > 0 && now - p.date <= 30 * DAY_MS) prsLast30Days++;
+        if (i > 0 && now - p.date <= 30 * DAY_MS) {
+          prsLast30Days++;
+          latestRecord = { libraryExerciseId, name: group.name, kind: stats.kind, value: v, previous: running, date: p.date };
+        }
         running = v;
       }
     });
+    if (latestRecord) recentRecords.push(latestRecord);
     trends.push({
       libraryExerciseId,
       name: group.name,
@@ -471,9 +490,96 @@ export function computeTrainingAnalytics(logs: TrainingLog[], weekCount = 12, no
     sessionsPerWeek: weeks.reduce((s, w) => s + w.sessions, 0) / weekCount,
     volumeChangePct: prior > 0 ? ((recent - prior) / prior) * 100 : null,
     prsLast30Days,
+    recentRecords: recentRecords.sort((a, b) => b.date - a.date),
     weekdayCounts,
     trends,
   };
+}
+
+// ─── Periods ────────────────────────────────────────────────────────────────
+
+export type StatsRange = 'week' | 'month' | 'year';
+
+export interface PeriodTotals {
+  sessions: number;
+  /** kg, timed exercises excluded. */
+  volume: number;
+  minutes: number;
+  /** Working sets. */
+  sets: number;
+}
+
+export interface PeriodSummary {
+  current: PeriodTotals;
+  /** The previous period up to the same point, so a running period compares fairly. */
+  previousToDate: PeriodTotals;
+  /** Whole periods, oldest first, ending with the running one. */
+  recent: PeriodTotals[];
+}
+
+/** Start of the calendar week (Monday), month or year containing a time. */
+export function startOfPeriod(range: StatsRange, time: number): number {
+  if (range === 'week') return startOfWeek(time);
+  const d = new Date(time);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(1);
+  if (range === 'year') d.setMonth(0);
+  return d.getTime();
+}
+
+/** The start of the period `offset` periods before the one starting at `start`. */
+function shiftPeriod(range: StatsRange, start: number, offset: number): number {
+  const d = new Date(start);
+  if (range === 'week') d.setDate(d.getDate() - 7 * offset);
+  else if (range === 'month') d.setMonth(d.getMonth() - offset);
+  else d.setFullYear(d.getFullYear() - offset);
+  return d.getTime();
+}
+
+/** What a completed session adds to the totals (completed exercises only, like the analytics). */
+function totalsOf(log: TrainingLog): PeriodTotals {
+  let volume = 0, sets = 0;
+  for (const ex of log.exercises ?? []) {
+    if (!ex.completed) continue;
+    const working = workingSets(setsOf(ex));
+    sets += working.length;
+    if (ex.repUnit !== 'seconds') volume += setVolume(working);
+  }
+  return { sessions: 1, volume, minutes: (log.durationSeconds || 0) / 60, sets };
+}
+
+const emptyTotals = (): PeriodTotals => ({ sessions: 0, volume: 0, minutes: 0, sets: 0 });
+
+function add(into: PeriodTotals, t: PeriodTotals) {
+  into.sessions += t.sessions;
+  into.volume += t.volume;
+  into.minutes += t.minutes;
+  into.sets += t.sets;
+}
+
+/** Totals of the running period, the previous one to the same point, and the last `count` periods. */
+export function summarizePeriods(logs: TrainingLog[], range: StatsRange, count = 6, now = Date.now()): PeriodSummary {
+  const currentStart = startOfPeriod(range, now);
+  const previousStart = shiftPeriod(range, currentStart, 1);
+  const previousCutoff = previousStart + (now - currentStart);
+  const starts = Array.from({ length: count }, (_, i) => shiftPeriod(range, currentStart, count - 1 - i));
+  const recent = starts.map(emptyTotals);
+  const current = emptyTotals();
+  const previousToDate = emptyTotals();
+
+  for (const log of logs) {
+    if (!log.isCompleted) continue;
+    const date = logDate(log);
+    if (date > now || date < starts[0]) continue;
+    const totals = totalsOf(log);
+    // Latest period starting at or before the session
+    let i = starts.length - 1;
+    while (i > 0 && starts[i] > date) i--;
+    add(recent[i], totals);
+    if (date >= currentStart) add(current, totals);
+    else if (date >= previousStart && date < previousCutoff) add(previousToDate, totals);
+  }
+  return { current, previousToDate, recent };
 }
 
 // ─── Formatting ─────────────────────────────────────────────────────────────

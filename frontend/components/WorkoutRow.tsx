@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import SwipeableRow from '@/components/SwipeableRow';
 import { useTheme } from '@/hooks/useTheme';
 import { confirm } from '@/utils/confirm';
+import { formatDaysAgo } from '@/utils/dates';
 import { Workout } from '@/types';
 
 interface Props {
@@ -11,10 +12,13 @@ interface Props {
   index: number;
   splitId: string;
   onDelete: (id: number) => void;
+  /** When this workout was last completed, if ever. */
+  lastDoneAt?: number | null;
+  isNext?: boolean;
 }
 
 /** A workout day of a split: opens its detail, swipe to edit or delete. */
-export function WorkoutRow({ workout, index, splitId, onDelete }: Props) {
+export function WorkoutRow({ workout, index, splitId, onDelete, lastDoneAt, isNext }: Props) {
   const router = useRouter();
   const c = useTheme();
 
@@ -53,9 +57,23 @@ export function WorkoutRow({ workout, index, splitId, onDelete }: Props) {
           {String(index + 1).padStart(2, '0')}
         </Text>
         <View className="flex-1">
-          <Text className="text-primary text-lg font-bold tracking-tight mb-1">{workout.name}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">
-            {workout.exerciseCount ?? 0} {workout.exerciseCount === 1 ? 'EXERCISE' : 'EXERCISES'}
+          <View className="flex-row items-center gap-2 mb-1">
+            <Text className="text-primary text-lg font-bold tracking-tight flex-shrink" numberOfLines={1}>{workout.name}</Text>
+            {isNext && (
+              // Letter spacing also trails the last letter, so the right padding is 2px less
+              <View className="bg-accent-muted rounded-sm h-[18px] pl-1.5 pr-1 justify-center">
+                <Text
+                  className="text-accent-text text-[9px] leading-[12px] font-bold tracking-[2px]"
+                  style={{ includeFontPadding: false, textAlignVertical: 'center' }}
+                >
+                  NEXT
+                </Text>
+              </View>
+            )}
+          </View>
+          <Text className="text-muted text-xs">
+            {workout.exerciseCount ?? 0} {workout.exerciseCount === 1 ? 'exercise' : 'exercises'}
+            {lastDoneAt != null ? ` · ${formatDaysAgo(lastDoneAt)}` : ''}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={c.subtle} />
