@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,7 @@ import { useActiveTraining } from '@/hooks/useActiveTraining';
 import { useStartTraining } from '@/hooks/useStartTraining';
 import { useTheme } from '@/hooks/useTheme';
 import { WorkoutRow } from '@/components/WorkoutRow';
-import { SplitPicker } from '@/components/SplitPicker';
+import { PickerAnchor, SplitPicker } from '@/components/SplitPicker';
 import { TrainingLog, Workout } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -33,6 +33,9 @@ export default function HomeScreen() {
   const c = useTheme();
   const insets = useSafeAreaInsets();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerAnchor, setPickerAnchor] = useState<PickerAnchor | null>(null);
+  const splitNameRef = useRef<View>(null);
+  const chooseButtonRef = useRef<View>(null);
   const { splits, isLoading, isRefetching, refetch, activateSplit } = useSplits();
   const active = splits?.find((s) => s.isActive);
   const splitId = active?.id.toString() ?? '';
@@ -49,9 +52,19 @@ export default function HomeScreen() {
     if (splitId) void workoutsQuery.refetch();
   };
 
+  // Open the picker right under (or above) the control that was tapped
+  const openPicker = (trigger: View | null) => {
+    if (!trigger) return setPickerOpen(true);
+    trigger.measureInWindow((_x, y, _width, height) => {
+      setPickerAnchor({ y, height });
+      setPickerOpen(true);
+    });
+  };
+
   const picker = (
     <SplitPicker
       visible={pickerOpen}
+      anchor={pickerAnchor}
       splits={splits ?? []}
       onSelect={(split) => {
         setPickerOpen(false);
@@ -88,8 +101,9 @@ export default function HomeScreen() {
             : 'A split is your training program: the workout days you rotate through. Create one, add its workouts, and it shows up here.'}
         </Text>
         <TouchableOpacity
+          ref={chooseButtonRef}
           className="bg-accent rounded-md py-4 flex-row items-center justify-center gap-2"
-          onPress={() => (hasSplits ? setPickerOpen(true) : router.push('/create-split'))}
+          onPress={() => (hasSplits ? openPicker(chooseButtonRef.current) : router.push('/create-split'))}
           activeOpacity={0.85}
         >
           <Ionicons name={hasSplits ? 'flash' : 'add'} size={18} color={c.accentFg} />
@@ -108,14 +122,15 @@ export default function HomeScreen() {
         <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">ACTIVE SPLIT</Text>
         <View className="flex-row items-center justify-between">
           <TouchableOpacity
+            ref={splitNameRef}
             className="flex-row items-center gap-2 flex-1 mr-3"
-            onPress={() => setPickerOpen(true)}
+            onPress={() => openPicker(splitNameRef.current)}
             accessibilityLabel={`${active.name}, tap to switch split`}
           >
             <Text className="text-primary text-[36px] font-bold tracking-tighter leading-10 flex-shrink" numberOfLines={1}>
               {active.name}
             </Text>
-            <Ionicons name="chevron-down" size={22} color={c.muted} />
+            <Ionicons name={pickerOpen ? 'chevron-up' : 'chevron-down'} size={22} color={pickerOpen ? c.accent : c.muted} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() =>
