@@ -7,6 +7,7 @@ import { getErrorMessage } from '@/utils/errorHandler';
 import { useTheme } from '@/hooks/useTheme';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 
+import { Tactile } from '@/components/Tactile';
 type FieldErrors = { username?: string; password?: string; general?: string };
 
 export default function LoginScreen() {
@@ -102,8 +103,8 @@ export default function LoginScreen() {
                 </View>
             )}
 
-            <TouchableOpacity
-                className={`bg-accent rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
+            <Tactile
+                className={`rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
                 onPress={handleLogin}
                 disabled={loading}
                 activeOpacity={0.85}
@@ -111,7 +112,7 @@ export default function LoginScreen() {
                 <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
                     {loading ? 'SIGNING IN...' : 'SIGN IN'}
                 </Text>
-            </TouchableOpacity>
+            </Tactile>
 
             <Link href="/register" asChild>
                 <TouchableOpacity className="mt-6 items-center" disabled={loading}>

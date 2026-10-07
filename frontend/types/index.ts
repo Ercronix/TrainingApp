@@ -73,6 +73,8 @@ export interface ExerciseLog {
   completed: boolean;
   notes: string | null;
   repUnit: 'reps' | 'seconds' | null;
+  // Of the library entry, e.g. 'barbell'; missing in data cached before it existed
+  equipment?: string | null;
   // Most recent completed session for this exercise (null if never trained)
   previousSets: number | null;
   previousReps: number | null;
@@ -157,6 +159,8 @@ export interface LibraryExercise {
   videoUrl: string | null;
   videoId: string | null;
   repUnit: 'reps' | 'seconds';
+  // In the catalog's vocabulary ('barbell', 'dumbbell', ...); null when unknown
+  equipment?: string | null;
   // Primary muscles first, empty until assigned. Missing in data cached before muscles existed.
   muscles?: MuscleTarget[];
   workoutCount: number;
@@ -168,6 +172,8 @@ export interface UpdateLibraryExerciseRequest {
   description?: string | null;
   videoUrl?: string | null;
   repUnit?: 'reps' | 'seconds';
+  // An empty string clears it
+  equipment?: string;
   // Replaces the muscles; an empty list clears them
   muscles?: MuscleTarget[];
 }
@@ -184,6 +190,7 @@ export interface CreateExerciseRequest {
   reps?: number | null;
   repUnit?: string;
   plannedWeight?: number | null;
+  equipment?: string;
   // Replaces the library entry's muscles when sent
   muscles?: MuscleTarget[];
 }

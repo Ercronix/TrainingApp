@@ -334,8 +334,33 @@ export function applyCustomAccent(c: ColorPalette, customAccent: string | null |
   };
 }
 
-export function getPalette(themeId: string, mode: 'light' | 'dark', customAccent?: string | null): ColorPalette {
-  return applyCustomAccent(getTheme(themeId)[mode], customAccent);
+/** A palette plus the edge colors of the chunky, raised look, derived so every theme gets them. */
+export interface Palette extends ColorPalette {
+  /** Bottom lip of accent buttons. */
+  accentLip: string;
+  /** Bottom lip of danger buttons. */
+  dangerLip: string;
+  /** Outline and lip of cards and neutral buttons. */
+  edge: string;
+  /** Outline and lip of done cards. */
+  edgeDone: string;
+}
+
+const BLACK = '#000000';
+
+function withEdges(c: ColorPalette): Palette {
+  return {
+    ...c,
+    accentLip: blendHex(c.accent, BLACK, 0.62),
+    dangerLip: blendHex(c.danger, BLACK, 0.62),
+    // Toward the text color, so it reads as a raised rim in both dark and light mode
+    edge: blendHex(c.primary, c.surface, 0.1),
+    edgeDone: blendHex(c.accent, c.surfaceDone, 0.25),
+  };
+}
+
+export function getPalette(themeId: string, mode: 'light' | 'dark', customAccent?: string | null): Palette {
+  return withEdges(applyCustomAccent(getTheme(themeId)[mode], customAccent));
 }
 
 export function getThemeVars(themeId: string, mode: 'light' | 'dark', customAccent?: string | null) {
@@ -357,5 +382,9 @@ export function getThemeVars(themeId: string, mode: 'light' | 'dark', customAcce
     '--color-elevated':     c.elevated,
     '--color-surface-done': c.surfaceDone,
     '--color-border':       c.border,
+    '--color-accent-lip':   c.accentLip,
+    '--color-danger-lip':   c.dangerLip,
+    '--color-edge':         c.edge,
+    '--color-edge-done':    c.edgeDone,
   });
 }

@@ -64,7 +64,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
 
   if (!stats) {
     return (
-      <View className="bg-surface rounded-md p-5 mb-2 items-center py-8 gap-2">
+      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2 items-center py-8 gap-2">
         <Ionicons name="analytics-outline" size={36} color={c.muted} />
         <Text className="text-muted text-sm font-bold tracking-widest">NO DATA YET</Text>
         <Text className="text-muted text-[11px] text-center">Complete a session with this exercise to unlock its stats</Text>
@@ -100,7 +100,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
   return (
     <>
       {/* Chart */}
-      <View className="bg-surface rounded-md p-5 mb-2">
+      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-3">PROGRESS</Text>
         <View className="flex-row gap-1 mb-3 flex-wrap">
           {metrics.map((m) => (
@@ -136,7 +136,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       </View>
 
       {/* Numbers */}
-      <View className="bg-surface rounded-md p-5 mb-2">
+      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-3">
           {kind === 'weighted' ? 'TOP WEIGHT' : kind === 'timed' ? 'BEST HOLD' : 'BEST SET'}
         </Text>
@@ -165,7 +165,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       </View>
 
       {/* Progression model */}
-      <View className="bg-surface rounded-md p-5 mb-2">
+      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-3">PROGRESSION TREND</Text>
         {!progression ? (
           <Text className="text-muted text-xs">
@@ -223,7 +223,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       </View>
 
       {/* Record sets */}
-      <View className="bg-surface rounded-md p-5 mb-2">
+      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">RECORD SESSIONS</Text>
         {stats.bestWeight && <RecordRow label="Heaviest weight" value={fmt(stats.bestWeight.weight)} point={stats.bestWeight} kind={kind} />}
         {stats.bestVolume && <RecordRow label="Most volume" value={`${formatNumber(stats.bestVolume.volume)} kg`} point={stats.bestVolume} kind={kind} />}

@@ -1,6 +1,7 @@
 import React, { useRef, useCallback } from 'react';
-import { View, Text, TouchableOpacity, Animated, PanResponder } from 'react-native';
+import { View, Text, Pressable, Animated, PanResponder } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { blendHex } from '@/utils/color';
 
 export interface SwipeAction {
   icon: keyof typeof Ionicons.glyphMap;
@@ -20,6 +21,45 @@ interface SwipeableRowProps {
 const ACTION_WIDTH = 72;
 const SWIPE_THRESHOLD = 40;
 const CLIP_RADIUS = 18;
+// Space between the row and each action tile
+const ACTION_GAP = 6;
+const LIP = 4;
+const RIM = 2;
+
+/** A raised action tile like the rows: a rim, a thicker bottom lip, and it sinks while pressed. */
+function ActionTile({ action, onPress, side }: { action: SwipeAction; onPress: () => void; side: 'left' | 'right' }) {
+  const edge = blendHex(action.color, action.backgroundColor, 0.35);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={action.label}
+      style={{ flex: 1, [side === 'right' ? 'marginLeft' : 'marginRight']: ACTION_GAP }}
+    >
+      {({ pressed }) => (
+        <View
+          style={{
+            flex: 1,
+            marginTop: pressed ? LIP : 0,
+            backgroundColor: action.backgroundColor,
+            borderRadius: CLIP_RADIUS,
+            borderColor: edge,
+            borderWidth: RIM,
+            borderBottomWidth: RIM + (pressed ? 0 : LIP),
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Ionicons name={action.icon} size={20} color={action.color} />
+          {action.label && (
+            <Text style={{ color: action.color, fontSize: 9, fontWeight: '700', letterSpacing: 1, marginTop: 4 }}>
+              {action.label}
+            </Text>
+          )}
+        </View>
+      )}
+    </Pressable>
+  );
+}
 
 export default function SwipeableRow({ children, rightActions, leftActions, enabled = true }: SwipeableRowProps) {
   const translateX = useRef(new Animated.Value(0)).current;
@@ -107,28 +147,7 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
           }}
         >
           {rightActions.map((action, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => { close(); action.onPress(); }}
-              activeOpacity={0.7}
-              style={{
-                flex: 1,
-                backgroundColor: action.backgroundColor,
-                justifyContent: 'center',
-                alignItems: 'center',
-                ...(index === rightActions.length - 1 && {
-                  borderTopRightRadius: CLIP_RADIUS,
-                  borderBottomRightRadius: CLIP_RADIUS,
-                }),
-              }}
-            >
-              <Ionicons name={action.icon} size={20} color={action.color} />
-              {action.label && (
-                <Text style={{ color: action.color, fontSize: 9, fontWeight: '700', letterSpacing: 1, marginTop: 4 }}>
-                  {action.label}
-                </Text>
-              )}
-            </TouchableOpacity>
+            <ActionTile key={index} action={action} side="right" onPress={() => { close(); action.onPress(); }} />
           ))}
         </View>
       )}
@@ -146,28 +165,7 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
           }}
         >
           {leftActions.map((action, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => { close(); action.onPress(); }}
-              activeOpacity={0.7}
-              style={{
-                flex: 1,
-                backgroundColor: action.backgroundColor,
-                justifyContent: 'center',
-                alignItems: 'center',
-                ...(index === 0 && {
-                  borderTopLeftRadius: CLIP_RADIUS,
-                  borderBottomLeftRadius: CLIP_RADIUS,
-                }),
-              }}
-            >
-              <Ionicons name={action.icon} size={20} color={action.color} />
-              {action.label && (
-                <Text style={{ color: action.color, fontSize: 9, fontWeight: '700', letterSpacing: 1, marginTop: 4 }}>
-                  {action.label}
-                </Text>
-              )}
-            </TouchableOpacity>
+            <ActionTile key={index} action={action} side="left" onPress={() => { close(); action.onPress(); }} />
           ))}
         </View>
       )}

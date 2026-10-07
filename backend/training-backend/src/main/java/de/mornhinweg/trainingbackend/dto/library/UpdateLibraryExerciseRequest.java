@@ -13,6 +13,8 @@ public class UpdateLibraryExerciseRequest {
   private String videoUrl;
   private String videoId;
   private String repUnit;
+  // Catalog vocabulary (barbell, dumbbell, ...); null leaves it unchanged, an empty string clears it
+  @Size(max = 30) private String equipment;
   // Replaces the entry's muscles when present; an empty list clears them
   private List<@Valid MuscleTargetDto> muscles;
 }

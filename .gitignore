@@ -33,3 +33,6 @@ application-prod.properties
 # Python
 __pycache__/
 *.pyc
+
+# Learning-tool notes
+.vibe-wise/

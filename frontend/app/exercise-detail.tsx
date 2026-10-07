@@ -15,8 +15,10 @@ import { confirm } from '@/utils/confirm';
 import { MusclePicker, MuscleSummary } from '@/components/MusclePicker';
 import { CatalogSuggestions } from '@/components/CatalogSuggestions';
 import { useCatalog } from '@/hooks/useCatalog';
+import { EQUIPMENT_OPTIONS } from '@/constants/equipment';
 import { MuscleTarget } from '@/types';
 
+import { Tactile } from '@/components/Tactile';
 export default function ExerciseDetailScreen() {
   const {
     exerciseId, exerciseName, description: initialDescription,
@@ -54,6 +56,11 @@ export default function ExerciseDetailScreen() {
   const saveMuscles = () => {
     if (libraryId == null) return;
     updateEntry.mutate({ id: libraryId, data: { muscles } }, { onSuccess: () => setEditingMuscles(false) });
+  };
+  // Saved on tap; tapping the selected one clears it
+  const pickEquipment = (option: string) => {
+    if (libraryId == null) return;
+    updateEntry.mutate({ id: libraryId, data: { equipment: entry?.equipment === option ? '' : option } });
   };
   // Seed the calculator with the set behind the best estimated 1RM
   let bestSet: { weight: number; reps: number } | undefined;
@@ -119,17 +126,17 @@ export default function ExerciseDetailScreen() {
       <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
 
         {/* Planned */}
-        {(sets || reps || weight) && (
-          <View className="bg-surface rounded-md p-5 mb-2">
+        {!!(sets || reps || weight) && (
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
             <Text className="text-muted text-[9px] tracking-[3px] mb-3">PLANNED</Text>
             <View className="flex-row gap-6">
-              {sets && reps && (
+              {!!sets && !!reps && (
                 <View>
                   <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{sets}×{reps}</Text>
                   <Text className="text-muted text-[9px] tracking-[2px] mt-1">SETS × REPS</Text>
                 </View>
               )}
-              {weight && (
+              {!!weight && (
                 <View>
                   <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{weight}</Text>
                   <Text className="text-muted text-[9px] tracking-[2px] mt-1">KG TARGET</Text>
@@ -141,7 +148,7 @@ export default function ExerciseDetailScreen() {
 
         {/* Muscles */}
         {entry && (
-          <View className="bg-surface rounded-md p-5 mb-2">
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
             <View className="flex-row justify-between items-center mb-3">
               <Text className="text-muted text-[9px] tracking-[3px]">MUSCLES</Text>
               <TouchableOpacity onPress={() => (editingMuscles ? setEditingMuscles(false) : startEditingMuscles())}>
@@ -159,15 +166,15 @@ export default function ExerciseDetailScreen() {
                   onSelect={(match) => setMuscles(match.muscles)}
                 />
                 <MusclePicker value={muscles} onChange={setMuscles} disabled={updateEntry.isPending} />
-                <TouchableOpacity
-                  className={`bg-accent rounded py-3 items-center mt-4 ${updateEntry.isPending ? 'opacity-50' : ''}`}
+                <Tactile
+                  className={`rounded py-3 items-center ${updateEntry.isPending ? 'opacity-50' : ''}`} containerClassName="mt-4"
                   onPress={saveMuscles}
                   disabled={updateEntry.isPending}
                 >
                   <Text className="text-accent-fg text-[11px] font-bold tracking-[2px]">
                     {updateEntry.isPending ? 'SAVING...' : 'SAVE MUSCLES'}
                   </Text>
-                </TouchableOpacity>
+                </Tactile>
               </View>
             ) : entry.muscles?.length ? (
               <TouchableOpacity onPress={startEditingMuscles}>
@@ -185,8 +192,38 @@ export default function ExerciseDetailScreen() {
           </View>
         )}
 
+        {/* Equipment */}
+        {entry && (
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-3">EQUIPMENT</Text>
+            <View className="flex-row flex-wrap gap-2">
+              {EQUIPMENT_OPTIONS.map((option) => {
+                const selected = entry.equipment === option;
+                return (
+                  <Tactile
+                    key={option}
+                    variant={selected ? 'accent' : 'elevated'}
+                    depth={3}
+                    className="rounded-sm px-3 py-2"
+                    onPress={() => pickEquipment(option)}
+                    disabled={updateEntry.isPending}
+                    accessibilityLabel={selected ? `${option}, selected, tap to clear` : `Set equipment to ${option}`}
+                  >
+                    <Text className={`text-[10px] font-bold tracking-[2px] ${selected ? 'text-accent-fg' : 'text-muted'}`}>
+                      {option.toUpperCase()}
+                    </Text>
+                  </Tactile>
+                );
+              })}
+            </View>
+            {entry.equipment === 'barbell' && (
+              <Text className="text-muted text-[11px] mt-3">The log screen shows the plates to load for each set.</Text>
+            )}
+          </View>
+        )}
+
         {/* Video */}
-        <View className="bg-surface rounded-md p-5 mb-2">
+        <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-muted text-[9px] tracking-[3px]">VIDEO</Text>
             <TouchableOpacity onPress={() => setEditingVideo(!editingVideo)}>
@@ -207,15 +244,15 @@ export default function ExerciseDetailScreen() {
                 autoFocus
                 keyboardAppearance="dark"
               />
-              <TouchableOpacity
-                className={`bg-accent rounded py-3 items-center ${isPending ? 'opacity-50' : ''}`}
+              <Tactile
+                className={`rounded py-3 items-center ${isPending ? 'opacity-50' : ''}`}
                 onPress={() => saveVideo(videoUrl, () => setEditingVideo(false))}
                 disabled={isPending}
               >
                 <Text className="text-accent-fg text-[11px] font-bold tracking-[2px]">
                   {isPending ? 'SAVING...' : 'SAVE VIDEO'}
                 </Text>
-              </TouchableOpacity>
+              </Tactile>
             </View>
           ) : videoId ? (
             <View className="rounded overflow-hidden">
@@ -234,7 +271,7 @@ export default function ExerciseDetailScreen() {
 
         {/* Statistics */}
         {progressLoading ? (
-          <View className="bg-surface rounded-md p-5 mb-2 items-center py-6">
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2 items-center py-6">
             <Text className="text-muted text-[10px] tracking-[3px]">LOADING...</Text>
           </View>
         ) : (
@@ -242,7 +279,7 @@ export default function ExerciseDetailScreen() {
         )}
 
         {/* Description */}
-        <View className="bg-surface rounded-md p-5 mb-2">
+        <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-muted text-[9px] tracking-[3px]">NOTES</Text>
             <TouchableOpacity onPress={() => setEditingDescription(!editingDescription)}>
@@ -264,15 +301,15 @@ export default function ExerciseDetailScreen() {
                 keyboardAppearance="dark"
                 style={{ textAlignVertical: 'top', minHeight: 90 }}
               />
-              <TouchableOpacity
-                className={`bg-accent rounded py-3 items-center ${isPending ? 'opacity-50' : ''}`}
+              <Tactile
+                className={`rounded py-3 items-center ${isPending ? 'opacity-50' : ''}`}
                 onPress={() => saveDescription(description, () => setEditingDescription(false))}
                 disabled={isPending}
               >
                 <Text className="text-accent-fg text-[11px] font-bold tracking-[2px]">
                   {isPending ? 'SAVING...' : 'SAVE NOTES'}
                 </Text>
-              </TouchableOpacity>
+              </Tactile>
             </View>
           ) : description ? (
             <TouchableOpacity onPress={() => setEditingDescription(true)}>
@@ -290,7 +327,7 @@ export default function ExerciseDetailScreen() {
         </View>
 
         {!timed && !progressLoading && (
-          <View className="bg-surface rounded-md p-5 mb-2">
+          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
             <Text className="text-muted text-[9px] tracking-[3px] mb-3">1RM CALCULATOR</Text>
             <OneRepMaxCalculator
               key={bestSet ? `${bestSet.weight}x${bestSet.reps}` : 'empty'}
@@ -302,7 +339,7 @@ export default function ExerciseDetailScreen() {
 
         {isLibraryView && (
           <TouchableOpacity
-            className={`bg-surface rounded-md py-5 mt-2 flex-row items-center justify-center gap-2 ${deleteEntry.isPending ? 'opacity-50' : ''}`}
+            className={`bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 mt-2 flex-row items-center justify-center gap-2 ${deleteEntry.isPending ? 'opacity-50' : ''}`}
             onPress={handleDelete}
             disabled={deleteEntry.isPending}
             activeOpacity={0.85}

@@ -28,6 +28,10 @@ public class AddExerciseLogRequest {
 
   private BigDecimal plannedWeight;
 
+  // Catalog vocabulary (barbell, dumbbell, ...); null leaves it unchanged, an empty string clears it
+  @Size(max = 30)
+  private String equipment;
+
   // Replaces the library entry's muscles when present
   private List<@Valid MuscleTargetDto> muscles;
 

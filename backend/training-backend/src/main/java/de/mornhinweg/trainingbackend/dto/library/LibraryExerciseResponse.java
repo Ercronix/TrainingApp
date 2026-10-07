@@ -12,6 +12,7 @@ public class LibraryExerciseResponse {
   private String videoUrl;
   private String videoId;
   private String repUnit;
+  private String equipment;
   private List<MuscleTargetDto> muscles;
   // Number of workouts (templates, not one-off session exercises) that use this entry
   private long workoutCount;

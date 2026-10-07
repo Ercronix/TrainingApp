@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
+import { Tactile } from '@/components/Tactile';
 import { useRestTimerStore } from '@/store/restTimerStore';
 
 /** Seconds left on the rest timer, re-rendering while it runs. */
@@ -44,83 +45,81 @@ export function RestCountdown() {
   );
 }
 
+const PRESET_MINUTES = [1, 2, 3, 5];
+
+/** Slim rest bar: countdown with play/pause and reset; tap it to pick the rest length. */
 export function RestTimer() {
   const { duration: customDuration, start, pause, reset, setDuration } = useRestTimerStore();
   const { seconds, isRunning } = useRestSeconds();
+  const [showPresets, setShowPresets] = useState(false);
   const c = useTheme();
-
-  const toggle = () => (isRunning ? pause() : start());
-
-  const setPreset = (mins: number) => setDuration(mins * 60);
 
   const isUrgent = seconds <= 10 && isRunning;
   const progress = ((customDuration - seconds) / customDuration) * 100;
 
-  const presets = [
-    { label: '1 MIN', mins: 1, secs: 60 },
-    { label: '2 MIN', mins: 2, secs: 120 },
-    { label: '3 MIN', mins: 3, secs: 180 },
-    { label: '5 MIN', mins: 5, secs: 300 },
-  ];
-
   return (
-    <View className="bg-surface rounded-md p-4">
-      <View className="flex-row items-center justify-between mb-3">
-        {/* Timer display */}
-        <View>
-          <Text className="text-muted text-[9px] tracking-[3px] mb-1">REST TIMER</Text>
-          <Text className={`text-[40px] font-mono-bold tracking-tighter leading-10 ${isUrgent ? 'text-danger' : 'text-primary'}`}>
-            {formatTime(seconds)}
-          </Text>
-        </View>
-
-        {/* Controls */}
-        <View className="flex-row gap-2">
-          <TouchableOpacity
-            className={`w-12 h-12 rounded-md justify-center items-center ${isRunning ? 'bg-elevated' : 'bg-accent'}`}
-            onPress={toggle}
-            activeOpacity={0.85}
-          >
-            <Ionicons
-              name={isRunning ? 'pause' : 'play'}
-              size={20}
-              color={isRunning ? c.muted : c.accentFg}
-            />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="w-12 h-12 rounded-md justify-center items-center bg-elevated"
-            onPress={reset}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="refresh" size={18} color={c.muted} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Progress bar */}
-      <View className="h-[3px] bg-base rounded-full overflow-hidden mb-3">
-        <View
-          className={`h-full rounded-full ${isUrgent ? 'bg-danger' : 'bg-accent'}`}
-          style={{ width: `${progress}%` }}
-        />
-      </View>
-
-      {/* Preset buttons */}
-      <View className="flex-row gap-2">
-        {presets.map(({ label, mins, secs }) => (
-          <TouchableOpacity
-            key={secs}
-            className={`flex-1 py-2 rounded-sm items-center ${customDuration === secs ? 'bg-accent' : 'bg-base'}`}
-            onPress={() => setPreset(mins)}
-            activeOpacity={0.85}
-          >
-            <Text className={`text-[10px] font-bold tracking-widest ${customDuration === secs ? 'text-accent-fg' : 'text-muted'}`}>
-              {label}
+    <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md">
+      <View className="flex-row items-center gap-2 pl-4 pr-2 py-2">
+        <TouchableOpacity
+          className="flex-1 gap-1.5 py-1"
+          onPress={() => setShowPresets((v) => !v)}
+          accessibilityLabel={`Rest timer ${formatTime(seconds)}, tap to change the rest length`}
+        >
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-1">
+              <Text className="text-muted text-[9px] tracking-[3px]">REST · {customDuration / 60} MIN</Text>
+              <Ionicons name={showPresets ? 'chevron-down' : 'chevron-up'} size={12} color={c.muted} />
+            </View>
+            <Text className={`text-xl font-mono-bold ${isUrgent ? 'text-danger' : isRunning ? 'text-info' : 'text-primary'}`}>
+              {formatTime(seconds)}
             </Text>
-          </TouchableOpacity>
-        ))}
+          </View>
+          <View className="h-[3px] bg-base rounded-full overflow-hidden">
+            <View className={`h-full rounded-full ${isUrgent ? 'bg-danger' : 'bg-info'}`} style={{ width: `${progress}%` }} />
+          </View>
+        </TouchableOpacity>
+        <Tactile
+          variant={isRunning ? 'elevated' : 'accent'}
+          depth={3}
+          className="w-11 h-11 rounded-sm justify-center items-center"
+          onPress={() => (isRunning ? pause() : start())}
+          accessibilityLabel={isRunning ? 'Pause rest timer' : 'Start rest timer'}
+        >
+          <Ionicons name={isRunning ? 'pause' : 'play'} size={18} color={isRunning ? c.primary : c.accentFg} />
+        </Tactile>
+        <Tactile
+          variant="elevated"
+          depth={3}
+          className="w-11 h-11 rounded-sm justify-center items-center"
+          onPress={reset}
+          accessibilityLabel="Reset rest timer"
+        >
+          <Ionicons name="refresh" size={16} color={c.muted} />
+        </Tactile>
       </View>
+
+      {showPresets && (
+        <View className="flex-row gap-2 px-2 pb-2">
+          {PRESET_MINUTES.map((mins) => {
+            const selected = customDuration === mins * 60;
+            return (
+              <TouchableOpacity
+                key={mins}
+                className={`flex-1 py-2.5 rounded-sm items-center ${selected ? 'bg-accent' : 'bg-base'}`}
+                onPress={() => {
+                  setDuration(mins * 60);
+                  setShowPresets(false);
+                }}
+                activeOpacity={0.85}
+              >
+                <Text className={`text-[10px] font-bold tracking-widest ${selected ? 'text-accent-fg' : 'text-muted'}`}>
+                  {mins} MIN
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }

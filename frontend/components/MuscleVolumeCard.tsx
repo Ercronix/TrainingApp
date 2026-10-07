@@ -47,7 +47,7 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
   const hasTagged = library.some((e) => e.muscles?.length);
 
   return (
-    <View className="mx-4 mb-3 bg-surface rounded-md p-5">
+    <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
       <View className="flex-row justify-between items-center mb-1">
         <Text className="text-muted text-[9px] tracking-[3px]">WEEKLY SETS PER MUSCLE</Text>
         <Text className="text-accent-text text-[10px] font-mono-bold">

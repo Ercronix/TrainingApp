@@ -12,6 +12,7 @@ import { MuscleSummary } from '@/components/MusclePicker';
 import { useCatalog } from '@/hooks/useCatalog';
 import { CatalogExercise } from '@/types';
 
+import { Tactile } from '@/components/Tactile';
 export default function AddExerciseScreen() {
   const { trainingLogId } = useLocalSearchParams<{ trainingLogId: string }>();
   const router = useRouter();
@@ -35,7 +36,8 @@ export default function AddExerciseScreen() {
   const { catalog } = useCatalog();
   // A picked catalog exercise brings its muscles along, as long as the name isn't edited again
   const [catalogPick, setCatalogPick] = useState<CatalogExercise | null>(null);
-  const catalogMuscles = !libraryMatch && catalogPick?.name === form.name.trim() ? catalogPick.muscles : undefined;
+  const fromCatalog = !libraryMatch && catalogPick?.name === form.name.trim() ? catalogPick : null;
+  const catalogMuscles = fromCatalog?.muscles;
 
   if (!trainingLogId) {
     return (
@@ -59,6 +61,7 @@ export default function AddExerciseScreen() {
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
+      equipment: fromCatalog?.equipment ?? undefined,
       muscles: catalogMuscles,
       addToWorkout,
     }, libraryMatch?.name ?? form.name.trim());
@@ -178,15 +181,15 @@ export default function AddExerciseScreen() {
           editable={!isPending}
         />
 
-        <TouchableOpacity
-          className={`bg-accent rounded-md py-4 flex-row items-center justify-center gap-2 mb-10 ${isPending ? 'opacity-50' : ''}`}
+        <Tactile
+          className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${isPending ? 'opacity-50' : ''}`} containerClassName="mb-10"
           onPress={handleAdd}
           disabled={isPending}
           activeOpacity={0.85}
         >
           <Ionicons name="add" size={18} color={c.accentFg} />
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">{isPending ? 'ADDING...' : 'ADD EXERCISE'}</Text>
-        </TouchableOpacity>
+        </Tactile>
       </ScrollView>
       </KeyboardAvoidingView>
     </View>

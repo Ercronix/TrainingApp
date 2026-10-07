@@ -23,7 +23,7 @@ export default function LibraryScreen() {
 
   const renderItem = ({ item }: { item: LibraryExercise }) => (
     <TouchableOpacity
-      className="bg-surface rounded-md px-5 py-4 mb-2 flex-row items-center gap-3"
+      className="bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4 mb-2 flex-row items-center gap-3"
       onPress={() =>
         router.push({
           pathname: '/exercise-detail' as any,
@@ -65,7 +65,7 @@ export default function LibraryScreen() {
 
       {untaggedCount > 0 && !isLoading && (
         <TouchableOpacity
-          className="mx-4 mb-3 bg-surface rounded-md px-5 py-4 flex-row items-center gap-3"
+          className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4 flex-row items-center gap-3"
           onPress={() => router.push('/assign-muscles' as any)}
           activeOpacity={0.85}
         >

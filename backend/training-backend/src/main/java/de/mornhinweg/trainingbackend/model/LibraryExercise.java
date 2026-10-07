@@ -45,6 +45,10 @@ public class LibraryExercise {
   @Builder.Default
   private String repUnit = "reps";
 
+  // Catalog vocabulary (barbell, dumbbell, cable, ...); null when unknown
+  @Column(length = 30)
+  private String equipment;
+
   @ElementCollection
   @CollectionTable(name = "library_exercise_muscles", joinColumns = @JoinColumn(name = "library_exercise_id"))
   @BatchSize(size = 100)

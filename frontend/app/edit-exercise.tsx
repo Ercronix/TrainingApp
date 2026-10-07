@@ -5,6 +5,7 @@ import { useEditExercise } from '@/hooks/useEditExercise';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 
+import { Tactile } from '@/components/Tactile';
 export default function EditExerciseModal() {
   const { workoutId, exerciseId, currentName, currentSets, currentReps, currentWeight, currentRepUnit } =
     useLocalSearchParams<{
@@ -107,8 +108,8 @@ export default function EditExerciseModal() {
           editable={!isPending}
         />
 
-        <TouchableOpacity
-          className={`bg-accent rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
+        <Tactile
+          className={`rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
           onPress={() => save(form, repUnit === initialRepUnit ? undefined : repUnit)}
           disabled={isPending}
           activeOpacity={0.85}
@@ -116,7 +117,7 @@ export default function EditExerciseModal() {
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
             {isPending ? 'SAVING...' : 'SAVE CHANGES'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       </ScrollView>
       </KeyboardAvoidingView>
     </View>

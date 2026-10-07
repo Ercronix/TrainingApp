@@ -7,6 +7,7 @@ import { useTheme } from '@/hooks/useTheme';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 import { alert } from '@/utils/confirm';
 
+import { Tactile } from '@/components/Tactile';
 export default function CreateSplitModal() {
   const [name, setName] = useState('');
   const router = useRouter();
@@ -41,8 +42,8 @@ export default function CreateSplitModal() {
           editable={!isCreating}
         />
 
-        <TouchableOpacity
-          className={`bg-accent rounded-md py-5 items-center ${isCreating ? 'opacity-50' : ''}`}
+        <Tactile
+          className={`rounded-md py-5 items-center ${isCreating ? 'opacity-50' : ''}`}
           onPress={() => {
             if (!name.trim()) { alert('Error', 'Please enter a name'); return; }
             createSplit.mutate(name.trim(), { onSuccess: () => router.back() });
@@ -53,7 +54,7 @@ export default function CreateSplitModal() {
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
             {isCreating ? 'CREATING...' : 'CREATE SPLIT'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       </View>
       </KeyboardAvoidingWrapper>
     </View>

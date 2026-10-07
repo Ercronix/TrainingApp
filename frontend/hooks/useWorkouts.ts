@@ -10,6 +10,8 @@ export function useWorkouts(splitId: string) {
   const workoutsQuery = useQuery({
     queryKey: QUERY_KEYS.workouts(splitId),
     queryFn: () => workoutsApi.getBySplit(Number(splitId)),
+    // The home tab has no split to load while none is active
+    enabled: !!splitId,
   });
 
   const createWorkout = useMutation({

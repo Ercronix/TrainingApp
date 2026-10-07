@@ -14,6 +14,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -202,6 +203,23 @@ class LibraryExerciseControllerTest {
 
     perform(token, put("/api/library-exercises/" + libraryId), "{\"muscles\":[]}")
         .andExpect(jsonPath("$.muscles", hasSize(0)));
+  }
+
+  @Test
+  void equipmentCanBeSetAndCleared() throws Exception {
+    long libraryId = libraryId(createExercise(workoutA, "{\"name\":\"Squat\",\"equipment\":\" Barbell \"}"));
+
+    // Stored trimmed and in lower case, like the catalog
+    perform(token, get("/api/library-exercises"), null)
+        .andExpect(jsonPath("$[0].equipment").value("barbell"));
+
+    // Other updates leave it alone
+    perform(token, put("/api/library-exercises/" + libraryId), "{\"description\":\"Deep\"}")
+        .andExpect(jsonPath("$.equipment").value("barbell"));
+
+    perform(token, put("/api/library-exercises/" + libraryId), "{\"equipment\":\"\"}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.equipment").value(nullValue()));
   }
 
   @Test

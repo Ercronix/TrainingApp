@@ -13,6 +13,7 @@ import { useCatalog } from '@/hooks/useCatalog';
 import { sameMuscles } from '@/utils/muscles';
 import { CatalogExercise, LibraryExercise, MuscleTarget } from '@/types';
 
+import { Tactile } from '@/components/Tactile';
 export default function CreateExerciseModal() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const router = useRouter();
@@ -87,6 +88,8 @@ export default function CreateExerciseModal() {
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       videoUrl: form.videoUrl.trim() || null,
       description: form.description.trim() || null,
+      // A picked catalog exercise brings its equipment, as long as the name isn't edited again
+      equipment: !libraryMatch && catalogPick?.name === form.name.trim() ? catalogPick.equipment ?? undefined : undefined,
       // Muscles are shared by the library entry, so they are only sent when changed
       muscles: sameMuscles(muscles, libraryMatch?.muscles ?? []) ? undefined : muscles,
     }, { onSuccess: () => router.back() });
@@ -220,8 +223,8 @@ export default function CreateExerciseModal() {
           style={{ textAlignVertical: 'top', minHeight: 80 }}
         />
 
-        <TouchableOpacity
-          className={`bg-accent rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
+        <Tactile
+          className={`rounded-md py-5 items-center ${isPending ? 'opacity-50' : ''}`}
           onPress={handleCreate}
           disabled={isPending}
           activeOpacity={0.85}
@@ -229,7 +232,7 @@ export default function CreateExerciseModal() {
           <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
             {isPending ? 'ADDING...' : 'ADD EXERCISE'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       </ScrollView>
       </KeyboardAvoidingView>
     </View>

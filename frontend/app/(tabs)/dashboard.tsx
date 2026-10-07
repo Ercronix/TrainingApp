@@ -1,14 +1,18 @@
 import { View, Text, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useDashboard, formatDuration as formatSeconds, parseLocalDate, weekdayName } from '@/hooks/useDashboard';
-import { useState } from 'react';
+import { useDashboard, parseLocalDate, weekdayName } from '@/hooks/useDashboard';
+import { useMemo, useState } from 'react';
 import { useTheme } from '@/hooks/useTheme';
+import { Tactile } from '@/components/Tactile';
 import { useLibrary } from '@/hooks/useLibrary';
 import { BarChart } from '@/components/charts/BarChart';
 import { MuscleVolumeCard } from '@/components/MuscleVolumeCard';
 import { formatKg } from '@/utils/strength';
-import { ExerciseTrend, formatDuration, formatNumber, formatSigned } from '@/utils/stats';
+import {
+  ExerciseTrend, PeriodTotals, RecentRecord, StatsRange, formatDuration, formatNumber, formatSigned, summarizePeriods,
+} from '@/utils/stats';
+import { formatDaysAgo } from '@/utils/dates';
 
 type WeeklyMetric = 'volume' | 'sessions' | 'minutes' | 'sets';
 
@@ -21,12 +25,39 @@ const WEEKLY_METRICS: { id: WeeklyMetric; label: string; format: (v: number) => 
 
 const WEEKDAYS = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
 const TRENDS_COLLAPSED = 5;
+const RECORDS_SHOWN = 5;
+
+/** Compact numbers for the tiles: 12.4k instead of 12,438. */
+function formatCompact(value: number): string {
+  if (value >= 10_000) return `${(value / 1000).toFixed(value >= 100_000 ? 0 : 1)}k`;
+  return formatNumber(Math.round(value));
+}
+
+/** "+1", "−8%", "+25m" against the previous period; null when there's nothing to compare with. */
+function formatDelta(current: number, previous: number, kind: 'count' | 'percent' | 'minutes'): { text: string; up: boolean } | null {
+  const diff = current - previous;
+  if (Math.abs(diff) < 0.5) return { text: '±0', up: true };
+  const sign = diff > 0 ? '+' : '−';
+  if (kind === 'percent') {
+    if (previous <= 0) return null;
+    return { text: `${sign}${Math.round(Math.abs(diff / previous) * 100)}%`, up: diff > 0 };
+  }
+  if (kind === 'minutes') return { text: `${sign}${formatDuration(Math.abs(diff))}`, up: diff > 0 };
+  return { text: `${sign}${Math.round(Math.abs(diff))}`, up: diff > 0 };
+}
+
+function describeRecord(r: RecentRecord): { value: string; gain: string } {
+  const gain = r.value - r.previous;
+  if (r.kind === 'weighted') return { value: `${formatKg(r.value)} kg`, gain: `+${formatKg(gain)} kg` };
+  if (r.kind === 'timed') return { value: `${r.value} s`, gain: `+${gain} s` };
+  return { value: `${r.value} reps`, gain: `+${gain}` };
+}
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { stats, analytics, history, isLoading, isRefetching, refetch } = useDashboard();
   const { library } = useLibrary();
-  const [timeRange, setTimeRange] = useState<'week' | 'month' | 'year'>('week');
+  const [timeRange, setTimeRange] = useState<StatsRange>('week');
   const [weeklyMetric, setWeeklyMetric] = useState<WeeklyMetric>('volume');
   const [showAllTrends, setShowAllTrends] = useState(false);
   const c = useTheme();
@@ -49,6 +80,11 @@ export default function DashboardScreen() {
   const finished = analytics.weeks.slice(0, -1);
   const weeklyAverage = finished.reduce((sum, w) => sum + w[weeklyMetric], 0) / (finished.length || 1);
   const { lifetime } = analytics;
+  const period = useMemo(() => summarizePeriods(history, timeRange), [history, timeRange]);
+  const tile = (key: keyof PeriodTotals) => ({
+    values: period.recent.map((t) => t[key]),
+    delta: formatDelta(period.current[key], period.previousToDate[key], key === 'volume' ? 'percent' : key === 'minutes' ? 'minutes' : 'count'),
+  });
   const trends = showAllTrends ? analytics.trends : analytics.trends.slice(0, TRENDS_COLLAPSED);
 
   const openTrend = (t: ExerciseTrend) => {
@@ -78,95 +114,102 @@ export default function DashboardScreen() {
       contentContainerStyle={{ paddingBottom: 140 }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
     >
-      {/* Header */}
-      <View className="px-6 pt-16 pb-6">
-        <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">OVERVIEW</Text>
-        <Text className="text-primary text-[40px] font-bold leading-[42px] tracking-tighter">
-          PERFORMANCE{'\n'}STATS
-        </Text>
+      {/* Header, with the range switch beside it */}
+      <View className="flex-row items-end justify-between px-5 pt-16 pb-4">
+        <View>
+          <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">OVERVIEW</Text>
+          <Text className="text-primary text-[34px] font-bold tracking-tighter leading-9">Stats</Text>
+        </View>
+        <View className="flex-row gap-1.5">
+          {(['week', 'month', 'year'] as const).map((range) => (
+            <Tactile
+              key={range}
+              variant={timeRange === range ? 'accent' : 'elevated'}
+              depth={3}
+              className="h-9 px-3 rounded-sm justify-center"
+              onPress={() => setTimeRange(range)}
+              accessibilityLabel={`Show this ${range}`}
+              accessibilityState={{ selected: timeRange === range }}
+            >
+              <Text className={`text-[11px] font-bold tracking-widest ${timeRange === range ? 'text-accent-fg' : 'text-muted'}`}>
+                {range.toUpperCase()}
+              </Text>
+            </Tactile>
+          ))}
+        </View>
       </View>
 
-      {/* Streak Card */}
-      <View className="mx-4 mb-3 bg-surface rounded-md p-6">
-        <View className="flex-row justify-between items-start mb-5">
-          <View>
-            <Text className="text-muted text-[10px] tracking-[3px] mb-1">CURRENT STREAK</Text>
-            <View className="flex-row items-end gap-2">
-              <Text className="text-primary text-[64px] font-mono-bold leading-[68px] tracking-tighter">
-                {stats.streak.current}
-              </Text>
-              <Text className="text-muted text-xs tracking-widest mb-2">DAYS</Text>
-            </View>
-          </View>
-          <Ionicons name="flame" size={48} color={c.danger} />
+      {/* Streak in one row */}
+      <View className="mx-4 mb-2 bg-surface border-2 border-edge border-b-[6px] rounded-md px-4 py-3.5 flex-row items-center gap-3">
+        <Ionicons name="flame" size={26} color={stats.streak.current > 0 ? c.danger : c.subtle} />
+        <View className="flex-1">
+          <Text className="text-primary text-lg font-bold">
+            <Text className="font-mono-bold">{stats.streak.current}</Text> day streak
+          </Text>
+          <Text className="text-muted text-xs">
+            {stats.streak.longest > stats.streak.current ? `Best ${stats.streak.longest} days` : stats.streak.current > 0 ? 'Your best yet' : 'Train today to start one'}
+          </Text>
         </View>
+        <View className="flex-row gap-1">
+          {stats.streak.last7Days.map((day) => (
+            <View
+              key={day.date}
+              className={`w-1.5 h-6 rounded-full ${day.trained ? 'bg-danger' : 'bg-elevated'}`}
+              accessibilityLabel={`${parseLocalDate(day.date).toLocaleDateString(undefined, { weekday: 'long' })}${day.trained ? ', trained' : ''}`}
+            />
+          ))}
+        </View>
+      </View>
 
-        {/* Week grid */}
-        <View className="flex-row justify-between">
-          {stats.streak.last7Days.map((day) => {
-            const label = parseLocalDate(day.date).toLocaleDateString(undefined, { weekday: 'short' }).charAt(0).toUpperCase();
+      {/* Tiles: this period, against the previous one up to the same point */}
+      <View className="mx-4 mb-1 gap-2">
+        <View className="flex-row gap-2">
+          <StatTile label="SESSIONS" textClass="text-accent-text" barClass="bg-accent" value={String(period.current.sessions)} {...tile('sessions')} />
+          <StatTile label="VOLUME · KG" textClass="text-info" barClass="bg-info" value={formatCompact(period.current.volume)} {...tile('volume')} />
+        </View>
+        <View className="flex-row gap-2">
+          <StatTile label="TIME TRAINED" textClass="text-danger" barClass="bg-danger" value={formatDuration(period.current.minutes)} {...tile('minutes')} />
+          <StatTile label="SETS" textClass="text-primary" barClass="bg-primary" value={String(period.current.sets)} {...tile('sets')} />
+        </View>
+      </View>
+      <Text className="text-muted text-[10px] mx-5 mb-3">Changes compare with last {timeRange} up to the same point.</Text>
+
+      {/* Records from the last 30 days */}
+      {analytics.recentRecords.length > 0 && (
+        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 gap-3">
+          <Text className="text-muted text-[9px] tracking-[3px]">NEW RECORDS · LAST 30 DAYS</Text>
+          {analytics.recentRecords.slice(0, RECORDS_SHOWN).map((record) => {
+            const { value, gain } = describeRecord(record);
+            const trend = analytics.trends.find((t) => t.libraryExerciseId === record.libraryExerciseId);
             return (
-              <View key={day.date} className="items-center gap-1">
-                <Text className="text-muted text-[10px] tracking-widest">{label}</Text>
-                <View className={`w-8 h-8 rounded-full items-center justify-center ${day.trained ? 'bg-accent' : 'bg-elevated'}`}>
-                  {day.trained && <Ionicons name="checkmark" size={12} color={c.accentFg} />}
+              <TouchableOpacity
+                key={record.libraryExerciseId}
+                className="flex-row items-center gap-3"
+                onPress={() => trend && openTrend(trend)}
+                disabled={!trend}
+                activeOpacity={0.7}
+              >
+                <View className="w-9 h-9 rounded-sm bg-accent-muted justify-center items-center">
+                  <Ionicons name="trophy-outline" size={16} color={c.accent} />
                 </View>
-              </View>
+                <View className="flex-1">
+                  <Text className="text-primary text-sm font-bold" numberOfLines={1}>{record.name}</Text>
+                  <Text className="text-muted text-[11px]">{formatDaysAgo(record.date)}</Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-primary text-sm font-mono-bold">{value}</Text>
+                  <Text className="text-accent-text text-[11px]">{gain}</Text>
+                </View>
+              </TouchableOpacity>
             );
           })}
         </View>
-
-        {stats.streak.longest > stats.streak.current && (
-          <Text className="text-muted text-xs mt-4">Best: {stats.streak.longest} days</Text>
-        )}
-      </View>
-
-      {/* Time Range Toggle */}
-      <View className="flex-row mx-4 mb-3 bg-surface rounded-md p-1">
-        {(['week', 'month', 'year'] as const).map((range) => (
-          <TouchableOpacity
-            key={range}
-            className={`flex-1 py-2.5 rounded-sm items-center ${timeRange === range ? 'bg-accent' : ''}`}
-            onPress={() => setTimeRange(range)}
-          >
-            <Text className={`text-[11px] font-bold tracking-widest ${timeRange === range ? 'text-accent-fg' : 'text-muted'}`}>
-              {range.toUpperCase()}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Stats Grid */}
-      <View className="flex-row flex-wrap mx-3 mb-3 gap-1">
-        <View className="bg-surface rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
-          <Ionicons name="barbell-outline" size={20} color={c.accent} />
-          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.sessions[timeRange]}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">SESSIONS</Text>
-        </View>
-
-        <View className="bg-elevated rounded-md p-5 gap-1.5" style={{ width: '48.5%' }}>
-          <Ionicons name="fitness-outline" size={20} color={c.info} />
-          <Text className="text-info text-[28px] font-mono-bold tracking-tighter">{stats.volume[timeRange]}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">KG VOLUME</Text>
-        </View>
-
-        <View className="bg-surface rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
-          <Ionicons name="time-outline" size={20} color={c.danger} />
-          <Text className="text-danger text-[28px] font-mono-bold tracking-tighter">{formatSeconds(stats.durationSeconds[timeRange])}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">TIME TRAINED</Text>
-        </View>
-
-        <View className="bg-elevated rounded-md p-5 gap-1.5 mt-1" style={{ width: '48.5%' }}>
-          <Ionicons name="trending-up-outline" size={20} color={c.accent} />
-          <Text className="text-accent-text text-[28px] font-mono-bold tracking-tighter">{stats.averageVolume[timeRange]}</Text>
-          <Text className="text-muted text-[9px] tracking-[2px]">AVG / SESSION</Text>
-        </View>
-      </View>
+      )}
 
       {/* Last Session */}
       {lastSession && (
         <TouchableOpacity
-          className="mx-4 mb-3 bg-surface rounded-md p-5"
+          className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5"
           onPress={() =>
             router.push({ pathname: '/history-detail', params: { trainingLogId: lastSession.id.toString() } })
           }
@@ -190,7 +233,7 @@ export default function DashboardScreen() {
       )}
 
       {/* Weekly trend */}
-      <View className="mx-4 mb-3 bg-surface rounded-md p-5">
+      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
         <View className="flex-row justify-between items-center mb-3">
           <Text className="text-muted text-[9px] tracking-[3px]">LAST 12 WEEKS</Text>
           {weeklyMetric === 'volume' && analytics.volumeChangePct != null && (
@@ -226,7 +269,7 @@ export default function DashboardScreen() {
 
       {/* Lifetime numbers */}
       {lifetime.sessions > 0 && (
-        <View className="mx-4 mb-3 bg-surface rounded-md p-5">
+        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-4">
             BY THE NUMBERS{lifetime.firstDate
               ? ` · SINCE ${new Date(lifetime.firstDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase()}`
@@ -251,7 +294,7 @@ export default function DashboardScreen() {
 
       {/* Strength trends */}
       {analytics.trends.length > 0 && (
-        <View className="mx-4 mb-3 bg-surface rounded-md p-5">
+        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-1">STRENGTH TRENDS</Text>
           <Text className="text-muted text-[10px] mb-3">
             Top weight (reps or seconds for bodyweight and timed work) and its 90-day trend
@@ -293,7 +336,7 @@ export default function DashboardScreen() {
 
       {/* Weekday distribution */}
       {lifetime.sessions > 0 && (
-        <View className="mx-4 mb-3 bg-surface rounded-md p-5">
+        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-3">
             SESSIONS BY WEEKDAY{stats.mostActiveDay ? ` · MOST ACTIVE: ${weekdayName(stats.mostActiveDay).toUpperCase()}` : ''}
           </Text>
@@ -312,7 +355,7 @@ export default function DashboardScreen() {
 
       {/* Tools */}
       <TouchableOpacity
-        className="mx-4 mb-10 bg-surface rounded-md p-5 flex-row items-center gap-3"
+        className="mx-4 mb-10 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 flex-row items-center gap-3"
         onPress={() => router.push('/one-rep-max' as any)}
         activeOpacity={0.85}
       >
@@ -338,6 +381,41 @@ function NumberCell({ value, label, accent }: { value: string; label: string; ac
         {value}
       </Text>
       <Text className="text-muted text-[8px] tracking-[1.5px] mt-0.5">{label}</Text>
+    </View>
+  );
+}
+
+interface StatTileProps {
+  label: string;
+  value: string;
+  textClass: string;
+  barClass: string;
+  /** Recent periods, oldest first; the last is the running one. */
+  values: number[];
+  delta: { text: string; up: boolean } | null;
+}
+
+/** One of the equal-sized tiles in the stats grid: value, change and a small trend. */
+function StatTile({ label, value, textClass, barClass, values, delta }: StatTileProps) {
+  const max = Math.max(...values, 1);
+  return (
+    <View className="flex-1 bg-surface border-2 border-edge border-b-[6px] rounded-md px-4 py-3.5 gap-1">
+      <Text className="text-muted text-[9px] tracking-[2px]" numberOfLines={1}>{label}</Text>
+      <Text className={`${textClass} text-[28px] font-mono-bold tracking-tighter`} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Text>
+      <View className="flex-row items-end justify-between">
+        <Text className={`text-[11px] ${delta?.up ? 'text-accent-text' : 'text-muted'}`}>{delta ? delta.text : '—'}</Text>
+        <View className="flex-row items-end gap-0.5 h-5" accessible={false}>
+          {values.map((v, i) => (
+            <View
+              key={i}
+              className={`w-1 rounded-sm ${i === values.length - 1 ? barClass : 'bg-elevated'}`}
+              style={{ height: `${Math.max(8, (v / max) * 100)}%` }}
+            />
+          ))}
+        </View>
+      </View>
     </View>
   );
 }

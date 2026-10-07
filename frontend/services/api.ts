@@ -303,6 +303,7 @@ export const trainingLogsApi = {
       sets?: number | null;
       reps?: number | null;
       plannedWeight?: number | null;
+      equipment?: string;
       muscles?: MuscleTarget[];
       addToWorkout: boolean;
     },

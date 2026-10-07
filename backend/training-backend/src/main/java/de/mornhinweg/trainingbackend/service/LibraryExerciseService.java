@@ -27,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -64,6 +65,7 @@ public class LibraryExerciseService {
         .videoId(request.getVideoId())
         .repUnit(request.getRepUnit() != null ? request.getRepUnit() : "reps")
         .build();
+    applyEquipment(entry, request.getEquipment());
     applyMuscles(entry, request.getMuscles());
     return toResponse(libraryExerciseRepository.save(entry), null);
   }
@@ -74,6 +76,7 @@ public class LibraryExerciseService {
     LibraryExercise entry = getOwnedEntry(id, user);
     if (request.getName() != null) rename(entry, request.getName());
     applyDetails(entry, request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
+    applyEquipment(entry, request.getEquipment());
     applyMuscles(entry, request.getMuscles());
     entry = libraryExerciseRepository.save(entry);
     List<Object[]> usage = exerciseRepository.findUsageByLibraryExerciseId(entry.getId());
@@ -138,6 +141,7 @@ public class LibraryExerciseService {
               .videoUrl(current.getVideoUrl())
               .videoId(current.getVideoId())
               .repUnit(current.getRepUnit())
+              .equipment(current.getEquipment())
               .muscles(new HashSet<>(current.getMuscles()))
               .build());
         });
@@ -163,6 +167,13 @@ public class LibraryExerciseService {
     if (videoUrl != null) entry.setVideoUrl(videoUrl);
     if (videoId != null) entry.setVideoId(videoId);
     if (repUnit != null) entry.setRepUnit(repUnit);
+  }
+
+  /** Sets the entry's equipment unless {@code equipment} is null; an empty string clears it. */
+  void applyEquipment(LibraryExercise entry, String equipment) {
+    if (equipment == null) return;
+    String trimmed = equipment.trim().toLowerCase(Locale.ROOT);
+    entry.setEquipment(trimmed.isEmpty() ? null : trimmed);
   }
 
   /** Replaces the entry's muscles unless {@code muscles} is null. Each muscle may appear once. */
@@ -227,6 +238,7 @@ public class LibraryExerciseService {
         .videoUrl(entry.getVideoUrl())
         .videoId(entry.getVideoId())
         .repUnit(entry.getRepUnit())
+        .equipment(entry.getEquipment())
         .muscles(MuscleTargetDto.fromAll(entry.getMuscles()))
         .workoutCount(usage != null ? ((Number) usage[1]).longValue() : 0)
         .lastTrainedAt(usage != null ? (LocalDateTime) usage[2] : null)

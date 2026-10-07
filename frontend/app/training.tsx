@@ -7,9 +7,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
 import { useRestTimerStore } from '@/store/restTimerStore';
+import { useSetDraftStore } from '@/store/setDraftStore';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { Tactile } from '@/components/Tactile';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
@@ -84,6 +86,7 @@ export default function TrainingScreen() {
     const finish = (message: string) => {
       // Don't leave a rest timer running (and notifying) after the session ends
       useRestTimerStore.getState().reset();
+      useSetDraftStore.getState().clearDrafts((training?.exercises ?? []).map((e: ExerciseLog) => String(e.id)));
       alert('Done!', records.length > 0 ? `${message}\n\nNew records:\n${records.join('\n')}` : message);
       router.replace('/(tabs)');
     };
@@ -104,94 +107,82 @@ export default function TrainingScreen() {
     }
   };
 
+  const openLog = (item: ExerciseLog) =>
+    router.push({
+      pathname: '/log-exercise' as any,
+      // The modal reads the log (sets, plan, previous session) from the training query
+      params: { exerciseLogId: item.id.toString(), exerciseName: item.exerciseName, trainingLogId },
+    });
+
+  // The exercise to do now: the first one not done yet
+  const currentId = orderedExercises.find((e) => !e.completed && e.id >= 0)?.id;
+
   const renderExerciseItem = ({ item }: { item: ExerciseLog }) => {
     // Added while offline (or still being saved): no server id yet, so it can't be opened or logged
     const syncing = item.id < 0;
     const isRecord = item.completed && personalRecordOf(item) != null;
+    const isCurrent = item.id === currentId;
+    const logged = setsOf(item).length;
+    const planned = item.plannedSets ?? 0;
+    const unit = item.repUnit === 'seconds' ? 'sec' : 'reps';
+    const previous = previousSetsOf(item);
     return (
-      <View className={`rounded-md mb-2 flex-row overflow-hidden relative ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${syncing ? 'opacity-50' : ''}`}>
-        {/* Done stripe */}
-        {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent" />}
-
-        {/* Main tap area */}
+      <View
+        className={`rounded-md mb-2 flex-row items-center overflow-hidden border-2 border-b-[6px] ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
+      >
+        {/* The whole row opens the log screen */}
         <TouchableOpacity
-          className="flex-1 px-5 py-4 flex-row items-center gap-2"
-          onPress={() =>
-            router.push({
-              pathname: '/exercise-detail' as any,
-              params: {
-                exerciseId: item.exerciseId?.toString() ?? '', exerciseName: item.exerciseName,
-                libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
-                description: '', videoUrl: '',
-                sets: item.plannedSets?.toString() || '', reps: item.plannedReps?.toString() || '',
-                weight: item.plannedWeight?.toString() || '', workoutId: item.workoutId?.toString() ?? '',
-              },
-            })
-          }
+          className="flex-1 pl-4 pr-2 py-4 gap-1"
+          onPress={() => openLog(item)}
           activeOpacity={0.85}
           disabled={syncing}
+          accessibilityLabel={`Log ${item.exerciseName}`}
         >
-          <View className="flex-1">
-            <Text className="text-primary text-base font-bold tracking-tight mb-1">
+          {isCurrent && <Text className="text-accent-text text-[9px] tracking-[3px]">NOW</Text>}
+          <View className="flex-row items-center gap-2">
+            <Text className="text-primary text-base font-bold tracking-tight flex-shrink" numberOfLines={1}>
               {item.exerciseName}
             </Text>
-            {item.plannedSets && item.plannedReps && (
-              <Text className="text-muted text-xs">
-                {item.plannedSets} × {item.plannedReps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
-              </Text>
-            )}
-            {!item.completed && previousSetsOf(item).length > 0 && (
-              <Text className="text-subtle text-[11px] mt-1">
-                Last: {formatSets(previousSetsOf(item), item.repUnit)}
-              </Text>
-            )}
-            {item.completed && (
-              <View className="flex-row items-center gap-2 mt-1">
-                <Text className="text-accent-text text-[11px]">
-                  {formatSets(setsOf(item), item.repUnit)}
-                </Text>
-                {isRecord && (
-                  <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
-                    <Ionicons name="trophy" size={10} color={c.accentFg} />
-                    <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
-                  </View>
-                )}
+            {isRecord && (
+              <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
+                <Ionicons name="trophy" size={10} color={c.accentFg} />
+                <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
               </View>
             )}
-            {syncing && (
-              <Text className="text-muted text-[10px] tracking-[2px] mt-1">SYNCING…</Text>
-            )}
           </View>
-          <Ionicons name="information-circle-outline" size={18} color={c.muted} />
+          {item.completed || logged > 0 ? (
+            <Text className={`text-xs font-mono ${item.completed ? 'text-accent-text' : 'text-primary'}`} numberOfLines={1}>
+              {formatSets(setsOf(item), item.repUnit)}
+            </Text>
+          ) : (
+            <Text className="text-muted text-xs" numberOfLines={1}>
+              {item.plannedSets && item.plannedReps
+                ? `${item.plannedSets} × ${item.plannedReps} ${unit}${item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}`
+                : 'No plan'}
+              {previous.length > 0 ? ` · last ${formatSets(previous, item.repUnit)}` : ''}
+            </Text>
+          )}
+          {/* Sets logged so far against the plan */}
+          {!item.completed && planned > 0 && (
+            <View className="flex-row gap-1 mt-1">
+              {Array.from({ length: Math.max(planned, logged) }, (_, i) => (
+                <View key={i} className={`w-2 h-2 rounded-full ${i < logged ? 'bg-accent' : 'bg-elevated'}`} />
+              ))}
+            </View>
+          )}
+          {syncing && <Text className="text-muted text-[10px] tracking-[2px]">SYNCING…</Text>}
         </TouchableOpacity>
 
-        {/* Toggle */}
+        {/* Tick off without opening it (records the plan when nothing is logged) */}
         <TouchableOpacity
-          className={`w-14 justify-center items-center ${item.completed ? 'bg-surface-done' : 'bg-base'}`}
+          className="w-14 self-stretch justify-center items-center"
           onPress={() => toggleExercise(item)}
           disabled={syncing}
+          accessibilityLabel={item.completed ? `Mark ${item.exerciseName} as not done` : `Mark ${item.exerciseName} as done`}
         >
-          <View className={`w-6 h-6 rounded-full justify-center items-center ${item.completed ? 'bg-accent' : 'border-2 border-elevated'}`}>
-            {item.completed && <Ionicons name="checkmark" size={14} color={c.accentFg} />}
+          <View className={`w-7 h-7 rounded-full justify-center items-center ${item.completed ? 'bg-accent' : 'border-2 border-elevated'}`}>
+            {item.completed && <Ionicons name="checkmark" size={16} color={c.accentFg} />}
           </View>
-        </TouchableOpacity>
-
-        {/* Log */}
-        <TouchableOpacity
-          className="w-14 justify-center items-center bg-base gap-0.5"
-          onPress={() =>
-            router.push({
-              pathname: '/log-exercise' as any,
-              // The modal reads the log (sets, plan, previous session) from the training query
-              params: {
-                exerciseLogId: item.id.toString(), exerciseName: item.exerciseName, trainingLogId,
-              },
-            })
-          }
-          disabled={syncing}
-        >
-          <Ionicons name="create-outline" size={22} color={item.completed ? c.accent : c.muted} />
-          <Text className={`text-[8px] tracking-widest ${item.completed ? 'text-accent-text' : 'text-muted'}`}>LOG</Text>
         </TouchableOpacity>
       </View>
     );
@@ -207,31 +198,36 @@ export default function TrainingScreen() {
 
   const completedCount = training?.exercises.filter((e: ExerciseLog) => e.completed).length || 0;
   const totalCount = training?.exercises.length || 0;
-  const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const allDone = totalCount > 0 && completedCount === totalCount;
 
   return (
     <View className="flex-1 bg-base">
       {/* Header */}
-      <View className="px-6 pt-14 pb-4">
-        <TouchableOpacity onPress={() => router.back()} className="mb-4">
-          <Ionicons name="arrow-back" size={20} color={c.accent} />
-        </TouchableOpacity>
-        <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">ACTIVE SESSION</Text>
-        <Text className="text-primary text-[32px] font-bold tracking-tighter mb-1">{training?.splitName}</Text>
-        <Text className="text-muted text-[11px] tracking-[2px]">
-          {completedCount}/{totalCount} COMPLETE · {formatElapsed(elapsedSeconds)} ELAPSED
+      <View className="px-5 pt-14 pb-3 gap-2">
+        <View className="flex-row items-center justify-between">
+          <TouchableOpacity onPress={() => router.back()} className="w-11 h-11 -ml-3 justify-center items-center" accessibilityLabel="Back">
+            <Ionicons name="arrow-back" size={22} color={c.accent} />
+          </TouchableOpacity>
+          <Text className="text-muted text-[13px] font-mono">{formatElapsed(elapsedSeconds)}</Text>
+        </View>
+        <Text className="text-accent-text text-[10px] tracking-[4px]" numberOfLines={1}>
+          {[training?.workoutName, training?.splitName].filter(Boolean).join(' · ').toUpperCase()}
         </Text>
+        <Text className="text-primary text-[28px] font-bold tracking-tighter">
+          {allDone ? 'All done' : `${completedCount} of ${totalCount} done`}
+        </Text>
+        {/* One segment per exercise */}
+        <View className="flex-row gap-1">
+          {orderedExercises.map((e) => (
+            <View key={e.id} className={`flex-1 h-1 rounded-full ${e.completed ? 'bg-accent' : 'bg-elevated'}`} />
+          ))}
+        </View>
         {!isOnline && (
-          <View className="flex-row items-center gap-2 mt-3 bg-surface rounded-sm px-3 py-2 self-start">
+          <View className="flex-row items-center gap-2 mt-1 bg-surface rounded-sm px-3 py-2 self-start">
             <Ionicons name="cloud-offline-outline" size={14} color={c.muted} />
             <Text className="text-muted text-[10px] tracking-[2px]">OFFLINE · CHANGES SYNC WHEN BACK ONLINE</Text>
           </View>
         )}
-      </View>
-
-      {/* Progress bar */}
-      <View className="h-[3px] bg-surface mx-4 mb-3 rounded-full overflow-hidden">
-        <View className="h-full bg-accent rounded-full" style={{ width: `${progressPct}%` }} />
       </View>
 
       <FlatList
@@ -242,7 +238,7 @@ export default function TrainingScreen() {
         ListFooterComponent={
           !training?.isCompleted ? (
             <TouchableOpacity
-              className="bg-surface rounded-md py-4 flex-row items-center justify-center gap-2 mt-1"
+              className="border border-dashed border-elevated rounded-md py-4 flex-row items-center justify-center gap-2 mt-1"
               onPress={() =>
                 router.push({
                   pathname: '/add-exercise' as any,
@@ -260,24 +256,25 @@ export default function TrainingScreen() {
 
       {/* Bottom dock */}
       <View
-        className="absolute bottom-0 left-0 right-0 bg-base border-t border-surface px-4 pt-4"
+        className="absolute bottom-0 left-0 right-0 bg-base px-4 pt-3"
         style={{ paddingBottom: 32 + insets.bottom }}
         onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
       >
-        <View className="mb-3">
+        <View className="mb-2">
           <RestTimer />
         </View>
-        <TouchableOpacity
-          className={`bg-accent rounded-md py-4 flex-row items-center justify-center gap-2 ${completeTraining.isPending ? 'opacity-50' : ''}`}
+        {/* Becomes the main action once every exercise is done */}
+        <Tactile
+          variant={allDone ? 'accent' : 'surface'}
+          className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${completeTraining.isPending ? 'opacity-50' : ''}`}
           onPress={handleComplete}
           disabled={completeTraining.isPending}
-          activeOpacity={0.85}
         >
-          <Ionicons name="checkmark-done" size={18} color={c.accentFg} />
-          <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
+          <Ionicons name="checkmark-done" size={18} color={allDone ? c.accentFg : c.primary} />
+          <Text className={`text-sm font-bold tracking-[2px] ${allDone ? 'text-accent-fg' : 'text-primary'}`}>
             {completeTraining.isPending ? 'SAVING...' : 'COMPLETE SESSION'}
           </Text>
-        </TouchableOpacity>
+        </Tactile>
       </View>
     </View>
   );

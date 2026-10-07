@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { useTheme } from '@/hooks/useTheme';
 
+import { Tactile } from '@/components/Tactile';
 type FieldErrors = { username?: string; email?: string; password?: string; general?: string };
 
 export default function RegisterScreen() {
@@ -138,8 +139,8 @@ export default function RegisterScreen() {
                     </View>
                 )}
 
-                <TouchableOpacity
-                    className={`bg-accent rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
+                <Tactile
+                    className={`rounded-md py-5 items-center ${loading ? 'opacity-50' : ''}`}
                     onPress={handleRegister}
                     disabled={loading}
                     activeOpacity={0.85}
@@ -147,7 +148,7 @@ export default function RegisterScreen() {
                     <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
                         {loading ? 'CREATING...' : 'CREATE ACCOUNT'}
                     </Text>
-                </TouchableOpacity>
+                </Tactile>
 
                 <Link href="/login" asChild>
                     <TouchableOpacity className="mt-6 items-center" disabled={loading}>
