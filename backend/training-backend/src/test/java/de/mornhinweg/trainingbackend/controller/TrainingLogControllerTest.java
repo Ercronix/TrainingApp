@@ -115,6 +115,89 @@ class TrainingLogControllerTest {
     assertEquals(100 * (1 + 5 / 30.0), ((Number) JsonPath.read(second, "$.exercises[0].bestOneRepMax")).doubleValue(), 0.01);
   }
 
+  @Test
+  void replacingKeepsThePlaceAndLeavesTheWorkoutAlone() throws Exception {
+    String token = register();
+    long splitId = id(perform(token, post("/api/splits"), "{\"name\":\"Split\"}"));
+    long workoutId = id(perform(token, post("/api/workouts/split/" + splitId), "{\"name\":\"Push\"}"));
+    perform(token, post("/api/workouts/" + workoutId + "/exercises"), "{\"name\":\"Bench\",\"sets\":2,\"reps\":5}");
+    perform(token, post("/api/workouts/" + workoutId + "/exercises"), "{\"name\":\"Dips\",\"sets\":3,\"reps\":8}");
+    long sessionId = id(perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutId + "}"));
+    String session = perform(token, get("/api/training-logs/" + sessionId), null)
+        .andReturn().getResponse().getContentAsString();
+    long benchLogId = ((Number) JsonPath.read(session, "$.exercises[0].id")).longValue();
+    perform(token, put("/api/training-logs/exercise-logs/" + benchLogId), "{\"completed\":true,\"sets\":[{\"reps\":5,\"weight\":100}]}")
+        .andExpect(status().isOk());
+
+    perform(token, put("/api/training-logs/exercise-logs/" + benchLogId + "/replace"), "{\"name\":\"Dumbbell Press\",\"sets\":3,\"reps\":10}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.id").value(benchLogId))
+        .andExpect(jsonPath("$.exerciseName").value("Dumbbell Press"))
+        .andExpect(jsonPath("$.plannedSets").value(3))
+        .andExpect(jsonPath("$.sets.length()").value(0))
+        .andExpect(jsonPath("$.completed").value(false));
+
+    perform(token, get("/api/training-logs/" + sessionId), null)
+        .andExpect(jsonPath("$.exercises.length()").value(2))
+        .andExpect(jsonPath("$.exercises[0].exerciseName").value("Dumbbell Press"))
+        .andExpect(jsonPath("$.exercises[1].exerciseName").value("Dips"));
+    perform(token, get("/api/workouts/" + workoutId + "/exercises"), null)
+        .andExpect(jsonPath("$.length()").value(2))
+        .andExpect(jsonPath("$[0].name").value("Bench"));
+
+    // The replacement can be replaced again (which drops its session-only exercise)
+    perform(token, put("/api/training-logs/exercise-logs/" + benchLogId + "/replace"), "{\"name\":\"Push-Up\"}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.exerciseName").value("Push-Up"));
+  }
+
+  @Test
+  void deletingRemovesTheExerciseFromTheSessionOnly() throws Exception {
+    String token = register();
+    String otherToken = register();
+    long splitId = id(perform(token, post("/api/splits"), "{\"name\":\"Split\"}"));
+    long workoutId = id(perform(token, post("/api/workouts/split/" + splitId), "{\"name\":\"Push\"}"));
+    perform(token, post("/api/workouts/" + workoutId + "/exercises"), "{\"name\":\"Bench\",\"sets\":2,\"reps\":5}");
+    long sessionId = id(perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutId + "}"));
+    long curlLogId = id(perform(token, post("/api/training-logs/" + sessionId + "/exercise-logs"), "{\"name\":\"Curl\",\"addToWorkout\":false}"));
+    String session = perform(token, get("/api/training-logs/" + sessionId), null)
+        .andReturn().getResponse().getContentAsString();
+    long benchLogId = ((Number) JsonPath.read(session, "$.exercises[0].id")).longValue();
+
+    perform(otherToken, delete("/api/training-logs/exercise-logs/" + benchLogId), null)
+        .andExpect(status().isForbidden());
+    perform(token, delete("/api/training-logs/exercise-logs/" + benchLogId), null)
+        .andExpect(status().isNoContent());
+    perform(token, delete("/api/training-logs/exercise-logs/" + benchLogId), null)
+        .andExpect(status().isNotFound());
+    // Added for this session only, so its exercise goes with it
+    perform(token, delete("/api/training-logs/exercise-logs/" + curlLogId), null)
+        .andExpect(status().isNoContent());
+
+    perform(token, get("/api/training-logs/" + sessionId), null)
+        .andExpect(jsonPath("$.exercises.length()").value(0));
+    perform(token, get("/api/workouts/" + workoutId + "/exercises"), null)
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].name").value("Bench"));
+  }
+
+  @Test
+  void exercisesOfACompletedSessionCantBeReplacedOrDeleted() throws Exception {
+    String token = register();
+    long splitId = id(perform(token, post("/api/splits"), "{\"name\":\"Split\"}"));
+    long workoutId = id(perform(token, post("/api/workouts/split/" + splitId), "{\"name\":\"Push\"}"));
+    perform(token, post("/api/workouts/" + workoutId + "/exercises"), "{\"name\":\"Bench\",\"sets\":2,\"reps\":5}");
+    long sessionId = id(perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutId + "}"));
+    String session = perform(token, put("/api/training-logs/" + sessionId + "/complete"), "{}")
+        .andReturn().getResponse().getContentAsString();
+    long logId = ((Number) JsonPath.read(session, "$.exercises[0].id")).longValue();
+
+    perform(token, put("/api/training-logs/exercise-logs/" + logId + "/replace"), "{\"name\":\"Dips\"}")
+        .andExpect(status().isBadRequest());
+    perform(token, delete("/api/training-logs/exercise-logs/" + logId), null)
+        .andExpect(status().isBadRequest());
+  }
+
   private String register() throws Exception {
     String name = "test_" + UUID.randomUUID().toString().substring(0, 8);
     String body = """

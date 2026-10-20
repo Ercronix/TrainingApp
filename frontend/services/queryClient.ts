@@ -3,10 +3,12 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { Platform } from 'react-native';
+import { isAxiosError } from 'axios';
 import { trainingLogsApi } from './api';
 import { UpdateExerciseLogRequest } from '@/types';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import type { AddExerciseLogDto } from '@/hooks/useAddExerciseLog';
+import type { ReplaceExerciseLogDto } from '@/hooks/useReplaceExerciseLog';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -16,6 +18,8 @@ export const CACHE_MAX_AGE = 7 * DAY_MS;
 export const MUTATION_KEYS = {
   updateExerciseLog: ['updateExerciseLog'] as const,
   addExerciseLog: ['addExerciseLog'] as const,
+  replaceExerciseLog: ['replaceExerciseLog'] as const,
+  deleteExerciseLog: ['deleteExerciseLog'] as const,
   completeTraining: ['completeTraining'] as const,
 };
 
@@ -33,6 +37,17 @@ export interface UpdateExerciseLogVariables {
 export interface AddExerciseLogVariables {
   trainingLogId: number;
   data: AddExerciseLogDto;
+}
+
+export interface ReplaceExerciseLogVariables {
+  trainingLogId: number;
+  exerciseLogId: number;
+  data: ReplaceExerciseLogDto;
+}
+
+export interface DeleteExerciseLogVariables {
+  trainingLogId: number;
+  exerciseLogId: number;
 }
 
 export interface CompleteTrainingVariables {
@@ -66,6 +81,31 @@ queryClient.setMutationDefaults(MUTATION_KEYS.addExerciseLog, {
     void queryClient.invalidateQueries({ queryKey: ['exercises'] });
     void queryClient.invalidateQueries({ queryKey: ['workouts'] });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.library });
+  },
+});
+
+queryClient.setMutationDefaults(MUTATION_KEYS.replaceExerciseLog, {
+  mutationFn: ({ exerciseLogId, data }: ReplaceExerciseLogVariables) =>
+    trainingLogsApi.replaceExerciseLog(exerciseLogId, data),
+  onSettled: (_data, _error, { trainingLogId }: ReplaceExerciseLogVariables) => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.training(trainingLogId.toString()) });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeTraining });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.library });
+  },
+});
+
+queryClient.setMutationDefaults(MUTATION_KEYS.deleteExerciseLog, {
+  mutationFn: async ({ exerciseLogId }: DeleteExerciseLogVariables) => {
+    try {
+      await trainingLogsApi.deleteExerciseLog(exerciseLogId);
+    } catch (error) {
+      // Already gone, e.g. a retry after the response was lost
+      if (!isAxiosError(error) || error.response?.status !== 404) throw error;
+    }
+  },
+  onSettled: (_data, _error, { trainingLogId }: DeleteExerciseLogVariables) => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.training(trainingLogId.toString()) });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeTraining });
   },
 });
 

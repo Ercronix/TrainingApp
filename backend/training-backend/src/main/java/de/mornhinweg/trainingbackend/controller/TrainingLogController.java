@@ -34,6 +34,22 @@ public class TrainingLogController {
     return ResponseEntity.ok(trainingLogService.updateExerciseLog(exerciseLogId, request, authentication));
   }
 
+  @PutMapping("/exercise-logs/{exerciseLogId}/replace")
+  public ResponseEntity<ExerciseLogResponse> replaceExerciseLog(
+      @PathVariable Long exerciseLogId,
+      @Valid @RequestBody ReplaceExerciseLogRequest request,
+      Authentication authentication) {
+    return ResponseEntity.ok(trainingLogService.replaceExerciseLog(exerciseLogId, request, authentication));
+  }
+
+  @DeleteMapping("/exercise-logs/{exerciseLogId}")
+  public ResponseEntity<Void> deleteExerciseLog(
+      @PathVariable Long exerciseLogId,
+      Authentication authentication) {
+    trainingLogService.deleteExerciseLog(exerciseLogId, authentication);
+    return ResponseEntity.noContent().build();
+  }
+
   @PostMapping("/{trainingLogId}/exercise-logs")
   public ResponseEntity<ExerciseLogResponse> addExerciseLog(
       @PathVariable Long trainingLogId,

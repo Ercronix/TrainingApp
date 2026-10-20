@@ -3,7 +3,8 @@ import { trainingLogsApi } from '@/services/api';
 import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
 import { QUERY_KEYS } from '@/constants/queryKeys';
-import { CompleteTrainingVariables, MUTATION_KEYS, trainingScope } from '@/services/queryClient';
+import { CompleteTrainingVariables, DeleteExerciseLogVariables, MUTATION_KEYS, trainingScope } from '@/services/queryClient';
+import { useSetDraftStore } from '@/store/setDraftStore';
 import { TrainingLog } from '@/types';
 import { useUpdateExerciseLog } from './useUpdateExerciseLog';
 
@@ -16,6 +17,28 @@ export function useTraining(trainingLogId: string) {
   });
 
   const updateExerciseLog = useUpdateExerciseLog(trainingLogId);
+
+  // Removes an exercise from this session (not from the workout) right away, also offline
+  const deleteExerciseLog = useMutation<void, unknown, DeleteExerciseLogVariables, { previous?: TrainingLog }>({
+    mutationKey: MUTATION_KEYS.deleteExerciseLog,
+    scope: trainingScope(trainingLogId),
+    onMutate: async ({ exerciseLogId }) => {
+      const queryKey = QUERY_KEYS.training(trainingLogId);
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<TrainingLog>(queryKey);
+      if (previous) {
+        queryClient.setQueryData<TrainingLog>(queryKey, {
+          ...previous, exercises: previous.exercises.filter((e) => e.id !== exerciseLogId),
+        });
+      }
+      useSetDraftStore.getState().clearDrafts([String(exerciseLogId)]);
+      return { previous };
+    },
+    onError: (error, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(QUERY_KEYS.training(trainingLogId), context.previous);
+      alert('Error', getErrorMessage(error));
+    },
+  });
 
   // Marks the session finished right away, so it also works offline: the request is paused
   // (and persisted) and runs after the session's other pending changes once back online.
@@ -53,6 +76,7 @@ export function useTraining(trainingLogId: string) {
     training: trainingQuery.data,
     isLoading: trainingQuery.isLoading,
     updateExerciseLog,
+    deleteExerciseLog,
     completeTraining,
   };
 }
