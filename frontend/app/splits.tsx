@@ -6,7 +6,7 @@ import { useSplits } from '@/hooks/useSplits';
 import SwipeableRow from '@/components/SwipeableRow';
 import { useTheme } from '@/hooks/useTheme';
 import { confirm } from '@/utils/confirm';
-import { AnimatedPressable } from '@/components/AnimatedPressable';
+import { Tactile } from '@/components/Tactile';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SplitsScreen() {
@@ -132,15 +132,13 @@ export default function SplitsScreen() {
       />
 
       {/* FAB */}
-      <Link href="/create-split" asChild>
-        <AnimatedPressable
-          wrapperStyle={{ position: 'absolute', right: 24, bottom: 32 + insets.bottom }}
-          className="w-14 h-14 rounded-md bg-accent justify-center items-center"
-          activeOpacity={0.8}
-        >
-          <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
-        </AnimatedPressable>
-      </Link>
+      <View style={{ position: 'absolute', right: 24, bottom: 32 + insets.bottom }}>
+        <Link href="/create-split" asChild>
+          <Tactile className="w-14 py-3 rounded-md items-center" accessibilityLabel="New split">
+            <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
+          </Tactile>
+        </Link>
+      </View>
     </View>
   );
 }
