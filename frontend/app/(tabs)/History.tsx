@@ -8,6 +8,7 @@ import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { TrainingLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { Tactile } from '@/components/Tactile';
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return '—';
@@ -97,7 +98,7 @@ export default function HistoryScreen() {
         ]}
       >
         <TouchableOpacity
-          className="bg-surface rounded-l-md p-5"
+          className="bg-surface rounded-md border-2 border-edge border-b-[6px] p-5"
           onPress={() =>
             // Sessions still in progress reopen in the training screen so they can be continued
             router.push({
@@ -196,7 +197,7 @@ export default function HistoryScreen() {
 
       {/* Search bar */}
       <View className="px-4 mb-3">
-        <View className="flex-row items-center bg-surface rounded-md px-4 py-3">
+        <View className="flex-row items-center bg-surface border-2 border-edge border-b-4 rounded-md px-4 py-3">
           <Ionicons name="search" size={16} color={c.muted} />
           <TextInput
             className="flex-1 text-primary text-sm ml-3"
@@ -219,11 +220,14 @@ export default function HistoryScreen() {
       {/* Date filter pills */}
       <View className="flex-row px-4 mb-3 gap-2">
         {DATE_FILTERS.map((f) => (
-          <TouchableOpacity
+          <Tactile
             key={f.key}
+            variant={dateFilter === f.key ? 'accent' : 'surface'}
+            depth={3}
+            className="h-9 px-4 rounded-sm justify-center"
             onPress={() => setDateFilter(f.key)}
-            className={`px-4 py-2 rounded-md ${dateFilter === f.key ? 'bg-accent' : 'bg-surface'}`}
-            activeOpacity={0.8}
+            accessibilityLabel={`Show ${f.label}`}
+            accessibilityState={{ selected: dateFilter === f.key }}
           >
             <Text
               className={`text-[10px] font-bold tracking-[2px] ${
@@ -232,7 +236,7 @@ export default function HistoryScreen() {
             >
               {f.label}
             </Text>
-          </TouchableOpacity>
+          </Tactile>
         ))}
       </View>
 
