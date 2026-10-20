@@ -63,7 +63,8 @@ export default function WorkoutDetailScreen() {
         ]}
       >
         <TouchableOpacity
-          className={`rounded-l-md overflow-hidden ${isActive ? 'bg-elevated' : 'bg-surface'}`}
+          // Rows only get the swipeable's gap while it is enabled
+          className={`rounded-md overflow-hidden border-2 border-b-[6px] ${reorderMode ? 'mb-2' : ''} ${isActive ? 'bg-elevated border-accent' : 'bg-surface border-edge'}`}
           onPress={() => {
             if (reorderMode) return;
             router.push({
