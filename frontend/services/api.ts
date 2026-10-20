@@ -324,6 +324,31 @@ export const trainingLogsApi = {
     return response.data;
   },
 
+  // Swaps the exercise for this session only; the log keeps its id but starts over
+  replaceExerciseLog: async (
+    exerciseLogId: number,
+    data: {
+      libraryExerciseId?: number;
+      name?: string;
+      sets?: number | null;
+      reps?: number | null;
+      plannedWeight?: number | null;
+      equipment?: string;
+      muscles?: MuscleTarget[];
+    },
+  ): Promise<ExerciseLog> => {
+    const response = await api.put(
+      `/training-logs/exercise-logs/${exerciseLogId}/replace`,
+      data,
+    );
+    return response.data;
+  },
+
+  // Removes the exercise from the session only, not from the workout
+  deleteExerciseLog: async (exerciseLogId: number): Promise<void> => {
+    await api.delete(`/training-logs/exercise-logs/${exerciseLogId}`);
+  },
+
   // completedSecondsAgo backdates the finish of a session completed while offline
   complete: async (id: number, notes?: string, completedSecondsAgo?: number): Promise<TrainingLog> => {
     const response = await api.put(`/training-logs/${id}/complete`, { notes, completedSecondsAgo });

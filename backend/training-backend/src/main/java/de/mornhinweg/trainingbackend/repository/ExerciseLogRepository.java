@@ -18,6 +18,8 @@ public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> 
 
   long countByTrainingLogId(Long trainingLogId);
 
+  boolean existsByExerciseId(Long exerciseId);
+
   List<ExerciseLog> findByExerciseIdOrderByCreatedAtDesc(Long exerciseId);
 
   @Query("""

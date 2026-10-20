@@ -160,6 +160,72 @@ public class TrainingLogService {
     return toExerciseLogResponse(exerciseLog, true);
   }
 
+  /**
+   * Swaps the exercise of a running session for another one, for this session only: the log keeps
+   * its id (and so its place) but starts over, and the workout's plan stays unchanged.
+   */
+  @Transactional
+  public ExerciseLogResponse replaceExerciseLog(Long exerciseLogId, ReplaceExerciseLogRequest request, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    ExerciseLog exerciseLog = getRunningExerciseLog(exerciseLogId, user);
+    Exercise replaced = exerciseLog.getExercise();
+    Workout workout = exerciseLog.getTrainingLog().getWorkout();
+
+    LibraryExercise libraryExercise = libraryExerciseService.resolve(user, request.getLibraryExerciseId(), request.getName());
+    libraryExerciseService.applyEquipment(libraryExercise, request.getEquipment());
+    libraryExerciseService.applyMuscles(libraryExercise, request.getMuscles());
+
+    Exercise exercise = Exercise.builder()
+        .workout(workout)
+        .libraryExercise(libraryExercise)
+        .sets(request.getSets())
+        .reps(request.getReps())
+        .plannedWeight(request.getPlannedWeight())
+        .orderIndex(exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId()).size())
+        .temporary(true)
+        .build();
+    exercise = exerciseRepository.save(exercise);
+
+    exerciseLog.setExercise(exercise);
+    exerciseLog.replaceSets(List.of());
+    exerciseLog.setCompleted(false);
+    exerciseLog.setNotes(null);
+    exerciseLog = exerciseLogRepository.save(exerciseLog);
+
+    deleteIfUnusedTemporary(replaced);
+    return toExerciseLogResponse(exerciseLog, true);
+  }
+
+  /** Removes an exercise from a running session. The workout's plan stays unchanged. */
+  @Transactional
+  public void deleteExerciseLog(Long exerciseLogId, Authentication authentication) {
+    User user = getCurrentUser(authentication);
+    ExerciseLog exerciseLog = getRunningExerciseLog(exerciseLogId, user);
+    Exercise exercise = exerciseLog.getExercise();
+    exerciseLogRepository.delete(exerciseLog);
+    deleteIfUnusedTemporary(exercise);
+  }
+
+  private ExerciseLog getRunningExerciseLog(Long exerciseLogId, User user) {
+    ExerciseLog exerciseLog = exerciseLogRepository.findById(exerciseLogId)
+        .orElseThrow(() -> new ResourceNotFoundException("Exercise log not found"));
+    if (!exerciseLog.getTrainingLog().getUser().getId().equals(user.getId())) {
+      throw new UnauthorizedException("Access denied");
+    }
+    if (exerciseLog.getTrainingLog().isCompleted()) {
+      throw new BadRequestException("Training is already completed");
+    }
+    return exerciseLog;
+  }
+
+  // A temporary exercise only exists for the session it was added to, so it goes with its log
+  private void deleteIfUnusedTemporary(Exercise exercise) {
+    exerciseLogRepository.flush();
+    if (exercise.getTemporary() && !exerciseLogRepository.existsByExerciseId(exercise.getId())) {
+      exerciseRepository.delete(exercise);
+    }
+  }
+
   @Transactional
   public TrainingLogResponse completeTraining(Long trainingLogId, CompleteTrainingRequest request, Authentication authentication) {
     User user = getCurrentUser(authentication);
