@@ -10,7 +10,6 @@ import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { Exercise } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
-import { AnimatedPressable } from '@/components/AnimatedPressable';
 
 import { Tactile } from '@/components/Tactile';
 export default function WorkoutDetailScreen() {
@@ -190,15 +189,13 @@ export default function WorkoutDetailScreen() {
       )}
 
       {!reorderMode && (
-        <Link href={{ pathname: '/create-exercise' as any, params: { workoutId } }} asChild>
-          <AnimatedPressable
-            wrapperStyle={{ position: 'absolute', right: 24, bottom: 32 + insets.bottom }}
-            className="w-14 h-14 rounded-md bg-accent justify-center items-center"
-            activeOpacity={0.8}
-          >
-            <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
-          </AnimatedPressable>
-        </Link>
+        <View style={{ position: 'absolute', right: 24, bottom: 32 + insets.bottom }}>
+          <Link href={{ pathname: '/create-exercise' as any, params: { workoutId } }} asChild>
+            <Tactile className="w-14 py-3 rounded-md items-center" accessibilityLabel="New exercise">
+              <Text className="text-accent-fg text-3xl font-bold leading-8">+</Text>
+            </Tactile>
+          </Link>
+        </View>
       )}
     </View>
   );
