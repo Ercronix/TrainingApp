@@ -9,14 +9,12 @@ import { useTheme } from '@/hooks/useTheme';
 import { useTabBarStore } from '@/store/tabBarStore';
 
 import { Tactile } from '@/components/Tactile';
+import { TAB_BAR_OFFSET } from '@/components/FloatingTabBar';
 // Screens the banner stays off: the session itself and the modals
 const HIDDEN_ROUTES = new Set([
   '/training', '/add-exercise', '/log-exercise', '/create-split', '/create-workout',
   '/create-exercise', '/edit-split', '/edit-workout', '/edit-exercise',
 ]);
-
-// Height of the floating tab bar plus its gap to the bottom edge (see app/(tabs)/_layout.tsx)
-const TAB_BAR_OFFSET = 72 + 12;
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--';

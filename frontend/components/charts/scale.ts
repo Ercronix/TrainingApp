@@ -1,4 +1,4 @@
-import { GestureResponderEvent } from 'react-native';
+import { Gesture } from 'react-native-gesture-handler';
 
 /** Rounded axis ticks (1/2/5 × 10ⁿ steps) covering [min, max]. */
 export function niceTicks(min: number, max: number, count = 4): number[] {
@@ -31,19 +31,19 @@ export function compactTick(v: number): string {
   return `${+v.toFixed(1)}`;
 }
 
-/** Responder props that report the touch x position while pressing or scrubbing. */
-export function scrubHandlers(onX: (x: number) => void, onEnd?: () => void) {
-  const report = (e: GestureResponderEvent) => onX(e.nativeEvent.locationX);
-  return {
-    onStartShouldSetResponder: () => true,
-    onMoveShouldSetResponder: () => true,
-    // Let a parent ScrollView take over vertical scrolls
-    onResponderTerminationRequest: () => true,
-    onResponderGrant: report,
-    onResponderMove: report,
-    onResponderRelease: onEnd,
-    onResponderTerminate: onEnd,
-  };
+/**
+ * A gesture that reports the touch x position while pressing or scrubbing. It is a native pan, so a
+ * horizontal scrub claims the touch before the tab pager does, while a vertical drag fails it and
+ * leaves the scroll to the parent ScrollView.
+ */
+export function scrubGesture(onX: (x: number) => void, onEnd?: () => void) {
+  return Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetX([-8, 8])
+    .failOffsetY([-10, 10])
+    .onBegin((e) => onX(e.x))
+    .onUpdate((e) => onX(e.x))
+    .onFinalize(() => onEnd?.());
 }
 
 export const CHART_FONT = 'JetBrainsMono_400Regular';

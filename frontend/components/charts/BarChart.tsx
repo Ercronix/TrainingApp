@@ -1,8 +1,10 @@
 import { View, Text, LayoutChangeEvent } from 'react-native';
 import { useState } from 'react';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Line, Path, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '@/hooks/useTheme';
-import { CHART_FONT, compactTick, linearScale, niceTicks, scrubHandlers } from './scale';
+import { useTabSwipeLock } from '@/hooks/useTabSwipeLock';
+import { CHART_FONT, compactTick, linearScale, niceTicks, scrubGesture } from './scale';
 
 export interface Bar {
   label: string;
@@ -35,6 +37,7 @@ function barPath(x: number, top: number, w: number, bottom: number): string {
 
 export function BarChart({ bars, formatValue, height = 150, defaultIndex, labelEvery = 1, reference }: Props) {
   const c = useTheme();
+  const { lockProps, unlock } = useTabSwipeLock();
   const [width, setWidth] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
 
@@ -64,41 +67,43 @@ export function BarChart({ bars, formatValue, height = 150, defaultIndex, labelE
         )}
       </View>
 
-      <View onLayout={onLayout} style={{ height }} {...scrubHandlers(selectAt, () => setSelected(null))}>
-        {width > 0 && (
-          <Svg width={width} height={height} pointerEvents="none">
-            {ticks.map((t) => (
-              <Line key={`g${t}`} x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} stroke={c.subtle} strokeWidth={1} />
-            ))}
-            {ticks.map((t) => (
-              <SvgText key={`l${t}`} x={PAD.left - 6} y={y(t) + 3} fontSize={9} fill={c.muted} textAnchor="end" fontFamily={CHART_FONT}>
-                {compactTick(t)}
-              </SvgText>
-            ))}
-            {bars.map((b, i) => {
-              const bx = PAD.left + i * slot + (slot - barWidth) / 2;
-              return (
-                <Path
-                  key={i}
-                  d={b.value > 0 ? barPath(bx, y(b.value), barWidth, y(0)) : ''}
-                  fill={c.accentText}
-                  fillOpacity={i === shown ? 1 : b.partial ? 0.35 : 0.7}
-                />
-              );
-            })}
-            {reference && reference.value > 0 && (
-              <Line x1={PAD.left} x2={width - PAD.right} y1={y(reference.value)} y2={y(reference.value)} stroke={c.primary} strokeOpacity={0.6} strokeWidth={1} strokeDasharray="3 3" />
-            )}
-            {bars.map((b, i) =>
-              i % labelEvery === (bars.length - 1) % labelEvery ? (
-                <SvgText key={`x${i}`} x={PAD.left + i * slot + slot / 2} y={height - 6} fontSize={9} fill={i === shown ? c.primary : c.muted} textAnchor="middle" fontFamily={CHART_FONT}>
-                  {b.label}
+      <GestureDetector gesture={scrubGesture(selectAt, () => { setSelected(null); unlock(); })}>
+        <View onLayout={onLayout} style={{ height }} {...lockProps}>
+          {width > 0 && (
+            <Svg width={width} height={height} pointerEvents="none">
+              {ticks.map((t) => (
+                <Line key={`g${t}`} x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} stroke={c.subtle} strokeWidth={1} />
+              ))}
+              {ticks.map((t) => (
+                <SvgText key={`l${t}`} x={PAD.left - 6} y={y(t) + 3} fontSize={9} fill={c.muted} textAnchor="end" fontFamily={CHART_FONT}>
+                  {compactTick(t)}
                 </SvgText>
-              ) : null,
-            )}
-          </Svg>
-        )}
-      </View>
+              ))}
+              {bars.map((b, i) => {
+                const bx = PAD.left + i * slot + (slot - barWidth) / 2;
+                return (
+                  <Path
+                    key={i}
+                    d={b.value > 0 ? barPath(bx, y(b.value), barWidth, y(0)) : ''}
+                    fill={c.accentText}
+                    fillOpacity={i === shown ? 1 : b.partial ? 0.35 : 0.7}
+                  />
+                );
+              })}
+              {reference && reference.value > 0 && (
+                <Line x1={PAD.left} x2={width - PAD.right} y1={y(reference.value)} y2={y(reference.value)} stroke={c.primary} strokeOpacity={0.6} strokeWidth={1} strokeDasharray="3 3" />
+              )}
+              {bars.map((b, i) =>
+                i % labelEvery === (bars.length - 1) % labelEvery ? (
+                  <SvgText key={`x${i}`} x={PAD.left + i * slot + slot / 2} y={height - 6} fontSize={9} fill={i === shown ? c.primary : c.muted} textAnchor="middle" fontFamily={CHART_FONT}>
+                    {b.label}
+                  </SvgText>
+                ) : null,
+              )}
+            </Svg>
+          )}
+        </View>
+      </GestureDetector>
     </View>
   );
 }
