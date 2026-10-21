@@ -32,7 +32,7 @@ export default function CreateSplitModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">SPLIT NAME</Text>
         <TextInput
-          className="bg-surface rounded px-4 py-4 text-primary text-xl font-bold tracking-tight mb-6"
+          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-xl font-bold tracking-tight mb-6"
           placeholder="PPL, Upper/Lower..."
           placeholderTextColor={c.elevated}
           value={name}

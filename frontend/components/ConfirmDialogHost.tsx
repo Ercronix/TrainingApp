@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity, Pressable, Animated, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Animated, StyleSheet } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { BlurView } from 'expo-blur';
 import { useColorScheme } from 'nativewind';
 import { useDialogStore } from '@/store/dialogStore';
 import { useTheme } from '@/hooks/useTheme';
 import { contrastTextColor } from '@/utils/color';
+import { Tactile } from '@/components/Tactile';
 
 /**
  * Renders the app's themed confirm/alert dialog. Mounted once at the root;
@@ -70,8 +71,9 @@ export function ConfirmDialogHost() {
             maxWidth: 340,
             backgroundColor: c.surface,
             borderRadius: 24,
-            borderWidth: 1,
-            borderColor: c.elevated,
+            borderWidth: 2,
+            borderBottomWidth: 6,
+            borderColor: c.edge,
             padding: 24,
             transform: [{ scale }],
             opacity,
@@ -87,25 +89,31 @@ export function ConfirmDialogHost() {
           )}
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {showCancel && (
-              <TouchableOpacity
+              <Tactile
+                variant="elevated"
+                depth={3}
                 onPress={hide}
-                activeOpacity={0.85}
-                style={{ flex: 1, paddingVertical: 14, borderRadius: 16, backgroundColor: c.elevated, alignItems: 'center' }}
+                containerClassName="flex-1"
+                style={{ paddingVertical: 14, borderRadius: 16, alignItems: 'center' }}
               >
                 <Text style={{ color: c.muted, fontWeight: '700', fontSize: 13, letterSpacing: 1 }}>
                   {cancelText.toUpperCase()}
                 </Text>
-              </TouchableOpacity>
+              </Tactile>
             )}
-            <TouchableOpacity
+            <Tactile
+              depth={3}
               onPress={handleConfirm}
-              activeOpacity={0.85}
-              style={{ flex: 1, paddingVertical: 14, borderRadius: 16, backgroundColor: confirmBg, alignItems: 'center' }}
+              containerClassName="flex-1"
+              style={{
+                paddingVertical: 14, borderRadius: 16, alignItems: 'center',
+                backgroundColor: confirmBg, borderColor: destructive ? c.dangerLip : c.accentLip,
+              }}
             >
               <Text style={{ color: contrastTextColor(confirmBg), fontWeight: '700', fontSize: 13, letterSpacing: 1 }}>
                 {confirmText.toUpperCase()}
               </Text>
-            </TouchableOpacity>
+            </Tactile>
           </View>
         </Animated.View>
       </View>

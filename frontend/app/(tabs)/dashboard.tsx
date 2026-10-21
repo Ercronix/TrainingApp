@@ -244,16 +244,18 @@ export default function DashboardScreen() {
         </View>
         <View className="flex-row gap-1 mb-4 flex-wrap">
           {WEEKLY_METRICS.map((m) => (
-            <TouchableOpacity
+            <Tactile
               key={m.id}
+              variant={m.id === weeklyMetric ? 'accent' : 'elevated'}
+              depth={3}
+              className="px-3 py-1.5 rounded-sm"
               onPress={() => setWeeklyMetric(m.id)}
-              className={`px-3 py-1.5 rounded-sm ${m.id === weeklyMetric ? 'bg-accent' : 'bg-elevated'}`}
-              activeOpacity={0.85}
+              accessibilityState={{ selected: m.id === weeklyMetric }}
             >
               <Text className={`text-[10px] font-bold tracking-widest ${m.id === weeklyMetric ? 'text-accent-fg' : 'text-muted'}`}>
                 {m.label}
               </Text>
-            </TouchableOpacity>
+            </Tactile>
           ))}
         </View>
         <BarChart

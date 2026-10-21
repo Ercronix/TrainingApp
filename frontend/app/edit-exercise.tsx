@@ -42,7 +42,7 @@ export default function EditExerciseModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
         <TextInput
-          className="bg-surface rounded px-4 py-4 text-primary text-[22px] font-bold tracking-tight mb-5"
+          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-[22px] font-bold tracking-tight mb-5"
           value={form.name}
           onChangeText={updateField('name')}
           autoFocus
@@ -54,7 +54,7 @@ export default function EditExerciseModal() {
           <View className="flex-1">
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">SETS</Text>
             <TextInput
-              className="bg-surface rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
+              className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
               value={form.sets}
               onChangeText={updateField('sets')}
               keyboardType="numeric"
@@ -67,7 +67,7 @@ export default function EditExerciseModal() {
           <View className="flex-1">
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">{repUnit === 'seconds' ? 'SECONDS' : 'REPS'}</Text>
             <TextInput
-              className="bg-surface rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
+              className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
               value={form.reps}
               onChangeText={updateField('reps')}
               keyboardType="numeric"
@@ -80,25 +80,33 @@ export default function EditExerciseModal() {
         </View>
 
         <View className="flex-row gap-3 mb-5">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded items-center ${repUnit === 'reps' ? 'bg-accent' : 'bg-surface'}`}
+          <Tactile
+            variant={repUnit === 'reps' ? 'accent' : 'surface'}
+            depth={3}
+            className="py-3 rounded items-center"
+            containerClassName="flex-1"
             onPress={() => setRepUnit('reps')}
             disabled={isPending}
+            accessibilityState={{ selected: repUnit === 'reps' }}
           >
             <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'reps' ? 'text-accent-fg' : 'text-muted'}`}>REPS</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded items-center ${repUnit === 'seconds' ? 'bg-accent' : 'bg-surface'}`}
+          </Tactile>
+          <Tactile
+            variant={repUnit === 'seconds' ? 'accent' : 'surface'}
+            depth={3}
+            className="py-3 rounded items-center"
+            containerClassName="flex-1"
             onPress={() => setRepUnit('seconds')}
             disabled={isPending}
+            accessibilityState={{ selected: repUnit === 'seconds' }}
           >
             <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'seconds' ? 'text-accent-fg' : 'text-muted'}`}>SECONDS</Text>
-          </TouchableOpacity>
+          </Tactile>
         </View>
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>
         <TextInput
-          className="bg-surface rounded px-4 py-4 text-primary text-lg font-bold tracking-tight mb-6"
+          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight mb-6"
           value={form.plannedWeight}
           onChangeText={updateField('plannedWeight')}
           keyboardType="decimal-pad"

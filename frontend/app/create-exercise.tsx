@@ -113,7 +113,7 @@ export default function CreateExerciseModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
         <TextInput
-          className="bg-surface rounded px-4 py-4 text-primary text-[22px] font-bold tracking-tight mb-5"
+          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-[22px] font-bold tracking-tight mb-5"
           placeholder="Bench Press, Squat..."
           placeholderTextColor={c.elevated}
           value={form.name}
@@ -137,7 +137,7 @@ export default function CreateExerciseModal() {
           <View className="flex-1">
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">SETS</Text>
             <TextInput
-              className="bg-surface rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
+              className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
               placeholder="4"
               placeholderTextColor={c.elevated}
               value={form.sets}
@@ -150,7 +150,7 @@ export default function CreateExerciseModal() {
           <View className="flex-1">
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">{repUnit === 'seconds' ? 'SECONDS' : 'REPS'}</Text>
             <TextInput
-              className="bg-surface rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
+              className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
               placeholder={repUnit === 'seconds' ? '30' : '10'}
               placeholderTextColor={c.elevated}
               value={form.reps}
@@ -163,30 +163,38 @@ export default function CreateExerciseModal() {
         </View>
 
         <View className="flex-row gap-3 mb-5">
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded items-center ${repUnit === 'reps' ? 'bg-accent' : 'bg-surface'}`}
+          <Tactile
+            variant={repUnit === 'reps' ? 'accent' : 'surface'}
+            depth={3}
+            className="py-3 rounded items-center"
+            containerClassName="flex-1"
             onPress={() => chooseRepUnit('reps')}
             disabled={isPending}
+            accessibilityState={{ selected: repUnit === 'reps' }}
           >
             <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'reps' ? 'text-accent-fg' : 'text-muted'}`}>REPS</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            className={`flex-1 py-3 rounded items-center ${repUnit === 'seconds' ? 'bg-accent' : 'bg-surface'}`}
+          </Tactile>
+          <Tactile
+            variant={repUnit === 'seconds' ? 'accent' : 'surface'}
+            depth={3}
+            className="py-3 rounded items-center"
+            containerClassName="flex-1"
             onPress={() => chooseRepUnit('seconds')}
             disabled={isPending}
+            accessibilityState={{ selected: repUnit === 'seconds' }}
           >
             <Text className={`text-[9px] font-bold tracking-[2px] ${repUnit === 'seconds' ? 'text-accent-fg' : 'text-muted'}`}>SECONDS</Text>
-          </TouchableOpacity>
+          </Tactile>
         </View>
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">MUSCLES</Text>
-        <View className="bg-surface rounded p-4 mb-5">
+        <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-4 mb-5">
           <MusclePicker value={muscles} onChange={setMuscles} disabled={isPending} />
         </View>
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>
         <TextInput
-          className="bg-surface rounded px-4 py-4 text-primary text-lg font-bold tracking-tight mb-5"
+          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight mb-5"
           placeholder="80"
           placeholderTextColor={c.elevated}
           value={form.weight}
@@ -198,7 +206,7 @@ export default function CreateExerciseModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">YOUTUBE URL</Text>
         <TextInput
-          className="bg-surface rounded px-4 py-4 text-primary text-sm mb-5"
+          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-sm mb-5"
           placeholder="https://youtube.com/watch?v=..."
           placeholderTextColor={c.elevated}
           value={form.videoUrl}
@@ -211,7 +219,7 @@ export default function CreateExerciseModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">NOTES</Text>
         <TextInput
-          className="bg-surface rounded px-4 py-3 text-primary text-sm mb-6"
+          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-3 text-primary text-sm mb-6"
           placeholder="Cues, form tips..."
           placeholderTextColor={c.elevated}
           value={form.description}

@@ -33,7 +33,7 @@ export default function EditSplitModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">SPLIT NAME</Text>
         <TextInput
-          className="bg-surface rounded px-4 py-4 text-primary text-xl font-bold tracking-tight mb-6"
+          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-xl font-bold tracking-tight mb-6"
           value={name}
           onChangeText={setName}
           autoFocus
@@ -44,17 +44,21 @@ export default function EditSplitModal() {
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">TRAINING BLOCK</Text>
         <View className="flex-row gap-3 mb-6">
           {[1, 2, 3].map((b) => (
-            <TouchableOpacity
+            <Tactile
               key={b}
-              className={`flex-1 py-4 rounded items-center ${block === b ? 'bg-accent' : 'bg-surface'}`}
+              variant={block === b ? 'accent' : 'surface'}
+              depth={3}
+              className="py-4 rounded items-center"
+              containerClassName="flex-1"
               onPress={() => setBlock(b)}
               disabled={isPending}
+              accessibilityState={{ selected: block === b }}
             >
               <Text className={`text-sm font-bold tracking-[1px] ${block === b ? 'text-accent-fg' : 'text-muted'}`}>{b}</Text>
               <Text className={`text-[8px] tracking-[1px] mt-1 ${block === b ? 'text-accent-fg' : 'text-subtle'}`}>
                 {b === 1 ? 'HYPERTROPHY' : b === 2 ? 'STRENGTH' : 'POWER'}
               </Text>
-            </TouchableOpacity>
+            </Tactile>
           ))}
         </View>
 

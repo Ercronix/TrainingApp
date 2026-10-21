@@ -83,7 +83,7 @@ export default function LibraryScreen() {
 
       {/* Search bar */}
       <View className="px-4 mb-3">
-        <View className="flex-row items-center bg-surface rounded-md px-4 py-3">
+        <View className="flex-row items-center bg-surface border-2 border-edge border-b-4 rounded-md px-4 py-3">
           <Ionicons name="search" size={16} color={c.muted} />
           <TextInput
             className="flex-1 text-primary text-sm ml-3"

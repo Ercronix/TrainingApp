@@ -6,6 +6,7 @@ import { LibraryExercise, Muscle, TrainingLog } from '@/types';
 import { MAJOR_MUSCLES, MUSCLE_LABELS, MUSCLES, WEEKLY_SET_TARGET } from '@/constants/muscles';
 import { computeMuscleVolume } from '@/utils/muscles';
 import { useTheme } from '@/hooks/useTheme';
+import { Tactile } from '@/components/Tactile';
 
 type Range = 'week' | 'average';
 
@@ -60,16 +61,18 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
 
       <View className="flex-row gap-1 mb-4">
         {([['week', 'THIS WEEK'], ['average', '4-WEEK AVG']] as const).map(([id, label]) => (
-          <TouchableOpacity
+          <Tactile
             key={id}
+            variant={range === id ? 'accent' : 'elevated'}
+            depth={3}
+            className="px-3 py-1.5 rounded-sm"
             onPress={() => setRange(id)}
-            className={`px-3 py-1.5 rounded-sm ${range === id ? 'bg-accent' : 'bg-elevated'}`}
-            activeOpacity={0.85}
+            accessibilityState={{ selected: range === id }}
           >
             <Text className={`text-[10px] font-bold tracking-widest ${range === id ? 'text-accent-fg' : 'text-muted'}`}>
               {label}
             </Text>
-          </TouchableOpacity>
+          </Tactile>
         ))}
       </View>
 

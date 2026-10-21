@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
@@ -9,6 +9,7 @@ import {
   ExerciseStats, SessionPoint, computeExerciseStats, formatNumber, formatSigned, formatWeeks,
 } from '@/utils/stats';
 import { TrendChart, TrendPoint } from '@/components/charts/TrendChart';
+import { Tactile } from '@/components/Tactile';
 
 interface Props {
   entries: ExerciseProgressEntry[];
@@ -243,13 +244,15 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
 
 function Chip({ label, active, onPress, small }: { label: string; active: boolean; onPress: () => void; small?: boolean }) {
   return (
-    <TouchableOpacity
+    <Tactile
+      variant={active ? 'accent' : 'elevated'}
+      depth={3}
+      className={`${small ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-sm`}
       onPress={onPress}
-      className={`${small ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-sm ${active ? 'bg-accent' : 'bg-elevated'}`}
-      activeOpacity={0.85}
+      accessibilityState={{ selected: active }}
     >
       <Text className={`text-[10px] font-bold tracking-widest ${active ? 'text-accent-fg' : 'text-muted'}`}>{label}</Text>
-    </TouchableOpacity>
+    </Tactile>
   );
 }
 

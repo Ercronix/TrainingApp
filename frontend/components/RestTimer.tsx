@@ -103,19 +103,22 @@ export function RestTimer() {
           {PRESET_MINUTES.map((mins) => {
             const selected = customDuration === mins * 60;
             return (
-              <TouchableOpacity
+              <Tactile
                 key={mins}
-                className={`flex-1 py-2.5 rounded-sm items-center ${selected ? 'bg-accent' : 'bg-base'}`}
+                variant={selected ? 'accent' : 'elevated'}
+                depth={3}
+                className="py-2.5 rounded-sm items-center"
+                containerClassName="flex-1"
                 onPress={() => {
                   setDuration(mins * 60);
                   setShowPresets(false);
                 }}
-                activeOpacity={0.85}
+                accessibilityState={{ selected }}
               >
                 <Text className={`text-[10px] font-bold tracking-widest ${selected ? 'text-accent-fg' : 'text-muted'}`}>
                   {mins} MIN
                 </Text>
-              </TouchableOpacity>
+              </Tactile>
             );
           })}
         </View>
