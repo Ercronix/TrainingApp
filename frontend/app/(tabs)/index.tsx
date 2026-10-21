@@ -8,6 +8,7 @@ import { useHistory } from '@/hooks/useHistory';
 import { useActiveTraining } from '@/hooks/useActiveTraining';
 import { useStartTraining } from '@/hooks/useStartTraining';
 import { useTheme } from '@/hooks/useTheme';
+import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { WorkoutRow } from '@/components/WorkoutRow';
 import { PickerAnchor, SplitPicker } from '@/components/SplitPicker';
 import { WeekStrip } from '@/components/WeekStrip';
@@ -49,6 +50,7 @@ const NEXT_UP_PREVIEW = 3;
 export default function HomeScreen() {
   const router = useRouter();
   const c = useTheme();
+  const scrollProps = useHideTabBarOnScroll();
   const insets = useSafeAreaInsets();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerAnchor, setPickerAnchor] = useState<PickerAnchor | null>(null);
@@ -244,6 +246,7 @@ export default function HomeScreen() {
     <View className="flex-1 bg-base">
       <FlatList
         data={workouts}
+        {...scrollProps}
         renderItem={({ item, index }) => (
           <WorkoutRow
             workout={item}

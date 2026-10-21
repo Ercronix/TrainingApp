@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from 'nativewind';
 import { storage } from '@/services/storage';
 import { useTheme } from '@/hooks/useTheme';
+import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { THEMES } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { isValidHex } from '@/utils/color';
@@ -32,6 +33,7 @@ export default function ProfileScreen() {
   const { colorScheme, setColorScheme } = useColorScheme();
   const isDark = colorScheme !== 'light';
   const c = useTheme();
+  const scrollProps = useHideTabBarOnScroll();
   const themeId = useThemeStore((s) => s.themeId);
   const setThemeId = useThemeStore((s) => s.setThemeId);
   const customAccent = useThemeStore((s) => s.customAccent);
@@ -91,7 +93,7 @@ export default function ProfileScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-base" contentContainerStyle={{ paddingBottom: 140 }}>
+    <ScrollView className="flex-1 bg-base" contentContainerStyle={{ paddingBottom: 140 }} {...scrollProps}>
       {/* Header */}
       <View className="px-6 pt-16 pb-6">
         <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">ACCOUNT</Text>

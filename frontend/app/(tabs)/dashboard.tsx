@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useDashboard, parseLocalDate, weekdayName } from '@/hooks/useDashboard';
 import { useMemo, useState } from 'react';
 import { useTheme } from '@/hooks/useTheme';
+import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { Tactile } from '@/components/Tactile';
 import { useLibrary } from '@/hooks/useLibrary';
 import { BarChart } from '@/components/charts/BarChart';
@@ -61,6 +62,7 @@ export default function DashboardScreen() {
   const [weeklyMetric, setWeeklyMetric] = useState<WeeklyMetric>('volume');
   const [showAllTrends, setShowAllTrends] = useState(false);
   const c = useTheme();
+  const scrollProps = useHideTabBarOnScroll();
 
   const weekly = WEEKLY_METRICS.find((m) => m.id === weeklyMetric)!;
   const weeklyBars = analytics.weeks.map((w, i) => {
@@ -111,6 +113,7 @@ export default function DashboardScreen() {
   return (
     <ScrollView
       className="flex-1 bg-base"
+      {...scrollProps}
       contentContainerStyle={{ paddingBottom: 140 }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
     >
