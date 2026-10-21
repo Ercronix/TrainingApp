@@ -32,7 +32,7 @@ export function CatalogSuggestions({
   if (matches.length === 0 || matches.some((m) => m.name.toLowerCase() === normalized)) return null;
 
   return (
-    <View className="bg-surface rounded mb-5 overflow-hidden">
+    <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md mb-5 overflow-hidden">
       <Text className="text-muted text-[9px] tracking-[3px] px-4 pt-3 pb-1">{title}</Text>
       {matches.map((entry) => (
         <TouchableOpacity

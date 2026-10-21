@@ -49,19 +49,14 @@ export default function SplitsScreen() {
       }
     >
       <TouchableOpacity
-        className={`px-5 py-5 flex-row items-center overflow-hidden relative ${
-          item.isActive ? 'bg-elevated' : 'bg-surface'
+        className={`bg-surface rounded-md border-2 border-b-[6px] px-5 py-5 flex-row items-center ${
+          item.isActive ? 'border-accent' : 'border-edge'
         }`}
         onPress={() =>
           router.push({ pathname: '/workouts', params: { splitId: item.id.toString(), splitName: item.name, currentBlock: item.currentBlock?.toString() || '1' } })
         }
         activeOpacity={0.85}
       >
-        {/* Active left stripe */}
-        {item.isActive && (
-          <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent rounded-l-md" />
-        )}
-
         {/* Index number */}
         <Text className="text-subtle text-[32px] font-mono-bold tracking-tighter mr-4 leading-9">
           {String(index + 1).padStart(2, '0')}

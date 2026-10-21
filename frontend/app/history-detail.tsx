@@ -44,7 +44,7 @@ export default function HistoryDetailScreen() {
 
     return (
       <TouchableOpacity
-        className={`rounded-md mb-2 overflow-hidden relative ${item.completed ? 'bg-surface-done' : 'bg-surface'}`}
+        className={`rounded-md mb-2 overflow-hidden border-2 border-b-[6px] ${item.completed ? 'bg-surface-done border-edge-done' : 'bg-surface border-edge'}`}
         activeOpacity={0.85}
         onPress={() =>
           router.push({
@@ -63,7 +63,6 @@ export default function HistoryDetailScreen() {
           })
         }
       >
-        {item.completed && <View className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent" />}
         <View className="flex-row items-start px-5 py-4 gap-3">
           <Text className="text-dim text-xl font-mono-bold tracking-tight min-w-[28px]">
             {String(index + 1).padStart(2, '0')}

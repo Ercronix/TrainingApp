@@ -1,7 +1,9 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { Muscle, MuscleRole, MuscleTarget } from '@/types';
 import { MUSCLE_GROUPS, MUSCLE_LABELS } from '@/constants/muscles';
 import { muscleNames, primaryMuscles, secondaryMuscles } from '@/utils/muscles';
+import { Tactile } from '@/components/Tactile';
+import { useTheme } from '@/hooks/useTheme';
 
 const NEXT_ROLE: Record<'NONE' | MuscleRole, MuscleRole | null> = {
   NONE: 'PRIMARY',
@@ -19,6 +21,7 @@ export function MusclePicker({
   onChange: (muscles: MuscleTarget[]) => void;
   disabled?: boolean;
 }) {
+  const c = useTheme();
   const roles = new Map(value.map((m) => [m.muscle, m.role]));
 
   const toggle = (muscle: Muscle) => {
@@ -36,14 +39,15 @@ export function MusclePicker({
             {group.muscles.map((muscle) => {
               const role = roles.get(muscle);
               return (
-                <TouchableOpacity
+                <Tactile
                   key={muscle}
+                  variant={role === 'PRIMARY' ? 'accent' : 'elevated'}
+                  depth={3}
+                  className="px-3 py-2 rounded-sm"
+                  style={role === 'SECONDARY' ? { backgroundColor: c.accentMuted, borderColor: c.accentLip } : undefined}
                   onPress={() => toggle(muscle)}
                   disabled={disabled}
-                  className={`px-3 py-2 rounded-sm ${
-                    role === 'PRIMARY' ? 'bg-accent' : role === 'SECONDARY' ? 'bg-accent-muted' : 'bg-elevated'
-                  }`}
-                  activeOpacity={0.8}
+                  accessibilityState={{ selected: role != null }}
                 >
                   <Text
                     className={`text-[10px] font-bold tracking-widest ${
@@ -52,7 +56,7 @@ export function MusclePicker({
                   >
                     {MUSCLE_LABELS[muscle].toUpperCase()}
                   </Text>
-                </TouchableOpacity>
+                </Tactile>
               );
             })}
           </View>

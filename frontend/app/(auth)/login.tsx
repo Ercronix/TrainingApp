@@ -57,7 +57,7 @@ export default function LoginScreen() {
 
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">USERNAME</Text>
             <TextInput
-                className={`bg-surface rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
+                className={`bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
                 placeholder="Enter username"
                 placeholderTextColor={c.elevated}
                 value={username}
@@ -77,7 +77,7 @@ export default function LoginScreen() {
 
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">PASSWORD</Text>
             <TextInput
-                className={`bg-surface rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
+                className={`bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
                 placeholder="Enter password"
                 placeholderTextColor={c.elevated}
                 value={password}

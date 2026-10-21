@@ -98,7 +98,7 @@ export default function ExerciseDetailScreen() {
         {editingName ? (
           <View className="flex-row items-center gap-2">
             <TextInput
-              className="flex-1 bg-surface rounded px-3 py-2 text-primary text-[22px] font-bold tracking-tight"
+              className="flex-1 bg-surface border-2 border-edge border-b-4 rounded px-3 py-2 text-primary text-[22px] font-bold tracking-tight"
               value={name}
               onChangeText={setName}
               autoFocus
