@@ -10,6 +10,7 @@ import { useFonts, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from '@expo
 import * as SplashScreen from 'expo-splash-screen';
 import { getPalette, getThemeVars } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
+import { useHapticsStore } from '@/store/hapticsStore';
 import { storage } from '@/services/storage';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
 import { ActiveTrainingBanner } from '@/components/ActiveTrainingBanner';
@@ -40,6 +41,9 @@ function AppLayout() {
     });
     storage.getItem('custom-accent').then((saved) => {
       if (saved) setCustomAccent(saved);
+    });
+    storage.getItem('haptics').then((saved) => {
+      if (saved === 'off') useHapticsStore.getState().setEnabled(false);
     });
     // Load saved preferences once on mount. nativewind's setColorScheme is a new function on
     // every render, so listing it would re-run this effect each render.

@@ -18,6 +18,7 @@ import { previousSetsOf, workingSets } from '@/utils/sets';
 import { formatKg } from '@/utils/strength';
 import { usesPlates } from '@/constants/equipment';
 import { ExerciseLog, SetLog, TrainingLog } from '@/types';
+import { haptics } from '@/utils/haptics';
 
 import { Tactile } from '@/components/Tactile';
 const emptyRow: SetRow = { weight: '', reps: '', rpe: '', warmup: false, done: false };
@@ -238,9 +239,11 @@ export default function LogExerciseModal() {
     const row = rows[index];
     saveNow.current = true;
     if (row.done) {
+      haptics.uncheck();
       updateRow(index, { done: false });
       return;
     }
+    haptics.check();
     // One tap logs the set as shown; empty values take the plan's
     updateRow(index, {
       done: true,
@@ -260,11 +263,13 @@ export default function LogExerciseModal() {
     if (timing?.index === index) {
       // Stopping records the time held as the set's seconds and finishes it
       saveNow.current = true;
+      haptics.check();
       updateRow(index, { reps: String(elapsed), done: true });
       setTiming(null);
       finishSet(index);
       return;
     }
+    haptics.tap();
     vibrated.current = false;
     setTiming({ index, startedAt: Date.now() });
     setFocused(index);
@@ -469,6 +474,7 @@ export default function LogExerciseModal() {
             className="rounded-md py-4 flex-row items-center justify-center gap-2"
             style={timing != null && !rowTiming ? { opacity: 0.5 } : undefined}
             onPress={() => toggleTiming(i)}
+            haptic={false}
             disabled={timing != null && !rowTiming}
             accessibilityLabel={rowTiming ? `Stop timing set ${i + 1}` : `Start timing set ${i + 1}`}
             activeOpacity={0.85}
@@ -483,6 +489,7 @@ export default function LogExerciseModal() {
             variant="elevated"
             className="rounded-md py-4 flex-row items-center justify-center gap-2"
             onPress={() => toggleDone(i)}
+            haptic={false}
           >
             <Ionicons name="arrow-undo" size={18} color={c.muted} />
             <Text className="text-muted text-sm font-bold tracking-[2px]">UNDO SET</Text>
@@ -491,6 +498,7 @@ export default function LogExerciseModal() {
           <Tactile
             className="rounded-md py-4 flex-row items-center justify-center gap-2"
             onPress={() => toggleDone(i)}
+            haptic={false}
             activeOpacity={0.85}
           >
             <Ionicons name="checkmark" size={18} color={c.accentFg} />

@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Switch, TextInput, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Switch, TextInput, ScrollView, Platform } from 'react-native';
 import { useState } from 'react';
 import { useAuthStore } from '@/store/authStore';
 import { authApi, trainingLogsApi } from '@/services/api';
@@ -13,6 +13,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { THEMES } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
+import { useHapticsStore } from '@/store/hapticsStore';
+import { haptics } from '@/utils/haptics';
 import { isValidHex } from '@/utils/color';
 
 import { Tactile } from '@/components/Tactile';
@@ -40,11 +42,20 @@ export default function ProfileScreen() {
   const setCustomAccent = useThemeStore((s) => s.setCustomAccent);
   const [accentInput, setAccentInput] = useState(customAccent ?? '');
   const [exporting, setExporting] = useState(false);
+  const hapticsEnabled = useHapticsStore((s) => s.enabled);
+  const setHapticsEnabled = useHapticsStore((s) => s.setEnabled);
 
   const toggleTheme = async () => {
     const next = isDark ? 'light' : 'dark';
     setColorScheme(next);
     await storage.setItem('color-scheme', next);
+  };
+
+  const toggleHaptics = async (enabled: boolean) => {
+    setHapticsEnabled(enabled);
+    // Let turning them on be felt
+    if (enabled) haptics.check();
+    await storage.setItem('haptics', enabled ? 'on' : 'off');
   };
 
   const selectTheme = async (id: string) => {
@@ -143,6 +154,23 @@ export default function ProfileScreen() {
             thumbColor={isDark ? c.accentFg : c.muted}
           />
         </View>
+        {Platform.OS !== 'web' && (
+          <>
+            <View className="h-px bg-elevated" />
+            <View className="flex-row items-center justify-between py-4">
+              <View className="flex-row items-center gap-2">
+                <Ionicons name="phone-portrait-outline" size={16} color={c.muted} />
+                <Text className="text-muted text-[10px] tracking-[2px]">HAPTICS</Text>
+              </View>
+              <Switch
+                value={hapticsEnabled}
+                onValueChange={toggleHaptics}
+                trackColor={{ false: c.elevated, true: c.accent }}
+                thumbColor={hapticsEnabled ? c.accentFg : c.muted}
+              />
+            </View>
+          </>
+        )}
       </View>
 
       {/* Theme picker */}

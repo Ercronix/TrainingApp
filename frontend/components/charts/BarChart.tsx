@@ -4,6 +4,7 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Line, Path, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '@/hooks/useTheme';
 import { useTabSwipeLock } from '@/hooks/useTabSwipeLock';
+import { haptics } from '@/utils/haptics';
 import { CHART_FONT, compactTick, linearScale, niceTicks, scrubGesture } from './scale';
 
 export interface Bar {
@@ -49,8 +50,11 @@ export function BarChart({ bars, formatValue, height = 150, defaultIndex, labelE
   const shown = selected ?? defaultIndex ?? bars.length - 1;
 
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
-  const selectAt = (px: number) =>
-    setSelected(Math.max(0, Math.min(bars.length - 1, Math.floor((px - PAD.left) / slot))));
+  const selectAt = (px: number) => {
+    const index = Math.max(0, Math.min(bars.length - 1, Math.floor((px - PAD.left) / slot)));
+    if (index !== selected) haptics.select();
+    setSelected(index);
+  };
 
   return (
     <View>

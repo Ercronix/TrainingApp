@@ -16,6 +16,7 @@ import SwipeableRow from '@/components/SwipeableRow';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
+import { haptics } from '@/utils/haptics';
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--:--';
@@ -66,6 +67,7 @@ export default function TrainingScreen() {
 
   const toggleExercise = (exerciseLog: ExerciseLog) => {
     const completing = !exerciseLog.completed;
+    if (completing) haptics.check(); else haptics.uncheck();
     const data: UpdateExerciseLogRequest = { completed: completing };
     // Ticking off an exercise without logging it records the plan as its sets
     if (completing && setsOf(exerciseLog).length === 0 && exerciseLog.plannedSets) {
@@ -87,6 +89,7 @@ export default function TrainingScreen() {
     const finish = (message: string) => {
       // Don't leave a rest timer running (and notifying) after the session ends
       useRestTimerStore.getState().reset();
+      if (records.length > 0) haptics.record(); else haptics.success();
       useSetDraftStore.getState().clearDrafts((training?.exercises ?? []).map((e: ExerciseLog) => String(e.id)));
       alert('Done!', records.length > 0 ? `${message}\n\nNew records:\n${records.join('\n')}` : message);
       router.replace('/(tabs)');

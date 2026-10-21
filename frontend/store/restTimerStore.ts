@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { AppState } from 'react-native';
 import { alert } from '@/utils/confirm';
+import { haptics } from '@/utils/haptics';
 import { cancelRestTimerNotification, scheduleRestTimerNotification } from '@/utils/restTimerNotifications';
 
 // A timer finishing later than this was suspended in the background, so the notification already told the user
@@ -38,6 +39,7 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => {
     // Only alert when the user is in the app to see it; otherwise the notification covers it
     if (AppState.currentState === 'active' && endTime != null && Date.now() - endTime < LATE_COMPLETION_MS) {
       void cancelRestTimerNotification();
+      haptics.success();
       alert('Rest Complete!', 'Time for next set!');
     }
   };
