@@ -8,6 +8,7 @@ import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { TrainingLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { Tactile } from '@/components/Tactile';
 
 function formatDuration(seconds: number | null): string {
@@ -49,6 +50,7 @@ export default function HistoryScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const c = useTheme();
+  const scrollProps = useHideTabBarOnScroll();
 
   const filteredHistory = useMemo(() => {
     let filtered = history;
@@ -242,6 +244,7 @@ export default function HistoryScreen() {
 
       <FlatList
         data={filteredHistory}
+        {...scrollProps}
         renderItem={renderLogItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}

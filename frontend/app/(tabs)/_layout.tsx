@@ -3,9 +3,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 import { BlurView } from 'expo-blur';
-import { StyleSheet, View } from 'react-native';
+import { Animated, Platform, StyleSheet, View } from 'react-native';
+import { useEffect, useRef } from 'react';
 import { getPalette } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
+import { useTabBarStore } from '@/store/tabBarStore';
+import { SwipeTabs } from '@/components/SwipeTabs';
+
+// Height of the floating tab bar plus its gap to the bottom edge
+const TAB_BAR_OFFSET = 72 + 12;
 
 export default function TabsLayout() {
     const insets = useSafeAreaInsets();
@@ -14,10 +20,27 @@ export default function TabsLayout() {
     const themeId = useThemeStore((s) => s.themeId);
     const customAccent = useThemeStore((s) => s.customAccent);
     const c = getPalette(themeId, isLight ? 'light' : 'dark', customAccent);
+    const hidden = useTabBarStore((s) => s.hidden);
+    const setHidden = useTabBarStore((s) => s.setHidden);
+
+    // Slides the bar below the screen's bottom edge while a tab's list scrolls down
+    const hideOffset = insets.bottom + TAB_BAR_OFFSET + 8;
+    const translateY = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+        Animated.timing(translateY, {
+            toValue: hidden ? hideOffset : 0,
+            duration: hidden ? 200 : 250,
+            useNativeDriver: Platform.OS !== 'web',
+        }).start();
+    }, [hidden, hideOffset, translateY]);
 
     return (
         <Tabs
+            screenLayout={({ children, navigation }) => <SwipeTabs navigation={navigation}>{children}</SwipeTabs>}
+            // Every tab switch, by tap or swipe, brings the bar back
+            screenListeners={{ focus: () => setHidden(false) }}
             screenOptions={{
+                animation: 'shift',
                 tabBarActiveTintColor: c.accent,
                 tabBarInactiveTintColor: c.muted,
                 tabBarStyle: {
@@ -38,6 +61,7 @@ export default function TabsLayout() {
                     paddingTop: 8,
                     elevation: 0,
                     overflow: 'hidden',
+                    transform: [{ translateY }],
                 },
                 tabBarBackground: () => (
                     <BlurView
