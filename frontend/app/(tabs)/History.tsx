@@ -209,7 +209,7 @@ export default function HistoryScreen() {
             onChangeText={setSearchQuery}
             autoCorrect={false}
             autoCapitalize="none"
-            keyboardAppearance="dark"
+            keyboardAppearance={c.keyboardAppearance}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')}>

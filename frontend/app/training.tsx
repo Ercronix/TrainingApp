@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity } from 'react-native';
-import { confirm, alert } from '@/utils/confirm';
+import { confirm } from '@/utils/confirm';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { RestTimer } from '@/components/RestTimer';
 import { useRestTimerStore } from '@/store/restTimerStore';
 import { useSetDraftStore } from '@/store/setDraftStore';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
+import { useKeepScreenOn } from '@/hooks/useKeepScreenOn';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { Tactile } from '@/components/Tactile';
@@ -35,6 +36,8 @@ export default function TrainingScreen() {
   const [dockHeight, setDockHeight] = useState(0);
   const c = useTheme();
   const isOnline = useIsOnline();
+  // The phone stays ready between sets instead of locking
+  useKeepScreenOn(!training?.isCompleted);
   const elapsedSeconds = useElapsedSeconds({
     startedAt: training?.startedAt,
     completedAt: training?.completedAt,
@@ -81,27 +84,22 @@ export default function TrainingScreen() {
   const handleComplete = () => {
     const completedCount = training?.exercises.filter((e: ExerciseLog) => e.completed).length || 0;
     const totalCount = training?.exercises.length || 0;
-    const records = (training?.exercises ?? [])
-      .filter((e: ExerciseLog) => e.completed)
-      .map((e: ExerciseLog) => ({ name: e.exerciseName, record: personalRecordOf(e) }))
-      .filter((r) => r.record != null)
-      .map((r) => `${r.name}: ${r.record}`);
-    const finish = (message: string) => {
+    const hasRecord = (training?.exercises ?? []).some((e: ExerciseLog) => e.completed && personalRecordOf(e) != null);
+    const finish = () => {
       // Don't leave a rest timer running (and notifying) after the session ends
       useRestTimerStore.getState().reset();
-      if (records.length > 0) haptics.record(); else haptics.success();
+      if (hasRecord) haptics.record(); else haptics.success();
       useSetDraftStore.getState().clearDrafts((training?.exercises ?? []).map((e: ExerciseLog) => String(e.id)));
-      alert('Done!', records.length > 0 ? `${message}\n\nNew records:\n${records.join('\n')}` : message);
-      router.replace('/(tabs)');
+      router.replace({ pathname: '/session-summary' as any, params: { trainingLogId } });
     };
     const doComplete = () => {
       const variables = { trainingLogId: Number(trainingLogId), completedAtMs: Date.now() };
       if (isOnline) {
-        completeTraining.mutate(variables, { onSuccess: () => finish('Training session complete!') });
+        completeTraining.mutate(variables, { onSuccess: finish });
       } else {
         // Paused until back online; the session is already shown as finished
         completeTraining.mutate(variables);
-        finish('Session saved. It will sync when you are back online.');
+        finish();
       }
     };
     if (completedCount < totalCount) {

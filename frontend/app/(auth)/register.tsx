@@ -81,7 +81,7 @@ export default function RegisterScreen() {
                         clearError('username');
                     }}
                     autoCapitalize="none"
-                    keyboardAppearance="dark"
+                    keyboardAppearance={c.keyboardAppearance}
                     editable={!loading}
                 />
                 {errors.username && (
@@ -102,7 +102,7 @@ export default function RegisterScreen() {
                     }}
                     autoCapitalize="none"
                     keyboardType="email-address"
-                    keyboardAppearance="dark"
+                    keyboardAppearance={c.keyboardAppearance}
                     editable={!loading}
                 />
                 {errors.email && (
@@ -122,7 +122,7 @@ export default function RegisterScreen() {
                         clearError('password');
                     }}
                     secureTextEntry
-                    keyboardAppearance="dark"
+                    keyboardAppearance={c.keyboardAppearance}
                     editable={!loading}
                 />
                 {errors.password && (

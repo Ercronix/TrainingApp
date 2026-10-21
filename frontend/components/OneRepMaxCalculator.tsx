@@ -38,7 +38,7 @@ export function OneRepMaxCalculator({ initialWeight, initialReps }: Props) {
             keyboardType="decimal-pad"
             placeholder="100"
             placeholderTextColor={c.subtle}
-            keyboardAppearance="dark"
+            keyboardAppearance={c.keyboardAppearance}
           />
         </View>
         <View className="flex-1">
@@ -50,7 +50,7 @@ export function OneRepMaxCalculator({ initialWeight, initialReps }: Props) {
             keyboardType="number-pad"
             placeholder="5"
             placeholderTextColor={c.subtle}
-            keyboardAppearance="dark"
+            keyboardAppearance={c.keyboardAppearance}
           />
         </View>
       </View>

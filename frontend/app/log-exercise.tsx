@@ -1,8 +1,9 @@
-import { View, Text, TextInput, TouchableOpacity, Vibration } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useExerciseLog } from '@/hooks/useExerciseLog';
+import { useKeepScreenOn } from '@/hooks/useKeepScreenOn';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
@@ -117,6 +118,7 @@ export default function LogExerciseModal() {
   // (through the same row conversion, so equal sets give equal keys)
   const lastSaved = useRef(keyOf(payloadOf((log?.sets ?? []).map((s) => toSet(toRow(s, true)) as SetLog), log)));
   const router = useRouter();
+  useKeepScreenOn();
   const { saveSets } = useExerciseLog(exerciseLogId, trainingLogId);
   const c = useTheme();
   const libraryExerciseId = log?.libraryExerciseId?.toString();
@@ -138,12 +140,12 @@ export default function LogExerciseModal() {
     return () => clearInterval(timer);
   }, [timing]);
 
-  // Buzz once when the timed set reaches its target
+  // Buzz once when the timed set reaches its target (through haptics, so the Profile switch applies)
   const target = timing ? targetOf(rows, timing.index, log) : NaN;
   useEffect(() => {
     if (timing && !vibrated.current && target > 0 && elapsed >= target) {
       vibrated.current = true;
-      Vibration.vibrate(500);
+      haptics.success();
     }
   }, [timing, elapsed, target]);
 
@@ -316,7 +318,7 @@ export default function LogExerciseModal() {
       editable={editable}
       onChangeText={onChange}
       keyboardType={keyboardType}
-      keyboardAppearance="dark"
+      keyboardAppearance={c.keyboardAppearance}
     />
   );
 

@@ -46,7 +46,7 @@ export default function EditExerciseModal() {
           value={form.name}
           onChangeText={updateField('name')}
           autoFocus
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 
@@ -60,7 +60,7 @@ export default function EditExerciseModal() {
               keyboardType="numeric"
               placeholder="4"
               placeholderTextColor={c.elevated}
-              keyboardAppearance="dark"
+              keyboardAppearance={c.keyboardAppearance}
               editable={!isPending}
             />
           </View>
@@ -73,7 +73,7 @@ export default function EditExerciseModal() {
               keyboardType="numeric"
               placeholder={repUnit === 'seconds' ? '30' : '10'}
               placeholderTextColor={c.elevated}
-              keyboardAppearance="dark"
+              keyboardAppearance={c.keyboardAppearance}
               editable={!isPending}
             />
           </View>
@@ -112,7 +112,7 @@ export default function EditExerciseModal() {
           keyboardType="decimal-pad"
           placeholder="80"
           placeholderTextColor={c.elevated}
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 

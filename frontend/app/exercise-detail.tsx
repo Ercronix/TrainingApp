@@ -102,7 +102,7 @@ export default function ExerciseDetailScreen() {
               value={name}
               onChangeText={setName}
               autoFocus
-              keyboardAppearance="dark"
+              keyboardAppearance={c.keyboardAppearance}
               editable={!isPending}
               onSubmitEditing={() => saveName(name, () => setEditingName(false))}
             />
@@ -242,7 +242,7 @@ export default function ExerciseDetailScreen() {
                 keyboardType="url"
                 autoCapitalize="none"
                 autoFocus
-                keyboardAppearance="dark"
+                keyboardAppearance={c.keyboardAppearance}
               />
               <Tactile
                 className={`rounded py-3 items-center ${isPending ? 'opacity-50' : ''}`}
@@ -298,7 +298,7 @@ export default function ExerciseDetailScreen() {
                 multiline
                 numberOfLines={4}
                 autoFocus
-                keyboardAppearance="dark"
+                keyboardAppearance={c.keyboardAppearance}
                 style={{ textAlignVertical: 'top', minHeight: 90 }}
               />
               <Tactile

@@ -37,7 +37,7 @@ export default function EditSplitModal() {
           value={name}
           onChangeText={setName}
           autoFocus
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 

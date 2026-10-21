@@ -38,7 +38,7 @@ export default function EditWorkoutModal() {
           value={name}
           onChangeText={setName}
           autoFocus
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 

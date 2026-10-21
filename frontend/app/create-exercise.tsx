@@ -119,7 +119,7 @@ export default function CreateExerciseModal() {
           value={form.name}
           onChangeText={handleNameChange}
           autoFocus
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
         {libraryMatch && (
@@ -143,7 +143,7 @@ export default function CreateExerciseModal() {
               value={form.sets}
               onChangeText={updateField('sets')}
               keyboardType="numeric"
-              keyboardAppearance="dark"
+              keyboardAppearance={c.keyboardAppearance}
               editable={!isPending}
             />
           </View>
@@ -156,7 +156,7 @@ export default function CreateExerciseModal() {
               value={form.reps}
               onChangeText={updateField('reps')}
               keyboardType="numeric"
-              keyboardAppearance="dark"
+              keyboardAppearance={c.keyboardAppearance}
               editable={!isPending}
             />
           </View>
@@ -200,7 +200,7 @@ export default function CreateExerciseModal() {
           value={form.weight}
           onChangeText={updateField('weight')}
           keyboardType="decimal-pad"
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 
@@ -213,7 +213,7 @@ export default function CreateExerciseModal() {
           onChangeText={updateField('videoUrl')}
           keyboardType="url"
           autoCapitalize="none"
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 
@@ -226,7 +226,7 @@ export default function CreateExerciseModal() {
           onChangeText={updateField('description')}
           multiline
           numberOfLines={3}
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
           style={{ textAlignVertical: 'top', minHeight: 80 }}
         />

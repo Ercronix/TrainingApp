@@ -537,7 +537,7 @@ function shiftPeriod(range: StatsRange, start: number, offset: number): number {
 }
 
 /** What a completed session adds to the totals (completed exercises only, like the analytics). */
-function totalsOf(log: TrainingLog): PeriodTotals {
+export function totalsOf(log: TrainingLog): PeriodTotals {
   let volume = 0, sets = 0;
   for (const ex of log.exercises ?? []) {
     if (!ex.completed) continue;

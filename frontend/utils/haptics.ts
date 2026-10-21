@@ -29,7 +29,9 @@ export const haptics = {
   check: () => play(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium), AndroidHaptics.Toggle_On, AndroidHaptics.Virtual_Key),
   /** Something checked off undone. */
   uncheck: () => play(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), AndroidHaptics.Toggle_Off, AndroidHaptics.Clock_Tick),
-  /** Something finished: the rest timer, a session. */
+  /** One of the last seconds of the rest timer, to feel the end coming without looking. */
+  countdown: () => play(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light), AndroidHaptics.Virtual_Key, AndroidHaptics.Virtual_Key),
+  /** Something finished: the rest timer, a timed set, a session. */
   success: () => play(
     () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
     AndroidHaptics.Confirm,
