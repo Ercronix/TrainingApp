@@ -1,8 +1,10 @@
 import { View, Text, LayoutChangeEvent } from 'react-native';
 import { useState } from 'react';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '@/hooks/useTheme';
-import { CHART_FONT, compactTick, linearScale, niceTicks, scrubHandlers } from './scale';
+import { useTabSwipeLock } from '@/hooks/useTabSwipeLock';
+import { CHART_FONT, compactTick, linearScale, niceTicks, scrubGesture } from './scale';
 
 export interface TrendPoint {
   x: number;
@@ -26,6 +28,7 @@ const PAD = { top: 10, right: 14, bottom: 22, left: 40 };
 
 export function TrendChart({ points, projection = [], formatValue, formatX, describe, height = 180, markBest = true }: Props) {
   const c = useTheme();
+  const { lockProps, unlock } = useTabSwipeLock();
   const [width, setWidth] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
 
@@ -71,45 +74,47 @@ export function TrendChart({ points, projection = [], formatValue, formatX, desc
         )}
       </View>
 
-      <View onLayout={onLayout} style={{ height }} {...scrubHandlers(selectNearest, () => setSelected(null))}>
-        {width > 0 && (
-          <Svg width={width} height={height} pointerEvents="none">
-            {ticks.map((t) => (
-              <Line key={`g${t}`} x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} stroke={c.subtle} strokeWidth={1} />
-            ))}
-            {ticks.map((t) => (
-              <SvgText key={`l${t}`} x={PAD.left - 6} y={y(t) + 3} fontSize={9} fill={c.muted} textAnchor="end" fontFamily={CHART_FONT}>
-                {compactTick(t)}
+      <GestureDetector gesture={scrubGesture(selectNearest, () => { setSelected(null); unlock(); })}>
+        <View onLayout={onLayout} style={{ height }} {...lockProps}>
+          {width > 0 && (
+            <Svg width={width} height={height} pointerEvents="none">
+              {ticks.map((t) => (
+                <Line key={`g${t}`} x1={PAD.left} x2={width - PAD.right} y1={y(t)} y2={y(t)} stroke={c.subtle} strokeWidth={1} />
+              ))}
+              {ticks.map((t) => (
+                <SvgText key={`l${t}`} x={PAD.left - 6} y={y(t) + 3} fontSize={9} fill={c.muted} textAnchor="end" fontFamily={CHART_FONT}>
+                  {compactTick(t)}
+                </SvgText>
+              ))}
+              <SvgText x={PAD.left} y={height - 6} fontSize={9} fill={c.muted} fontFamily={CHART_FONT}>
+                {formatX(points[0].x)}
               </SvgText>
-            ))}
-            <SvgText x={PAD.left} y={height - 6} fontSize={9} fill={c.muted} fontFamily={CHART_FONT}>
-              {formatX(points[0].x)}
-            </SvgText>
-            <SvgText x={width - PAD.right} y={height - 6} fontSize={9} fill={c.muted} textAnchor="end" fontFamily={CHART_FONT}>
-              {formatX((lastProjection ?? points[points.length - 1]).x)}
-            </SvgText>
+              <SvgText x={width - PAD.right} y={height - 6} fontSize={9} fill={c.muted} textAnchor="end" fontFamily={CHART_FONT}>
+                {formatX((lastProjection ?? points[points.length - 1]).x)}
+              </SvgText>
 
-            {projection.length > 1 && (
-              <Path d={path(projection)} stroke={c.accentText} strokeOpacity={0.55} strokeWidth={2} strokeDasharray="4 4" fill="none" />
-            )}
-            {points.length > 1 && (
-              <Path d={path(points)} stroke={c.accentText} strokeWidth={2} fill="none" strokeLinejoin="round" strokeLinecap="round" />
-            )}
+              {projection.length > 1 && (
+                <Path d={path(projection)} stroke={c.accentText} strokeOpacity={0.55} strokeWidth={2} strokeDasharray="4 4" fill="none" />
+              )}
+              {points.length > 1 && (
+                <Path d={path(points)} stroke={c.accentText} strokeWidth={2} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+              )}
 
-            {selected != null && (
-              <Line x1={x(points[selected].x)} x2={x(points[selected].x)} y1={PAD.top} y2={height - PAD.bottom} stroke={c.muted} strokeWidth={1} />
-            )}
-            {/* Dots only when they stay readable */}
-            {points.length <= 40 && points.map((p, i) => (
-              <Circle key={i} cx={x(p.x)} cy={y(p.y)} r={3} fill={c.accentText} stroke={c.surface} strokeWidth={2} />
-            ))}
-            {markBest && points.length > 1 && (
-              <Circle cx={x(points[bestIndex].x)} cy={y(points[bestIndex].y)} r={6} fill="none" stroke={c.primary} strokeWidth={1.5} />
-            )}
-            <Circle cx={x(points[shown].x)} cy={y(points[shown].y)} r={5} fill={c.accentText} stroke={c.surface} strokeWidth={2} />
-          </Svg>
-        )}
-      </View>
+              {selected != null && (
+                <Line x1={x(points[selected].x)} x2={x(points[selected].x)} y1={PAD.top} y2={height - PAD.bottom} stroke={c.muted} strokeWidth={1} />
+              )}
+              {/* Dots only when they stay readable */}
+              {points.length <= 40 && points.map((p, i) => (
+                <Circle key={i} cx={x(p.x)} cy={y(p.y)} r={3} fill={c.accentText} stroke={c.surface} strokeWidth={2} />
+              ))}
+              {markBest && points.length > 1 && (
+                <Circle cx={x(points[bestIndex].x)} cy={y(points[bestIndex].y)} r={6} fill="none" stroke={c.primary} strokeWidth={1.5} />
+              )}
+              <Circle cx={x(points[shown].x)} cy={y(points[shown].y)} r={5} fill={c.accentText} stroke={c.surface} strokeWidth={2} />
+            </Svg>
+          )}
+        </View>
+      </GestureDetector>
     </View>
   );
 }

@@ -1,7 +1,9 @@
-import React, { useRef, useCallback } from 'react';
-import { View, Text, Pressable, Animated, PanResponder } from 'react-native';
+import React, { useRef, useCallback, useState } from 'react';
+import { View, Text, Pressable, Animated } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { blendHex } from '@/utils/color';
+import { useTabSwipeLock } from '@/hooks/useTabSwipeLock';
 
 export interface SwipeAction {
   icon: keyof typeof Ionicons.glyphMap;
@@ -20,6 +22,10 @@ interface SwipeableRowProps {
 
 const ACTION_WIDTH = 72;
 const SWIPE_THRESHOLD = 40;
+// Horizontal travel before the row takes the swipe; vertical travel this far leaves it to the list
+const ACTIVATE_DISTANCE = 10;
+// An activation offset that is never reached, for a direction the row can't move in
+const NEVER = 10000;
 const CLIP_RADIUS = 18;
 // Space between the row and each action tile
 const ACTION_GAP = 6;
@@ -63,70 +69,45 @@ function ActionTile({ action, onPress, side }: { action: SwipeAction; onPress: (
 
 export default function SwipeableRow({ children, rightActions, leftActions, enabled = true }: SwipeableRowProps) {
   const translateX = useRef(new Animated.Value(0)).current;
-  const lastOffset = useRef(0);
+  // Where the row rests: 0 when closed, or the width of the open actions (negative on the right)
+  const [offset, setOffset] = useState(0);
 
   const rightWidth = (rightActions?.length ?? 0) * ACTION_WIDTH;
   const leftWidth = (leftActions?.length ?? 0) * ACTION_WIDTH;
 
-  // The pan responder is created once, so it reads the actions through a ref to see prop changes
-  const actions = useRef({ rightActions, leftActions, rightWidth, leftWidth });
-  actions.current = { rightActions, leftActions, rightWidth, leftWidth };
-
-  const close = useCallback(() => {
+  const snapTo = useCallback((toValue: number) => {
     Animated.spring(translateX, {
-      toValue: 0,
+      toValue,
       useNativeDriver: true,
       bounciness: 0,
       speed: 20,
     }).start();
-    lastOffset.current = 0;
+    setOffset(toValue);
   }, [translateX]);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy * 2);
-      },
-      onPanResponderGrant: () => {
-        translateX.setOffset(lastOffset.current);
-        translateX.setValue(0);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const { rightActions, leftActions, rightWidth, leftWidth } = actions.current;
-        let newValue = gestureState.dx;
-        const total = lastOffset.current + newValue;
+  const close = useCallback(() => snapTo(0), [snapTo]);
+  const { lockProps, unlock } = useTabSwipeLock();
 
-        // Clamp: don't go beyond action widths
-        if (total < -rightWidth) newValue = -rightWidth - lastOffset.current;
-        if (total > leftWidth) newValue = leftWidth - lastOffset.current;
-        // Don't allow swiping in a direction with no actions
-        if (!rightActions?.length && total < 0) newValue = -lastOffset.current;
-        if (!leftActions?.length && total > 0) newValue = -lastOffset.current;
-
-        translateX.setValue(newValue);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        const { rightActions, leftActions, rightWidth, leftWidth } = actions.current;
-        translateX.flattenOffset();
-        const currentPos = lastOffset.current + gestureState.dx;
-
-        let toValue = 0;
-        if (currentPos < -SWIPE_THRESHOLD && rightActions?.length) {
-          toValue = -rightWidth;
-        } else if (currentPos > SWIPE_THRESHOLD && leftActions?.length) {
-          toValue = leftWidth;
-        }
-
-        Animated.spring(translateX, {
-          toValue,
-          useNativeDriver: true,
-          bounciness: 0,
-          speed: 20,
-        }).start();
-        lastOffset.current = toValue;
-      },
+  // A gesture-handler pan, so inside the tab pager the row takes a horizontal swipe before the pager does.
+  // It only activates in a direction it can move, leaving the others to the pager.
+  const canMoveLeft = rightWidth > 0 || offset > 0;
+  const canMoveRight = leftWidth > 0 || offset < 0;
+  const pan = Gesture.Pan()
+    .runOnJS(true)
+    .activeOffsetX([canMoveLeft ? -ACTIVATE_DISTANCE : -NEVER, canMoveRight ? ACTIVATE_DISTANCE : NEVER])
+    .failOffsetX([canMoveLeft ? -NEVER : -ACTIVATE_DISTANCE, canMoveRight ? NEVER : ACTIVATE_DISTANCE])
+    .failOffsetY([-ACTIVATE_DISTANCE, ACTIVATE_DISTANCE])
+    .onUpdate((e) => {
+      // Clamp to the action widths, which are 0 on a side without actions
+      translateX.setValue(Math.min(Math.max(offset + e.translationX, -rightWidth), leftWidth));
     })
-  ).current;
+    .onEnd((e) => {
+      const position = offset + e.translationX;
+      if (position < -SWIPE_THRESHOLD && rightWidth > 0) snapTo(-rightWidth);
+      else if (position > SWIPE_THRESHOLD && leftWidth > 0) snapTo(leftWidth);
+      else snapTo(0);
+    })
+    .onFinalize(unlock);
 
   if (!enabled || (!rightActions?.length && !leftActions?.length)) {
     return <>{children}</>;
@@ -171,12 +152,11 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
       )}
 
       {/* Main content */}
-      <Animated.View
-        {...panResponder.panHandlers}
-        style={{ transform: [{ translateX }] }}
-      >
-        {children}
-      </Animated.View>
+      <GestureDetector gesture={pan}>
+        <Animated.View style={{ transform: [{ translateX }] }} {...lockProps}>
+          {children}
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 }

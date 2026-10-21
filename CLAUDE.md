@@ -35,7 +35,8 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 - Schema is owned by Flyway (`src/main/resources/db/migration/V<n>__*.sql`) with `ddl-auto=validate`. Schema changes need a new migration and matching entity changes; never edit an applied migration.
 
 ### Frontend
-- Expo Router file-based routes in `app/`: `(auth)` for login/register, `(tabs)` for the main tabs, and other screens and modals registered in `app/_layout.tsx`. `providers/AuthProvider.tsx` redirects between the auth and tab groups based on auth state.
+- Expo Router file-based routes in `app/`: `(auth)` for login/register, `(tabs)` for the main tabs, and other screens and modals registered in `app/_layout.tsx`.
+- The main tabs are a swipeable pager (material top tabs: a native ViewPager on Android/iOS, JS responders on web) with the custom `FloatingTabBar`. A horizontal pan inside a tab must be a gesture-handler `Gesture.Pan` (as in `SwipeableRow` and the charts' `scrubGesture`), since the pager takes the touch before a `PanResponder` responds, and must use `useTabSwipeLock` so the web pager stays still. `providers/AuthProvider.tsx` redirects between the auth and tab groups based on auth state.
 - All HTTP calls go through the domain objects in `services/api.ts` (`authApi`, `accountApi`, `splitsApi`, `workoutsApi`, `exercisesApi`, `libraryApi`, `trainingLogsApi`, `statsApi`). The API base URL is `EXPO_PUBLIC_API_URL` (default `localhost:8080`) on web, but native builds always use the hard-coded production URL. The axios interceptor attaches the access token and, on a 401, refreshes once (concurrent 401s share a single refresh) and retries.
 - Tokens are stored via `services/storage.ts` (SecureStore on native, localStorage on web).
 - Server state uses TanStack Query through per-feature hooks in `hooks/`. Query keys are in `constants/queryKeys.ts`. Zustand stores in `store/` hold only client state (auth, theme, dialogs).
