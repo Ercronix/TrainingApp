@@ -10,6 +10,7 @@ import { View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { useTabBarStore } from '@/store/tabBarStore';
 import { FloatingTabBar } from '@/components/FloatingTabBar';
+import { TabScene } from '@/components/TabScene';
 
 // A pager of the main tabs: the neighbouring tab follows the finger while swiping
 const { Navigator } = createMaterialTopTabNavigator();
@@ -31,12 +32,17 @@ export default function TabsLayout() {
         <SwipeTabs
             tabBar={(props) => <FloatingTabBar {...props} />}
             tabBarPosition="bottom"
+            // Tapped tabs fade in (see TabScene) instead of the pager scrolling past the tabs in between
+            screenLayout={({ route, navigation, children }) => (
+                <TabScene route={route} navigation={navigation}>{children}</TabScene>
+            )}
             style={{ backgroundColor: c.base }}
             // Every tab switch, by tap or swipe, brings the bar back
             screenListeners={{ focus: () => setHidden(false) }}
             screenOptions={{
                 sceneStyle: { backgroundColor: c.base },
                 swipeEnabled: !swipeLocked,
+                animationEnabled: false,
                 // Mount a tab when it is next to the current one, so swiping never shows a blank page
                 lazy: true,
                 lazyPreloadDistance: 1,

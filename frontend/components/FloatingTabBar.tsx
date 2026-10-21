@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +6,7 @@ import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs
 import { useColorScheme } from 'nativewind';
 import { useTheme } from '@/hooks/useTheme';
 import { useTabBarStore } from '@/store/tabBarStore';
+import { EASE_IN, spring } from '@/constants/motion';
 
 // 64 of content plus the 2px top and 6px bottom border
 export const TAB_BAR_HEIGHT = 72;
@@ -14,11 +15,13 @@ const TAB_BAR_GAP = 12;
 export const TAB_BAR_OFFSET = TAB_BAR_HEIGHT + TAB_BAR_GAP;
 // Inset of the active tab's pill from the item's edges
 const PILL_INSET = 6;
+const useNativeDriver = Platform.OS !== 'web';
 
 /**
  * The floating, blurred tab bar of the main tabs. It follows the pager while swiping: the pill
  * behind the active tab slides along and the tab colors cross-fade, so the bar always shows where
- * the swipe will land. It slides out of view while a tab's list scrolls down (see tabBarStore).
+ * the swipe will land. On a tap the pager jumps (see TabScene) and the pill springs over instead.
+ * It slides out of view while a tab's list scrolls down (see tabBarStore).
  */
 export function FloatingTabBar({ state, descriptors, navigation, position }: MaterialTopTabBarProps) {
   const insets = useSafeAreaInsets();
@@ -31,15 +34,28 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
   const hideOffset = insets.bottom + TAB_BAR_OFFSET + 8;
   const translateY = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(translateY, {
-      toValue: hidden ? hideOffset : 0,
-      duration: hidden ? 200 : 250,
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
+    if (hidden) {
+      Animated.timing(translateY, { toValue: hideOffset, duration: 220, easing: EASE_IN, useNativeDriver }).start();
+    } else {
+      Animated.spring(translateY, { toValue: 0, ...spring(0.45), useNativeDriver }).start();
+    }
   }, [hidden, hideOffset, translateY]);
 
+  // On a tap the pager's position jumps to the new tab at once. This offset, in tabs, starts at the
+  // jump's distance back to the old tab and springs to 0, so the pill and colors glide over.
+  const tapOffset = useRef(new Animated.Value(0)).current;
+  const tappedFrom = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    const from = tappedFrom.current;
+    tappedFrom.current = null;
+    if (from === null || from === state.index) return;
+    tapOffset.setValue(from - state.index);
+    Animated.spring(tapOffset, { toValue: 0, ...spring(0.38, 0.82), useNativeDriver }).start();
+  }, [state.index, tapOffset]);
+  const shown = Animated.add(position, tapOffset);
+
   const last = state.routes.length - 1;
-  const pillX = position.interpolate({
+  const pillX = shown.interpolate({
     inputRange: [0, last],
     outputRange: [0, last * itemWidth],
     extrapolate: 'clamp',
@@ -77,7 +93,7 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
           const label = typeof options.title === 'string' ? options.title : route.name;
           const focused = state.index === index;
           // 1 on this tab, fading to 0 one tab away, so the colors follow the swipe
-          const activeness = position.interpolate({
+          const activeness = shown.interpolate({
             inputRange: [index - 1, index, index + 1],
             outputRange: [0, 1, 0],
             extrapolate: 'clamp',
@@ -86,7 +102,10 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
 
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-            if (!focused && !event.defaultPrevented) navigation.navigate(route.name, route.params);
+            if (!focused && !event.defaultPrevented) {
+              tappedFrom.current = state.index;
+              navigation.navigate(route.name, route.params);
+            }
           };
 
           const renderItem = (color: string) => (
