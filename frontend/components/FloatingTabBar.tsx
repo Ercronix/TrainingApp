@@ -6,7 +6,7 @@ import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs
 import { useColorScheme } from 'nativewind';
 import { useTheme } from '@/hooks/useTheme';
 import { useTabBarStore } from '@/store/tabBarStore';
-import { EASE_IN, spring } from '@/constants/motion';
+import { EASE_IN, EASE_OUT, spring } from '@/constants/motion';
 
 // 64 of content plus the 2px top and 6px bottom border
 export const TAB_BAR_HEIGHT = 72;
@@ -30,16 +30,25 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
   const hidden = useTabBarStore((s) => s.hidden);
   const [itemWidth, setItemWidth] = useState(0);
 
-  // Slides the bar below the screen's bottom edge while a tab's list scrolls down
+  // Slides the bar below the screen's bottom edge while a tab's list scrolls down. Coming back is
+  // a short timing rather than a spring, whose long tail kept the bar untappable (see sliding).
   const hideOffset = insets.bottom + TAB_BAR_OFFSET + 8;
   const translateY = useRef(new Animated.Value(0)).current;
+  // A native-driven transform only reaches React's layout once its animation ends, so until then a
+  // press measures the bar where it was hidden and a slight finger move cancels it. While sliding
+  // in, the press area reaches up over that whole distance.
+  const [sliding, setSliding] = useState(false);
   useEffect(() => {
     if (hidden) {
       Animated.timing(translateY, { toValue: hideOffset, duration: 220, easing: EASE_IN, useNativeDriver }).start();
     } else {
-      Animated.spring(translateY, { toValue: 0, ...spring(0.45), useNativeDriver }).start();
+      setSliding(true);
+      Animated.timing(translateY, { toValue: 0, duration: 240, easing: EASE_OUT, useNativeDriver }).start(() =>
+        setSliding(false),
+      );
     }
   }, [hidden, hideOffset, translateY]);
+  const pressRetentionOffset = { top: sliding ? hideOffset : 20, bottom: 30, left: 20, right: 20 };
 
   // On a tap the pager's position jumps to the new tab at once. This offset, in tabs, starts at the
   // jump's distance back to the old tab and springs to 0, so the pill and colors glide over.
@@ -122,6 +131,7 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
               key={route.key}
               onPress={onPress}
               onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+              pressRetentionOffset={pressRetentionOffset}
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}
               accessibilityLabel={label}

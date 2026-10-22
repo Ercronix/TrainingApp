@@ -10,8 +10,10 @@ import { useFonts, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from '@expo
 import * as SplashScreen from 'expo-splash-screen';
 import { getPalette, getThemeVars } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
+import { useHapticsStore } from '@/store/hapticsStore';
 import { storage } from '@/services/storage';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
+import { ToastHost } from '@/components/ToastHost';
 import { ActiveTrainingBanner } from '@/components/ActiveTrainingBanner';
 import { queryClient, persister, CACHE_MAX_AGE } from '@/services/queryClient';
 import "./styles/global.css";
@@ -40,6 +42,9 @@ function AppLayout() {
     });
     storage.getItem('custom-accent').then((saved) => {
       if (saved) setCustomAccent(saved);
+    });
+    storage.getItem('haptics').then((saved) => {
+      if (saved === 'off') useHapticsStore.getState().setEnabled(false);
     });
     // Load saved preferences once on mount. nativewind's setColorScheme is a new function on
     // every render, so listing it would re-run this effect each render.
@@ -86,12 +91,14 @@ function AppLayout() {
               <Stack.Screen name="workout-detail"  options={{ headerShown: false }} />
               <Stack.Screen name="exercise-detail" options={{ headerShown: false }} />
               <Stack.Screen name="training"        options={{ headerShown: false }} />
+              <Stack.Screen name="session-summary" options={{ headerShown: false }} />
               <Stack.Screen name="history-detail"  options={{ headerShown: false }} />
               <Stack.Screen name="library"         options={{ headerShown: false }} />
               <Stack.Screen name="assign-muscles"  options={{ headerShown: false }} />
               <Stack.Screen name="one-rep-max"     options={{ headerShown: false }} />
             </Stack>
             <ActiveTrainingBanner />
+            <ToastHost />
             <ConfirmDialogHost />
           </AuthProvider>
         </PersistQueryClientProvider>

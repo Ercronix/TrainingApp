@@ -121,7 +121,7 @@ export default function AccountModal() {
                 secureTextEntry
                 autoCapitalize="none"
                 autoCorrect={false}
-                keyboardAppearance="dark"
+                keyboardAppearance={c.keyboardAppearance}
                 editable={!busy}
               />
               <Tactile
@@ -192,6 +192,7 @@ function Field({
   keyboardType?: 'email-address';
   editable?: boolean;
 }) {
+  const c = useTheme();
   return (
     <>
       <Text className="text-muted text-[9px] tracking-[3px] mb-2">{label}</Text>
@@ -200,7 +201,7 @@ function Field({
         secureTextEntry={secure}
         autoCapitalize="none"
         autoCorrect={false}
-        keyboardAppearance="dark"
+        keyboardAppearance={c.keyboardAppearance}
         {...props}
       />
     </>

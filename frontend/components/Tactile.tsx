@@ -1,5 +1,6 @@
 import { Pressable, PressableProps, StyleProp, View, ViewStyle } from 'react-native';
 import type { ReactNode, Ref } from 'react';
+import { haptics } from '@/utils/haptics';
 
 type Variant = 'accent' | 'surface' | 'elevated' | 'danger';
 
@@ -23,6 +24,8 @@ interface Props extends Omit<PressableProps, 'children' | 'style'> {
   style?: StyleProp<ViewStyle>;
   /** Kept for drop-in replacement of TouchableOpacity; the press is shown by sinking instead. */
   activeOpacity?: number;
+  /** Taps when pressed. Off for buttons whose action gives its own feedback. */
+  haptic?: boolean;
   ref?: Ref<View>;
 }
 
@@ -31,10 +34,20 @@ interface Props extends Omit<PressableProps, 'children' | 'style'> {
  * the same, so nothing around it moves.
  */
 export function Tactile({
-  children, variant = 'accent', className = '', containerClassName = '', depth = 4, disabled, style, ref, activeOpacity: _, ...rest
+  children, variant = 'accent', className = '', containerClassName = '', depth = 4, disabled, style, ref, activeOpacity: _, haptic = true, onPress, ...rest
 }: Props) {
   return (
-    <Pressable {...rest} ref={ref} disabled={disabled} className={containerClassName}>
+    <Pressable
+      {...rest}
+      ref={ref}
+      disabled={disabled}
+      className={containerClassName}
+      // On the press, not the touch down, so starting a scroll on a button doesn't tap
+      onPress={onPress && ((e) => {
+        if (haptic) haptics.tap();
+        onPress(e);
+      })}
+    >
       {({ pressed }) => {
         const down = pressed && !disabled;
         const { className: face, rim } = VARIANTS[variant];

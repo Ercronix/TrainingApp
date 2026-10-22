@@ -66,7 +66,7 @@ export default function LoginScreen() {
                     if (errors.username || errors.general) setErrors({ ...errors, username: undefined, general: undefined });
                 }}
                 autoCapitalize="none"
-                keyboardAppearance="dark"
+                keyboardAppearance={c.keyboardAppearance}
                 editable={!loading}
             />
             {errors.username && (
@@ -86,7 +86,7 @@ export default function LoginScreen() {
                     if (errors.password || errors.general) setErrors({ ...errors, password: undefined, general: undefined });
                 }}
                 secureTextEntry
-                keyboardAppearance="dark"
+                keyboardAppearance={c.keyboardAppearance}
                 editable={!loading}
             />
             {errors.password && (

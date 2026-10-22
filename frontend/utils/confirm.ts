@@ -1,4 +1,5 @@
 import { useDialogStore } from '@/store/dialogStore';
+import { ToastIcon, useToastStore } from '@/store/toastStore';
 
 /**
  * Themed confirmation dialog (replaces the native Alert/window.confirm so it
@@ -32,4 +33,12 @@ export function alert(title: string, message?: string) {
     confirmText: 'OK',
     showCancel: false,
   });
+}
+
+/**
+ * Brief notice at the top of the screen that hides by itself, for news that needs no answer
+ * (e.g. rest is over). Unlike alert() it doesn't block what the user is doing.
+ */
+export function toast(title: string, message?: string, icon?: ToastIcon) {
+  useToastStore.getState().show({ title, message, icon });
 }

@@ -6,5 +6,7 @@ export function useTheme() {
   const { colorScheme } = useColorScheme();
   const themeId = useThemeStore((s) => s.themeId);
   const customAccent = useThemeStore((s) => s.customAccent);
-  return getPalette(themeId, colorScheme === 'light' ? 'light' : 'dark', customAccent);
+  const mode: 'light' | 'dark' = colorScheme === 'light' ? 'light' : 'dark';
+  // The keyboard follows the mode too (iOS only), so light themes don't get a dark one
+  return { ...getPalette(themeId, mode, customAccent), keyboardAppearance: mode };
 }

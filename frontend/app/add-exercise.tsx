@@ -156,7 +156,7 @@ export default function AddExerciseScreen() {
           value={form.name}
           onChangeText={updateField('name')}
           autoFocus
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
         {libraryMatch && (
@@ -184,7 +184,7 @@ export default function AddExerciseScreen() {
           value={form.sets}
           onChangeText={updateField('sets')}
           keyboardType="numeric"
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 
@@ -197,7 +197,7 @@ export default function AddExerciseScreen() {
           value={form.reps}
           onChangeText={updateField('reps')}
           keyboardType="numeric"
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 
@@ -210,7 +210,7 @@ export default function AddExerciseScreen() {
           value={form.weight}
           onChangeText={updateField('weight')}
           keyboardType="decimal-pad"
-          keyboardAppearance="dark"
+          keyboardAppearance={c.keyboardAppearance}
           editable={!isPending}
         />
 

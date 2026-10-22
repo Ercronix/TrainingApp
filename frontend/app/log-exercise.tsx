@@ -1,8 +1,9 @@
-import { View, Text, TextInput, TouchableOpacity, Vibration } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useExerciseLog } from '@/hooks/useExerciseLog';
+import { useKeepScreenOn } from '@/hooks/useKeepScreenOn';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
@@ -18,6 +19,7 @@ import { previousSetsOf, workingSets } from '@/utils/sets';
 import { formatKg } from '@/utils/strength';
 import { usesPlates } from '@/constants/equipment';
 import { ExerciseLog, SetLog, TrainingLog } from '@/types';
+import { haptics } from '@/utils/haptics';
 
 import { Tactile } from '@/components/Tactile';
 const emptyRow: SetRow = { weight: '', reps: '', rpe: '', warmup: false, done: false };
@@ -116,6 +118,7 @@ export default function LogExerciseModal() {
   // (through the same row conversion, so equal sets give equal keys)
   const lastSaved = useRef(keyOf(payloadOf((log?.sets ?? []).map((s) => toSet(toRow(s, true)) as SetLog), log)));
   const router = useRouter();
+  useKeepScreenOn();
   const { saveSets } = useExerciseLog(exerciseLogId, trainingLogId);
   const c = useTheme();
   const libraryExerciseId = log?.libraryExerciseId?.toString();
@@ -137,12 +140,12 @@ export default function LogExerciseModal() {
     return () => clearInterval(timer);
   }, [timing]);
 
-  // Buzz once when the timed set reaches its target
+  // Buzz once when the timed set reaches its target (through haptics, so the Profile switch applies)
   const target = timing ? targetOf(rows, timing.index, log) : NaN;
   useEffect(() => {
     if (timing && !vibrated.current && target > 0 && elapsed >= target) {
       vibrated.current = true;
-      Vibration.vibrate(500);
+      haptics.success();
     }
   }, [timing, elapsed, target]);
 
@@ -238,9 +241,11 @@ export default function LogExerciseModal() {
     const row = rows[index];
     saveNow.current = true;
     if (row.done) {
+      haptics.uncheck();
       updateRow(index, { done: false });
       return;
     }
+    haptics.check();
     // One tap logs the set as shown; empty values take the plan's
     updateRow(index, {
       done: true,
@@ -260,11 +265,13 @@ export default function LogExerciseModal() {
     if (timing?.index === index) {
       // Stopping records the time held as the set's seconds and finishes it
       saveNow.current = true;
+      haptics.check();
       updateRow(index, { reps: String(elapsed), done: true });
       setTiming(null);
       finishSet(index);
       return;
     }
+    haptics.tap();
     vibrated.current = false;
     setTiming({ index, startedAt: Date.now() });
     setFocused(index);
@@ -311,7 +318,7 @@ export default function LogExerciseModal() {
       editable={editable}
       onChangeText={onChange}
       keyboardType={keyboardType}
-      keyboardAppearance="dark"
+      keyboardAppearance={c.keyboardAppearance}
     />
   );
 
@@ -469,6 +476,7 @@ export default function LogExerciseModal() {
             className="rounded-md py-4 flex-row items-center justify-center gap-2"
             style={timing != null && !rowTiming ? { opacity: 0.5 } : undefined}
             onPress={() => toggleTiming(i)}
+            haptic={false}
             disabled={timing != null && !rowTiming}
             accessibilityLabel={rowTiming ? `Stop timing set ${i + 1}` : `Start timing set ${i + 1}`}
             activeOpacity={0.85}
@@ -483,6 +491,7 @@ export default function LogExerciseModal() {
             variant="elevated"
             className="rounded-md py-4 flex-row items-center justify-center gap-2"
             onPress={() => toggleDone(i)}
+            haptic={false}
           >
             <Ionicons name="arrow-undo" size={18} color={c.muted} />
             <Text className="text-muted text-sm font-bold tracking-[2px]">UNDO SET</Text>
@@ -491,6 +500,7 @@ export default function LogExerciseModal() {
           <Tactile
             className="rounded-md py-4 flex-row items-center justify-center gap-2"
             onPress={() => toggleDone(i)}
+            haptic={false}
             activeOpacity={0.85}
           >
             <Ionicons name="checkmark" size={18} color={c.accentFg} />

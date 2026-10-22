@@ -4,6 +4,7 @@ import { GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '@/hooks/useTheme';
 import { useTabSwipeLock } from '@/hooks/useTabSwipeLock';
+import { haptics } from '@/utils/haptics';
 import { CHART_FONT, compactTick, linearScale, niceTicks, scrubGesture } from './scale';
 
 export interface TrendPoint {
@@ -53,6 +54,7 @@ export function TrendChart({ points, projection = [], formatValue, formatX, desc
     points.forEach((p, i) => {
       if (Math.abs(x(p.x) - px) < Math.abs(x(points[nearest].x) - px)) nearest = i;
     });
+    if (nearest !== selected) haptics.select();
     setSelected(nearest);
   };
 
