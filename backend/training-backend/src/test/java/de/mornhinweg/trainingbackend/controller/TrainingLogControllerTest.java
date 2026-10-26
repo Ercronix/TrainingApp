@@ -198,6 +198,34 @@ class TrainingLogControllerTest {
         .andExpect(status().isBadRequest());
   }
 
+  @Test
+  void loggingInARunningSessionMovesItsLastActivity() throws Exception {
+    String token = register();
+    long splitId = id(perform(token, post("/api/splits"), "{\"name\":\"Split\"}"));
+    long workoutId = id(perform(token, post("/api/workouts/split/" + splitId), "{\"name\":\"Push\"}"));
+    perform(token, post("/api/workouts/" + workoutId + "/exercises"), "{\"name\":\"Bench\",\"sets\":2,\"reps\":5}");
+    long sessionId = id(perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutId + "}"));
+    String started = perform(token, get("/api/training-logs/" + sessionId), null)
+        .andReturn().getResponse().getContentAsString();
+    long logId = ((Number) JsonPath.read(started, "$.exercises[0].id")).longValue();
+    String startedAt = JsonPath.read(started, "$.startedAt");
+    assertEquals(startedAt, JsonPath.read(started, "$.lastActivityAt"));
+
+    perform(token, put("/api/training-logs/exercise-logs/" + logId), "{\"sets\":[{\"reps\":5,\"weight\":100}]}")
+        .andExpect(status().isOk());
+    String logged = perform(token, get("/api/training-logs/" + sessionId), null)
+        .andReturn().getResponse().getContentAsString();
+    String lastActivityAt = JsonPath.read(logged, "$.lastActivityAt");
+    assertTrue(lastActivityAt.compareTo(startedAt) > 0);
+
+    // Corrections after the session is finished don't count as activity in it
+    perform(token, put("/api/training-logs/" + sessionId + "/complete"), "{}").andExpect(status().isOk());
+    perform(token, put("/api/training-logs/exercise-logs/" + logId), "{\"sets\":[{\"reps\":6,\"weight\":100}]}")
+        .andExpect(status().isOk());
+    perform(token, get("/api/training-logs/" + sessionId), null)
+        .andExpect(jsonPath("$.lastActivityAt").value(lastActivityAt));
+  }
+
   private String register() throws Exception {
     String name = "test_" + UUID.randomUUID().toString().substring(0, 8);
     String body = """

@@ -107,6 +107,7 @@ public class TrainingLogService {
     }
     if (request.getCompleted() != null) exerciseLog.setCompleted(request.getCompleted());
     if (request.getNotes() != null) exerciseLog.setNotes(request.getNotes());
+    touch(exerciseLog.getTrainingLog());
 
     exerciseLog = exerciseLogRepository.save(exerciseLog);
     return toExerciseLogResponse(exerciseLog, true);
@@ -146,6 +147,7 @@ public class TrainingLogService {
         .temporary(temporary)
         .build();
     exercise = exerciseRepository.save(exercise);
+    touch(trainingLog);
 
     ExerciseLog exerciseLog = ExerciseLog.builder()
         .trainingLog(trainingLog)
@@ -190,6 +192,7 @@ public class TrainingLogService {
     exerciseLog.replaceSets(List.of());
     exerciseLog.setCompleted(false);
     exerciseLog.setNotes(null);
+    touch(exerciseLog.getTrainingLog());
     exerciseLog = exerciseLogRepository.save(exerciseLog);
 
     deleteIfUnusedTemporary(replaced);
@@ -202,6 +205,7 @@ public class TrainingLogService {
     User user = getCurrentUser(authentication);
     ExerciseLog exerciseLog = getRunningExerciseLog(exerciseLogId, user);
     Exercise exercise = exerciseLog.getExercise();
+    touch(exerciseLog.getTrainingLog());
     exerciseLogRepository.delete(exerciseLog);
     deleteIfUnusedTemporary(exercise);
   }
@@ -216,6 +220,11 @@ public class TrainingLogService {
       throw new BadRequestException("Training is already completed");
     }
     return exerciseLog;
+  }
+
+  // Only for sessions in progress: a set corrected in a finished session isn't activity in it
+  private void touch(TrainingLog trainingLog) {
+    if (!trainingLog.isCompleted()) trainingLog.setLastActivityAt(LocalDateTime.now());
   }
 
   // A temporary exercise only exists for the session it was added to, so it goes with its log
@@ -309,6 +318,7 @@ public class TrainingLogService {
         .workoutName(trainingLog.getWorkout().getName())  // Added workout name
         .startedAt(trainingLog.getStartedAt())
         .completedAt(trainingLog.getCompletedAt())
+        .lastActivityAt(trainingLog.getLastActivityAt())
         .durationSeconds(trainingLog.getDurationSeconds())
         .notes(trainingLog.getNotes())
         .exercises(trainingLog.getExerciseLogs().stream()

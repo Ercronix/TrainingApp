@@ -40,9 +40,24 @@ export function useTraining(trainingLogId: string) {
     },
   });
 
-  // Marks the session finished right away, so it also works offline: the request is paused
-  // (and persisted) and runs after the session's other pending changes once back online.
-  const completeTraining = useMutation<
+  const completeTraining = useCompleteTraining(trainingLogId);
+
+  return {
+    training: trainingQuery.data,
+    isLoading: trainingQuery.isLoading,
+    updateExerciseLog,
+    deleteExerciseLog,
+    completeTraining,
+  };
+}
+
+/**
+ * Marks the session finished right away, so it also works offline: the request is paused
+ * (and persisted) and runs after the session's other pending changes once back online.
+ */
+export function useCompleteTraining(trainingLogId: string) {
+  const queryClient = useQueryClient();
+  return useMutation<
     TrainingLog, unknown, CompleteTrainingVariables, { previous?: TrainingLog; previousActive?: TrainingLog[] }
   >({
     mutationKey: MUTATION_KEYS.completeTraining,
@@ -71,12 +86,4 @@ export function useTraining(trainingLogId: string) {
       alert('Error', getErrorMessage(error));
     },
   });
-
-  return {
-    training: trainingQuery.data,
-    isLoading: trainingQuery.isLoading,
-    updateExerciseLog,
-    deleteExerciseLog,
-    completeTraining,
-  };
 }

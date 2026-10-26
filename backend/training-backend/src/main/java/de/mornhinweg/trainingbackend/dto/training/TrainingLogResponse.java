@@ -21,6 +21,7 @@ public class TrainingLogResponse {
   private String workoutName;  // Added
   private LocalDateTime startedAt;
   private LocalDateTime completedAt;
+  private LocalDateTime lastActivityAt;
   private Integer durationSeconds;
   private String notes;
 
