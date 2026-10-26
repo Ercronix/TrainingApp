@@ -98,8 +98,8 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     confirm('Logout', 'Are you sure you want to logout?', async () => {
       await authApi.logout();
+      // AuthProvider clears the cached data and redirects to login
       logout();
-      router.replace('/login');
     }, 'Logout');
   };
 
