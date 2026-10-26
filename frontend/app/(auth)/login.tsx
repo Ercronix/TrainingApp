@@ -1,6 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
 import { useState } from 'react';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
 import { getErrorMessage } from '@/utils/errorHandler';
@@ -16,7 +16,6 @@ export default function LoginScreen() {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<FieldErrors>({});
 
-    const router = useRouter();
     const setUser = useAuthStore((state) => state.setUser);
     const c = useTheme();
 
@@ -35,9 +34,10 @@ export default function LoginScreen() {
 
             const response = await authApi.login({ username, password });
 
+            // AuthProvider sees the new session and switches to the tabs. Navigating here as well
+            // replaced the tabs twice, which tore down the native tab pager while it was being set
+            // up and closed the app on Android.
             setUser(response);
-
-            router.replace('/(tabs)');
 
         } catch (error: unknown) {
             // Backend responds 401 "Invalid username or password" on bad credentials

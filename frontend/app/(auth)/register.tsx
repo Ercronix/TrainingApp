@@ -1,6 +1,6 @@
 import { View, Text, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { useState } from 'react';
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { authApi } from '@/services/api';
 import { useAuthStore } from '@/store/authStore';
 import { getErrorMessage } from '@/utils/errorHandler';
@@ -16,7 +16,6 @@ export default function RegisterScreen() {
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<FieldErrors>({});
 
-    const router = useRouter();
     const setUser = useAuthStore((state) => state.setUser);
     const c = useTheme();
 
@@ -41,9 +40,8 @@ export default function RegisterScreen() {
 
             const response = await authApi.register({ username, email, password });
 
+            // AuthProvider switches to the tabs (see login.tsx)
             setUser(response);
-
-            router.replace('/(tabs)');
 
         } catch (error: unknown) {
             // Backend responds 409 "Username is already taken" / "Email is already in use"
