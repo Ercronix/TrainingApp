@@ -45,7 +45,12 @@ export function RestCountdown() {
   );
 }
 
-const PRESET_MINUTES = [1, 2, 3, 5];
+// Rest lengths in seconds, shown as two rows of four
+const PRESETS = [45, 60, 90, 120, 150, 180, 240, 300];
+const PRESET_ROWS = [PRESETS.slice(0, 4), PRESETS.slice(4)];
+
+/** A rest length as a short label, e.g. 0:45, 2:00 or 2:30. */
+const formatLength = (secs: number) => `${Math.floor(secs / 60)}:${(secs % 60).toString().padStart(2, '0')}`;
 
 /** Slim rest bar: countdown with play/pause and reset; tap it to pick the rest length. */
 export function RestTimer() {
@@ -67,7 +72,7 @@ export function RestTimer() {
         >
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-1">
-              <Text className="text-muted text-[9px] tracking-[3px]">REST · {customDuration / 60} MIN</Text>
+              <Text className="text-muted text-[9px] tracking-[3px]">REST · {formatLength(customDuration)} MIN</Text>
               <Ionicons name={showPresets ? 'chevron-down' : 'chevron-up'} size={12} color={c.muted} />
             </View>
             <Text className={`text-xl font-mono-bold ${isUrgent ? 'text-danger' : isRunning ? 'text-info' : 'text-primary'}`}>
@@ -99,28 +104,32 @@ export function RestTimer() {
       </View>
 
       {showPresets && (
-        <View className="flex-row gap-2 px-2 pb-2">
-          {PRESET_MINUTES.map((mins) => {
-            const selected = customDuration === mins * 60;
-            return (
-              <Tactile
-                key={mins}
-                variant={selected ? 'accent' : 'elevated'}
-                depth={3}
-                className="py-2.5 rounded-sm items-center"
-                containerClassName="flex-1"
-                onPress={() => {
-                  setDuration(mins * 60);
-                  setShowPresets(false);
-                }}
-                accessibilityState={{ selected }}
-              >
-                <Text className={`text-[10px] font-bold tracking-widest ${selected ? 'text-accent-fg' : 'text-muted'}`}>
-                  {mins} MIN
-                </Text>
-              </Tactile>
-            );
-          })}
+        <View className="gap-2 px-2 pb-2">
+          {PRESET_ROWS.map((row) => (
+            <View key={row[0]} className="flex-row gap-2">
+              {row.map((secs) => {
+                const selected = customDuration === secs;
+                return (
+                  <Tactile
+                    key={secs}
+                    variant={selected ? 'accent' : 'elevated'}
+                    depth={3}
+                    className="py-2.5 rounded-sm items-center"
+                    containerClassName="flex-1"
+                    onPress={() => {
+                      setDuration(secs);
+                      setShowPresets(false);
+                    }}
+                    accessibilityState={{ selected }}
+                  >
+                    <Text className={`text-[10px] font-bold tracking-widest ${selected ? 'text-accent-fg' : 'text-muted'}`}>
+                      {formatLength(secs)}
+                    </Text>
+                  </Tactile>
+                );
+              })}
+            </View>
+          ))}
         </View>
       )}
     </View>
