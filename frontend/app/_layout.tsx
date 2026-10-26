@@ -15,6 +15,7 @@ import { storage } from '@/services/storage';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
 import { ToastHost } from '@/components/ToastHost';
 import { ActiveTrainingBanner } from '@/components/ActiveTrainingBanner';
+import { TrainingAutoEnd } from '@/components/TrainingAutoEnd';
 import { queryClient, persister, CACHE_MAX_AGE } from '@/services/queryClient';
 import "./styles/global.css";
 
@@ -98,6 +99,7 @@ function AppLayout() {
               <Stack.Screen name="one-rep-max"     options={{ headerShown: false }} />
             </Stack>
             <ActiveTrainingBanner />
+            <TrainingAutoEnd />
             <ToastHost />
             <ConfirmDialogHost />
           </AuthProvider>

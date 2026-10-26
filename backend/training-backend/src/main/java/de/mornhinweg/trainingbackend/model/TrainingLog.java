@@ -38,6 +38,10 @@ public class TrainingLog {
   @Column(name = "completed_at")
   private LocalDateTime completedAt;
 
+  // Last input in the session: logged sets, or added, swapped or removed exercises
+  @Column(name = "last_activity_at", nullable = false)
+  private LocalDateTime lastActivityAt;
+
   @Column(name = "duration_seconds")
   private Integer durationSeconds;
 
@@ -59,6 +63,7 @@ public class TrainingLog {
   protected void onCreate() {
     createdAt = LocalDateTime.now();
     updatedAt = LocalDateTime.now();
+    if (lastActivityAt == null) lastActivityAt = startedAt;
   }
 
   @PreUpdate

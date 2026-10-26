@@ -48,6 +48,8 @@ export interface TrainingLog {
   workoutName: string;    
   startedAt: string;
   completedAt: string | null;
+  /** Last input in the session (logged sets, added or removed exercises). Missing from data cached by older versions. */
+  lastActivityAt?: string;
   durationSeconds: number | null;
   notes: string | null;
   exercises: ExerciseLog[];
