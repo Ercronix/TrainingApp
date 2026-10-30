@@ -27,7 +27,8 @@ export function useIllustrationCatalogId(libraryExerciseId: number | null | unde
 
 /**
  * The Everkinetic drawings are dark lines on white. White becomes the background they sit on
- * and every other fill the line color, so they follow the theme.
+ * (or is left out on a transparent one) and every other fill the line color, so they follow
+ * the theme.
  */
 function recolor(svg: string, background: string, line: string) {
   return svg.replace(/fill="([^"]*)"/g, (_, fill: string) =>
@@ -69,16 +70,18 @@ export function ExerciseIllustration({
   height?: number;
   maxHeight?: number;
   animate?: boolean;
+  /** What the drawing sits on; 'transparent' leaves only the lines, for a drawing that doesn't animate. */
   background?: string;
 }) {
   const c = useTheme();
   const reduceMotion = useReduceMotion();
   const looping = animate && reduceMotion === false;
   const bg = background ?? c.surface;
+  const fill = bg === 'transparent' ? 'none' : bg;
   const start = useDrawing(catalogExerciseId, 0);
   const end = useDrawing(catalogExerciseId, 1, looping);
-  const startXml = useMemo(() => start && recolor(start, bg, c.primary), [start, bg, c.primary]);
-  const endXml = useMemo(() => end && recolor(end, bg, c.primary), [end, bg, c.primary]);
+  const startXml = useMemo(() => start && recolor(start, fill, c.primary), [start, fill, c.primary]);
+  const endXml = useMemo(() => end && recolor(end, fill, c.primary), [end, fill, c.primary]);
   const fade = useRef(new Animated.Value(0)).current;
   const showEnd = looping && !!endXml;
 
@@ -122,20 +125,20 @@ export function IllustrationCredit() {
 }
 
 /**
- * A square tile for an exercise in a list: its drawing, else a small body map of its muscles,
- * else a plain icon, so the rows stay aligned.
+ * An exercise's picture in a list, straight on the row: its drawing, else a small body map of
+ * its muscles, else a plain icon, in a square of the same size so the rows stay aligned.
  */
-export function ExerciseThumb({ libraryExerciseId, size = 52 }: { libraryExerciseId: number | null | undefined; size?: number }) {
+export function ExerciseThumb({ libraryExerciseId, size = 68 }: { libraryExerciseId: number | null | undefined; size?: number }) {
   const c = useTheme();
   const { library } = useLibrary();
   const drawingId = useIllustrationCatalogId(libraryExerciseId);
   const muscles = library.find((e) => e.id === libraryExerciseId)?.muscles ?? [];
   return (
-    <View className="rounded-sm bg-elevated justify-center items-center overflow-hidden" style={{ width: size, height: size }} accessible={false}>
+    <View className="justify-center items-center" style={{ width: size, height: size }} accessible={false}>
       {drawingId != null ? (
-        <ExerciseIllustration catalogExerciseId={drawingId} width={size - 6} height={size - 6} background={c.elevated} />
+        <ExerciseIllustration catalogExerciseId={drawingId} width={size} height={size} background="transparent" />
       ) : muscles.length > 0 ? (
-        <BodyMap fills={targetFills(muscles, c, c.elevated)} height={size - 8} background={c.elevated} showLabels={false} />
+        <BodyMap fills={targetFills(muscles, c)} height={size - 12} showLabels={false} />
       ) : (
         <Ionicons name="barbell-outline" size={size * 0.4} color={c.muted} />
       )}
