@@ -29,6 +29,10 @@ public class CatalogExercise {
   @Column(nullable = false, length = 30)
   private String category;
 
+  // Everkinetic id of the drawing of the movement (start and end pose); null when there is none
+  @Column(length = 10)
+  private String illustration;
+
   @ElementCollection
   @CollectionTable(name = "exercise_catalog_muscles", joinColumns = @JoinColumn(name = "catalog_exercise_id"))
   @BatchSize(size = 1000)

@@ -4,10 +4,11 @@ import { CatalogExercise } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { searchCatalog } from '@/utils/muscles';
 import { MuscleSummary } from '@/components/MusclePicker';
+import { ExerciseIllustration } from '@/components/ExerciseIllustration';
 
 /**
- * Catalog exercises matching the typed name. Picking one takes over its name and muscles, so
- * the exercise counts towards weekly sets per muscle.
+ * Catalog exercises matching the typed name, with their drawings. Picking one takes over its name,
+ * muscles and drawing, so the exercise counts towards weekly sets per muscle.
  */
 export function CatalogSuggestions({
   catalog,
@@ -16,6 +17,7 @@ export function CatalogSuggestions({
   title = 'FROM THE CATALOG',
   requireAll = true,
   limit = 4,
+  hideExactMatch = true,
 }: {
   catalog: CatalogExercise[];
   query: string;
@@ -23,13 +25,15 @@ export function CatalogSuggestions({
   title?: string;
   requireAll?: boolean;
   limit?: number;
+  /** Shows nothing once the query is exactly a catalog exercise's name. */
+  hideExactMatch?: boolean;
 }) {
   const c = useTheme();
   if (query.trim().length < 2) return null;
   const normalized = query.trim().toLowerCase();
   const matches = searchCatalog(catalog, query, { limit, requireAll });
   // Nothing to suggest once the name is exactly a catalog exercise
-  if (matches.length === 0 || matches.some((m) => m.name.toLowerCase() === normalized)) return null;
+  if (matches.length === 0 || (hideExactMatch && matches.some((m) => m.name.toLowerCase() === normalized))) return null;
 
   return (
     <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md mb-5 overflow-hidden">
@@ -41,7 +45,13 @@ export function CatalogSuggestions({
           onPress={() => onSelect(entry)}
           activeOpacity={0.7}
         >
-          <Ionicons name="body-outline" size={16} color={c.accent} />
+          <View className="w-12 items-center">
+            {entry.hasIllustration ? (
+              <ExerciseIllustration catalogExerciseId={entry.id} width={44} height={44} />
+            ) : (
+              <Ionicons name="body-outline" size={16} color={c.accent} />
+            )}
+          </View>
           <View className="flex-1">
             <Text className="text-primary text-sm font-bold">{entry.name}</Text>
             <MuscleSummary muscles={entry.muscles} />

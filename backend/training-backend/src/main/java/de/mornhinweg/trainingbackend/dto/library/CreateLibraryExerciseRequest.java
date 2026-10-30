@@ -18,4 +18,6 @@ public class CreateLibraryExerciseRequest {
   @Size(max = 30) private String equipment;
   // Muscles the exercise trains, e.g. taken from a catalog exercise
   private List<@Valid MuscleTargetDto> muscles;
+  // The catalog exercise picked for it, if any
+  private Long catalogExerciseId;
 }

@@ -7,6 +7,8 @@ import { MAJOR_MUSCLES, MUSCLE_LABELS, MUSCLES, WEEKLY_SET_TARGET } from '@/cons
 import { computeMuscleVolume } from '@/utils/muscles';
 import { useTheme } from '@/hooks/useTheme';
 import { Tactile } from '@/components/Tactile';
+import { BodyMap, MuscleFills } from '@/components/BodyMap';
+import { blendHex } from '@/utils/color';
 
 type Range = 'week' | 'average';
 
@@ -23,6 +25,7 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
   const router = useRouter();
   const c = useTheme();
   const [range, setRange] = useState<Range>('week');
+  const [selected, setSelected] = useState<Muscle | null>(null);
   const volume = useMemo(() => computeMuscleVolume(logs, library, WEEK_COUNT), [logs, library]);
 
   const current = volume.weeks[volume.weeks.length - 1];
@@ -46,6 +49,16 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
   const pct = (v: number) => `${(v / scale) * 100}%` as const;
   const inTarget = rows.filter((r) => r.sets >= WEEKLY_SET_TARGET.min).length;
   const hasTagged = library.some((e) => e.muscles?.length);
+
+  // Below the target the accent fades in with the sets, above it the muscle turns blue like its bar
+  const heatOf = (sets: number) =>
+    sets < WEEKLY_SET_TARGET.min
+      ? blendHex(c.accentText, c.surface, 0.2 + 0.5 * (sets / WEEKLY_SET_TARGET.min))
+      : sets <= WEEKLY_SET_TARGET.max ? c.accentText : c.info;
+  const fills: MuscleFills = Object.fromEntries(
+    MUSCLES.filter((m) => setsFor(m) > 0).map((m) => [m, heatOf(setsFor(m))]),
+  );
+  const selectedSets = selected ? Math.round(setsFor(selected) * 10) / 10 : 0;
 
   return (
     <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
@@ -76,10 +89,40 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
         ))}
       </View>
 
+      <BodyMap
+        fills={fills}
+        height={190}
+        onPressMuscle={(m) => setSelected((current) => (current === m ? null : m))}
+        accessibilityLabel={`Weekly sets per muscle: ${rows.filter((r) => r.sets > 0).map((r) => `${MUSCLE_LABELS[r.muscle]} ${formatSets(Math.round(r.sets * 10) / 10)}`).join(', ') || 'none yet'}`}
+      />
+      <View className="h-8 justify-center items-center mb-2">
+        {selected ? (
+          <Text className="text-primary text-xs">
+            <Text className="font-bold">{MUSCLE_LABELS[selected]}</Text>
+            <Text className="text-muted"> · </Text>
+            <Text className="font-mono-bold">{formatSets(selectedSets)}</Text>
+            <Text className="text-muted"> {selectedSets === 1 ? 'set' : 'sets'}</Text>
+          </Text>
+        ) : (
+          <View className="flex-row items-center gap-4">
+            {([
+              ['UNDER', blendHex(c.accentText, c.surface, 0.45)],
+              ['IN RANGE', c.accentText],
+              ['OVER', c.info],
+            ] as const).map(([label, color]) => (
+              <View key={label} className="flex-row items-center gap-1.5">
+                <View className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
+                <Text className="text-muted text-[8px] tracking-[2px]">{label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
       {rows.map(({ muscle, sets }) => {
         const tone = sets < WEEKLY_SET_TARGET.min ? 'bg-subtle' : sets <= WEEKLY_SET_TARGET.max ? 'bg-accent' : 'bg-info';
         return (
-          <View key={muscle} className="flex-row items-center gap-3 py-1.5">
+          <View key={muscle} className={`flex-row items-center gap-3 py-1.5 px-1.5 -mx-1.5 rounded-sm ${selected === muscle ? 'bg-elevated' : ''}`}>
             <Text className="text-primary text-xs w-24" numberOfLines={1}>{MUSCLE_LABELS[muscle]}</Text>
             <View className="flex-1 h-2.5 bg-elevated rounded-full overflow-hidden">
               <View

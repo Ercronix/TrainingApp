@@ -11,6 +11,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -220,6 +221,28 @@ class LibraryExerciseControllerTest {
     perform(token, put("/api/library-exercises/" + libraryId), "{\"equipment\":\"\"}")
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.equipment").value(nullValue()));
+  }
+
+  @Test
+  void catalogLinkCanBeSetAndRemoved() throws Exception {
+    String catalog = perform(token, get("/api/exercise-catalog"), null).andReturn().getResponse().getContentAsString();
+    long benchId = ((Number) JsonPath.<List<Object>>read(catalog,
+        "$[?(@.name == 'Barbell Bench Press - Medium Grip')].id").get(0)).longValue();
+    long libraryId = libraryId(createExercise(workoutA, "{\"name\":\"Bench\",\"catalogExerciseId\":" + benchId + "}"));
+
+    perform(token, get("/api/library-exercises"), null)
+        .andExpect(jsonPath("$[0].catalogExerciseId").value(benchId));
+
+    // Other updates leave it alone
+    perform(token, put("/api/library-exercises/" + libraryId), "{\"description\":\"Arch\"}")
+        .andExpect(jsonPath("$.catalogExerciseId").value(benchId));
+
+    perform(token, put("/api/library-exercises/" + libraryId), "{\"catalogExerciseId\":0}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.catalogExerciseId").value(nullValue()));
+
+    perform(token, put("/api/library-exercises/" + libraryId), "{\"catalogExerciseId\":999999}")
+        .andExpect(status().isBadRequest());
   }
 
   @Test

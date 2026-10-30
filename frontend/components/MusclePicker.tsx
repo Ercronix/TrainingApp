@@ -3,6 +3,7 @@ import { Muscle, MuscleRole, MuscleTarget } from '@/types';
 import { MUSCLE_GROUPS, MUSCLE_LABELS } from '@/constants/muscles';
 import { muscleNames, primaryMuscles, secondaryMuscles } from '@/utils/muscles';
 import { Tactile } from '@/components/Tactile';
+import { BodyMap, targetFills } from '@/components/BodyMap';
 import { useTheme } from '@/hooks/useTheme';
 
 const NEXT_ROLE: Record<'NONE' | MuscleRole, MuscleRole | null> = {
@@ -11,7 +12,10 @@ const NEXT_ROLE: Record<'NONE' | MuscleRole, MuscleRole | null> = {
   SECONDARY: null,
 };
 
-/** Muscle chips grouped by push, pull, legs and core. A tap cycles primary, secondary and off. */
+/**
+ * A body map and muscle chips grouped by push, pull, legs and core. A tap on either cycles a
+ * muscle through primary, secondary and off.
+ */
 export function MusclePicker({
   value,
   onChange,
@@ -32,6 +36,9 @@ export function MusclePicker({
 
   return (
     <View>
+      <View className="mb-4">
+        <BodyMap fills={targetFills(value, c)} height={200} onPressMuscle={disabled ? undefined : toggle} />
+      </View>
       {MUSCLE_GROUPS.map((group) => (
         <View key={group.label} className="mb-3">
           <Text className="text-subtle text-[8px] tracking-[2px] mb-1.5">{group.label}</Text>
@@ -63,7 +70,7 @@ export function MusclePicker({
         </View>
       ))}
       <Text className="text-muted text-[10px]">
-        Tap once for a primary muscle (full set), twice for a secondary one (half a set)
+        Tap a muscle or chip once for a primary muscle (full set), twice for a secondary one (half a set)
       </Text>
     </View>
   );

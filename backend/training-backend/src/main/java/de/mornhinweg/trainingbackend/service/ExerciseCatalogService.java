@@ -24,6 +24,7 @@ public class ExerciseCatalogService {
             .name(c.getName())
             .equipment(c.getEquipment())
             .category(c.getCategory())
+            .hasIllustration(c.getIllustration() != null)
             .muscles(MuscleTargetDto.fromAll(c.getMuscles()))
             .build())
         .toList();

@@ -7,6 +7,7 @@ import { useLibrary } from '@/hooks/useLibrary';
 import { useTheme } from '@/hooks/useTheme';
 import { LibraryExercise } from '@/types';
 import { MuscleSummary } from '@/components/MusclePicker';
+import { ExerciseThumb } from '@/components/ExerciseIllustration';
 
 export default function LibraryScreen() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function LibraryScreen() {
 
   const renderItem = ({ item }: { item: LibraryExercise }) => (
     <TouchableOpacity
-      className="bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4 mb-2 flex-row items-center gap-3"
+      className="bg-surface border-2 border-edge border-b-[6px] rounded-md pl-3 pr-5 py-3 mb-2 flex-row items-center gap-3"
       onPress={() =>
         router.push({
           pathname: '/exercise-detail' as any,
@@ -35,6 +36,7 @@ export default function LibraryScreen() {
       }
       activeOpacity={0.85}
     >
+      <ExerciseThumb libraryExerciseId={item.id} />
       <View className="flex-1">
         <Text className="text-primary text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
         <Text className="text-muted text-[9px] tracking-[2px]">

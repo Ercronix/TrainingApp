@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
+import { ExerciseThumb } from '@/components/ExerciseIllustration';
 import { useRestTimerStore } from '@/store/restTimerStore';
 import { useSetDraftStore } from '@/store/setDraftStore';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';
@@ -163,45 +164,48 @@ export default function TrainingScreen() {
         >
           {/* The whole row opens the log screen */}
           <TouchableOpacity
-            className="flex-1 pl-4 pr-2 py-4 gap-1"
+            className="flex-1 flex-row items-center gap-3 pl-3 pr-2 py-3"
             onPress={() => openLog(item)}
             activeOpacity={0.85}
             disabled={syncing}
             accessibilityLabel={`Log ${item.exerciseName}`}
           >
-            {isCurrent && <Text className="text-accent-text text-[9px] tracking-[3px]">NOW</Text>}
-            <View className="flex-row items-center gap-2">
-              <Text className="text-primary text-base font-bold tracking-tight flex-shrink" numberOfLines={1}>
-                {item.exerciseName}
-              </Text>
-              {isRecord && (
-                <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
-                  <Ionicons name="trophy" size={10} color={c.accentFg} />
-                  <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
+            <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
+            <View className="flex-1 gap-1">
+              {isCurrent && <Text className="text-accent-text text-[9px] tracking-[3px]">NOW</Text>}
+              <View className="flex-row items-center gap-2">
+                <Text className="text-primary text-base font-bold tracking-tight flex-shrink" numberOfLines={1}>
+                  {item.exerciseName}
+                </Text>
+                {isRecord && (
+                  <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
+                    <Ionicons name="trophy" size={10} color={c.accentFg} />
+                    <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
+                  </View>
+                )}
+              </View>
+              {item.completed || logged > 0 ? (
+                <Text className={`text-xs font-mono ${item.completed ? 'text-accent-text' : 'text-primary'}`} numberOfLines={1}>
+                  {formatSets(setsOf(item), item.repUnit)}
+                </Text>
+              ) : (
+                <Text className="text-muted text-xs" numberOfLines={1}>
+                  {item.plannedSets && item.plannedReps
+                    ? `${item.plannedSets} × ${item.plannedReps} ${unit}${item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}`
+                    : 'No plan'}
+                  {previous.length > 0 ? ` · last ${formatSets(previous, item.repUnit)}` : ''}
+                </Text>
+              )}
+              {/* Sets logged so far against the plan */}
+              {!item.completed && planned > 0 && (
+                <View className="flex-row gap-1 mt-1">
+                  {Array.from({ length: Math.max(planned, logged) }, (_, i) => (
+                    <View key={i} className={`w-2 h-2 rounded-full ${i < logged ? 'bg-accent' : 'bg-elevated'}`} />
+                  ))}
                 </View>
               )}
+              {syncing && <Text className="text-muted text-[10px] tracking-[2px]">SYNCING…</Text>}
             </View>
-            {item.completed || logged > 0 ? (
-              <Text className={`text-xs font-mono ${item.completed ? 'text-accent-text' : 'text-primary'}`} numberOfLines={1}>
-                {formatSets(setsOf(item), item.repUnit)}
-              </Text>
-            ) : (
-              <Text className="text-muted text-xs" numberOfLines={1}>
-                {item.plannedSets && item.plannedReps
-                  ? `${item.plannedSets} × ${item.plannedReps} ${unit}${item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}`
-                  : 'No plan'}
-                {previous.length > 0 ? ` · last ${formatSets(previous, item.repUnit)}` : ''}
-              </Text>
-            )}
-            {/* Sets logged so far against the plan */}
-            {!item.completed && planned > 0 && (
-              <View className="flex-row gap-1 mt-1">
-                {Array.from({ length: Math.max(planned, logged) }, (_, i) => (
-                  <View key={i} className={`w-2 h-2 rounded-full ${i < logged ? 'bg-accent' : 'bg-elevated'}`} />
-                ))}
-              </View>
-            )}
-            {syncing && <Text className="text-muted text-[10px] tracking-[2px]">SYNCING…</Text>}
           </TouchableOpacity>
 
           {/* Tick off without opening it (records the plan when nothing is logged) */}

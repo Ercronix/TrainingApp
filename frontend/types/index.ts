@@ -150,6 +150,8 @@ export interface CatalogExercise {
   equipment: string | null;
   category: string;
   muscles: MuscleTarget[];
+  // Whether there is a drawing of the start and end pose
+  hasIllustration?: boolean;
 }
 
 // An exercise in the user's library. Workout exercises link to one and add their own plan
@@ -165,6 +167,8 @@ export interface LibraryExercise {
   equipment?: string | null;
   // Primary muscles first, empty until assigned. Missing in data cached before muscles existed.
   muscles?: MuscleTarget[];
+  // The catalog exercise it was picked from, whose drawing shows how it's done
+  catalogExerciseId?: number | null;
   workoutCount: number;
   lastTrainedAt: string | null;
 }
@@ -178,6 +182,8 @@ export interface UpdateLibraryExerciseRequest {
   equipment?: string;
   // Replaces the muscles; an empty list clears them
   muscles?: MuscleTarget[];
+  // Links a catalog exercise for its drawing; 0 removes the link
+  catalogExerciseId?: number;
 }
 
 export interface CreateExerciseRequest {
@@ -195,6 +201,8 @@ export interface CreateExerciseRequest {
   equipment?: string;
   // Replaces the library entry's muscles when sent
   muscles?: MuscleTarget[];
+  // Links a catalog exercise for its drawing
+  catalogExerciseId?: number;
 }
 
 export interface ExerciseProgressEntry {

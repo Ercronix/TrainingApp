@@ -136,6 +136,7 @@ public class TrainingLogService {
     LibraryExercise libraryExercise = libraryExerciseService.resolve(user, request.getLibraryExerciseId(), request.getName());
     libraryExerciseService.applyEquipment(libraryExercise, request.getEquipment());
     libraryExerciseService.applyMuscles(libraryExercise, request.getMuscles());
+    libraryExerciseService.applyCatalogExercise(libraryExercise, request.getCatalogExerciseId());
 
     Exercise exercise = Exercise.builder()
         .workout(workout)
@@ -176,6 +177,7 @@ public class TrainingLogService {
     LibraryExercise libraryExercise = libraryExerciseService.resolve(user, request.getLibraryExerciseId(), request.getName());
     libraryExerciseService.applyEquipment(libraryExercise, request.getEquipment());
     libraryExerciseService.applyMuscles(libraryExercise, request.getMuscles());
+    libraryExerciseService.applyCatalogExercise(libraryExercise, request.getCatalogExerciseId());
 
     Exercise exercise = Exercise.builder()
         .workout(workout)

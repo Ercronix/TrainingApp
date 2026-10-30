@@ -47,6 +47,26 @@ class ExerciseCatalogControllerTest {
         .andExpect(status().is(anyOf(is(401), is(403))));
   }
 
+  @Test
+  void catalogMarksExercisesWithIllustrations() throws Exception {
+    String catalog = mockMvc.perform(get("/api/exercise-catalog").header("Authorization", "Bearer " + register()))
+        .andReturn().getResponse().getContentAsString();
+    assertTrue(JsonPath.<List<Boolean>>read(catalog, "$[?(@.name == 'Barbell Squat')].hasIllustration").contains(true));
+    assertTrue(JsonPath.<List<Boolean>>read(catalog, "$[?(@.name == 'Kettlebell Halo')].hasIllustration").contains(false));
+  }
+
+  @Test
+  void illustrationsAreCheckedAndNeedAToken() throws Exception {
+    String token = register();
+    // These fail before anything is fetched
+    mockMvc.perform(get("/api/exercise-catalog/1/illustrations/2").header("Authorization", "Bearer " + token))
+        .andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/exercise-catalog/999999/illustrations/0").header("Authorization", "Bearer " + token))
+        .andExpect(status().isNotFound());
+    mockMvc.perform(get("/api/exercise-catalog/1/illustrations/0"))
+        .andExpect(status().isUnauthorized());
+  }
+
   private static void assertMuscles(String catalog, String name, String muscle, String role) {
     List<String> roles = JsonPath.read(catalog,
         "$[?(@.name == '" + name + "')].muscles[?(@.muscle == '" + muscle + "')].role");

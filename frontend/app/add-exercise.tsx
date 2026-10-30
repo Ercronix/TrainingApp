@@ -71,6 +71,7 @@ export default function AddExerciseScreen() {
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       equipment: fromCatalog?.equipment ?? undefined,
       muscles: catalogMuscles,
+      catalogExerciseId: fromCatalog?.id,
     };
     const exerciseName = libraryMatch?.name ?? form.name.trim();
     if (replacing) {

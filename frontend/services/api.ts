@@ -286,6 +286,12 @@ export const catalogApi = {
     const response = await api.get("/exercise-catalog");
     return response.data;
   },
+
+  // The exercise's drawing as SVG: 0 is the start pose, 1 the end
+  getIllustration: async (catalogExerciseId: number, index: 0 | 1): Promise<string> => {
+    const response = await api.get(`/exercise-catalog/${catalogExerciseId}/illustrations/${index}`, { responseType: "text" });
+    return response.data;
+  },
 };
 
 // Training Logs API
@@ -305,6 +311,7 @@ export const trainingLogsApi = {
       plannedWeight?: number | null;
       equipment?: string;
       muscles?: MuscleTarget[];
+      catalogExerciseId?: number;
       addToWorkout: boolean;
     },
   ): Promise<ExerciseLog> => {
@@ -335,6 +342,7 @@ export const trainingLogsApi = {
       plannedWeight?: number | null;
       equipment?: string;
       muscles?: MuscleTarget[];
+      catalogExerciseId?: number;
     },
   ): Promise<ExerciseLog> => {
     const response = await api.put(
