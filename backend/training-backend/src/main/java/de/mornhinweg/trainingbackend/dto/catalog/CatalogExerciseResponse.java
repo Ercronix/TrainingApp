@@ -11,6 +11,6 @@ public class CatalogExerciseResponse {
   private String name;
   private String equipment;
   private String category;
-  private boolean hasImages;
+  private boolean hasIllustration;
   private List<MuscleTargetDto> muscles;
 }

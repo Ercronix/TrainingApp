@@ -19,7 +19,7 @@ import { useCatalog } from '@/hooks/useCatalog';
 import { EQUIPMENT_OPTIONS } from '@/constants/equipment';
 import { MuscleTarget } from '@/types';
 import { muscleNames, searchCatalog } from '@/utils/muscles';
-import { ExercisePhoto, usePhotoCatalogId } from '@/components/ExercisePhoto';
+import { ExerciseIllustration, IllustrationCredit, useIllustrationCatalogId } from '@/components/ExerciseIllustration';
 
 import { Tactile } from '@/components/Tactile';
 export default function ExerciseDetailScreen() {
@@ -51,15 +51,16 @@ export default function ExerciseDetailScreen() {
   const libraryId = progress?.libraryExerciseId ?? (libraryExerciseId ? Number(libraryExerciseId) : null);
   const entry = library.find((l) => l.id === libraryId);
   const timed = entry?.repUnit === 'seconds';
-  const photoId = usePhotoCatalogId(libraryId);
-  const [pickingPhoto, setPickingPhoto] = useState(false);
-  const [photoWidth, setPhotoWidth] = useState(0);
-  const photoName = catalog.find((e) => e.id === entry?.catalogExerciseId)?.name;
-  const hasPhotoMatches = searchCatalog(catalog, name, { requireAll: false }).length > 0;
+  const drawingId = useIllustrationCatalogId(libraryId);
+  const [pickingDrawing, setPickingDrawing] = useState(false);
+  const [drawingWidth, setDrawingWidth] = useState(0);
+  const drawingName = catalog.find((e) => e.id === entry?.catalogExerciseId)?.name;
+  const illustrated = catalog.filter((e) => e.hasIllustration);
+  const hasDrawingMatches = searchCatalog(illustrated, name, { requireAll: false }).length > 0;
   // 0 removes the link
-  const linkPhoto = (catalogExerciseId: number) => {
+  const linkDrawing = (catalogExerciseId: number) => {
     if (libraryId == null) return;
-    updateEntry.mutate({ id: libraryId, data: { catalogExerciseId } }, { onSuccess: () => setPickingPhoto(false) });
+    updateEntry.mutate({ id: libraryId, data: { catalogExerciseId } }, { onSuccess: () => setPickingDrawing(false) });
   };
 
   const startEditingMuscles = () => {
@@ -137,50 +138,6 @@ export default function ExerciseDetailScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-
-        {/* How it's done: the photos of the catalog exercise it was picked from */}
-        {entry && photoId != null && !pickingPhoto ? (
-          <View
-            key="photo"
-            className="bg-surface border-2 border-edge border-b-[6px] rounded-md mb-2 overflow-hidden"
-            onLayout={(e) => setPhotoWidth(e.nativeEvent.layout.width - 4)}
-          >
-            {photoWidth > 0 && <ExercisePhoto catalogExerciseId={photoId} width={photoWidth} animate />}
-            <View className="flex-row items-center gap-3 px-5 py-3">
-              <View className="flex-1">
-                <Text className="text-muted text-[9px] tracking-[3px]">HOW IT&apos;S DONE</Text>
-                {!!photoName && <Text className="text-muted text-xs mt-1" numberOfLines={1}>{photoName}</Text>}
-              </View>
-              <TouchableOpacity onPress={() => setPickingPhoto(true)} accessibilityLabel="Change the photos">
-                <Ionicons name="pencil-outline" size={18} color={c.muted} />
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : entry && (pickingPhoto || hasPhotoMatches) ? (
-          <View key="pick">
-            <CatalogSuggestions
-              catalog={catalog}
-              query={name}
-              requireAll={false}
-              hideExactMatch={false}
-              limit={3}
-              title={pickingPhoto ? 'PICK THE MATCHING EXERCISE' : 'SHOW HOW IT\'S DONE · PICK A MATCH'}
-              onSelect={(match) => linkPhoto(match.id)}
-            />
-            {pickingPhoto && (
-              <View className="flex-row justify-end gap-5 -mt-3 mb-4 px-1">
-                {entry.catalogExerciseId != null && (
-                  <TouchableOpacity onPress={() => linkPhoto(0)} disabled={updateEntry.isPending}>
-                    <Text className="text-danger text-[10px] font-bold tracking-[2px]">REMOVE PHOTOS</Text>
-                  </TouchableOpacity>
-                )}
-                <TouchableOpacity onPress={() => setPickingPhoto(false)}>
-                  <Text className="text-muted text-[10px] font-bold tracking-[2px]">CANCEL</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        ) : null}
 
         {/* Planned */}
         {!!(sets || reps || weight) && (
@@ -399,6 +356,57 @@ export default function ExerciseDetailScreen() {
             />
           </View>
         )}
+
+        {/* How it's done: the drawing of the catalog exercise it was picked from */}
+        {entry && drawingId != null && !pickingDrawing ? (
+          <View
+            key="drawing"
+            className="bg-surface border-2 border-edge border-b-[6px] rounded-md mb-2 overflow-hidden"
+            onLayout={(e) => setDrawingWidth(e.nativeEvent.layout.width - 4)}
+          >
+            <View className="flex-row items-center gap-3 px-5 pt-5">
+              <View className="flex-1">
+                <Text className="text-muted text-[9px] tracking-[3px]">HOW IT&apos;S DONE</Text>
+                {!!drawingName && <Text className="text-muted text-xs mt-1" numberOfLines={1}>{drawingName}</Text>}
+              </View>
+              <TouchableOpacity onPress={() => setPickingDrawing(true)} accessibilityLabel="Change the drawing">
+                <Ionicons name="pencil-outline" size={18} color={c.muted} />
+              </TouchableOpacity>
+            </View>
+            {drawingWidth > 0 && (
+              <View className="py-3">
+                <ExerciseIllustration catalogExerciseId={drawingId} width={drawingWidth} maxHeight={280} animate />
+              </View>
+            )}
+            <View className="px-5 pb-4">
+              <IllustrationCredit />
+            </View>
+          </View>
+        ) : entry && (pickingDrawing || hasDrawingMatches) ? (
+          <View key="pick">
+            <CatalogSuggestions
+              catalog={illustrated}
+              query={name}
+              requireAll={false}
+              hideExactMatch={false}
+              limit={3}
+              title={pickingDrawing ? 'PICK THE MATCHING EXERCISE' : 'SHOW HOW IT\'S DONE · PICK A MATCH'}
+              onSelect={(match) => linkDrawing(match.id)}
+            />
+            {pickingDrawing && (
+              <View className="flex-row justify-end gap-5 -mt-3 mb-4 px-1">
+                {entry.catalogExerciseId != null && (
+                  <TouchableOpacity onPress={() => linkDrawing(0)} disabled={updateEntry.isPending}>
+                    <Text className="text-danger text-[10px] font-bold tracking-[2px]">REMOVE DRAWING</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={() => setPickingDrawing(false)}>
+                  <Text className="text-muted text-[10px] font-bold tracking-[2px]">CANCEL</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        ) : null}
 
         {isLibraryView && (
           <TouchableOpacity

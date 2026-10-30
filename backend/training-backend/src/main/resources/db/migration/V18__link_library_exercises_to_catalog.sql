@@ -2,19 +2,12 @@
 -- Migration: Link library entries to the catalog
 --
 -- A library entry can point at the catalog exercise it was picked from,
--- whose free-exercise-db photos (a start and an end position) the client
--- shows. Clearing the catalog never happens, but a link wouldn't block it.
+-- whose drawing (V19) the client shows. Clearing the catalog never
+-- happens, but a link wouldn't block it.
 -- ============================================================
 
 ALTER TABLE library_exercises
     ADD COLUMN catalog_exercise_id BIGINT REFERENCES exercise_catalog(id) ON DELETE SET NULL;
-
--- The few catalog exercises free-exercise-db has no photos for
-ALTER TABLE exercise_catalog ADD COLUMN has_images BOOLEAN NOT NULL DEFAULT TRUE;
-
-UPDATE exercise_catalog
-SET has_images = FALSE
-WHERE slug IN ('Kettlebell_Halo', 'Kettlebell_Halo_With_Overhead_Extension', 'Kettlebell_Overhead_Triceps_Extension');
 
 -- Entries named exactly like a catalog exercise
 UPDATE library_exercises l

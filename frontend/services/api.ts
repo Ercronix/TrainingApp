@@ -10,10 +10,6 @@ const API_URL =
     ? (process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:8080/api")
     : "https://training.timmornhinweg.de/api";
 
-/** A catalog exercise's photo: 0 is the start position, 1 the end. Served without a token. */
-export const exerciseImageUrl = (catalogExerciseId: number, index: 0 | 1) =>
-  `${API_URL}/exercise-catalog/${catalogExerciseId}/images/${index}`;
-
 const ACCESS_TOKEN_KEY = "authToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 const USER_KEY = "authUser";
@@ -288,6 +284,12 @@ export const libraryApi = {
 export const catalogApi = {
   getAll: async (): Promise<CatalogExercise[]> => {
     const response = await api.get("/exercise-catalog");
+    return response.data;
+  },
+
+  // The exercise's drawing as SVG: 0 is the start pose, 1 the end
+  getIllustration: async (catalogExerciseId: number, index: 0 | 1): Promise<string> => {
+    const response = await api.get(`/exercise-catalog/${catalogExerciseId}/illustrations/${index}`, { responseType: "text" });
     return response.data;
   },
 };

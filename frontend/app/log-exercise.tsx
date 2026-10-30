@@ -19,7 +19,7 @@ import { previousSetsOf, workingSets } from '@/utils/sets';
 import { detectPersonalRecord, estimateOneRepMax, formatKg } from '@/utils/strength';
 import { toast } from '@/utils/confirm';
 import { useReduceMotion } from '@/hooks/useReduceMotion';
-import { ExercisePhoto, usePhotoCatalogId } from '@/components/ExercisePhoto';
+import { ExerciseIllustration, useIllustrationCatalogId } from '@/components/ExerciseIllustration';
 import { spring } from '@/constants/motion';
 import { usesPlates } from '@/constants/equipment';
 import { ExerciseLog, SetLog, TrainingLog } from '@/types';
@@ -207,7 +207,7 @@ export default function LogExerciseModal() {
   const { library } = useLibrary();
   const equipment = library.find((l) => l.id === log?.libraryExerciseId)?.equipment ?? log?.equipment;
   const showPlates = usesPlates(equipment) && !isTimed;
-  const photoId = usePhotoCatalogId(log?.libraryExerciseId);
+  const drawingId = useIllustrationCatalogId(log?.libraryExerciseId);
   const elapsed = timing ? Math.max(0, Math.floor((nowMs - timing.startedAt) / 1000)) : 0;
 
   useEffect(() => {
@@ -636,9 +636,9 @@ export default function LogExerciseModal() {
           <Text className="flex-1 text-primary text-[32px] font-bold tracking-tighter leading-9">
             {log?.exerciseName ?? exerciseName}
           </Text>
-          {photoId != null && (
+          {drawingId != null && (
             <TouchableOpacity onPress={openDetails} activeOpacity={0.85} accessibilityLabel="How it's done, and exercise details">
-              <ExercisePhoto catalogExerciseId={photoId} width={96} animate className="rounded-sm" />
+              <ExerciseIllustration catalogExerciseId={drawingId} width={76} height={76} background={c.base} animate />
             </TouchableOpacity>
           )}
         </View>

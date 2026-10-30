@@ -4,11 +4,11 @@ import { CatalogExercise } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { searchCatalog } from '@/utils/muscles';
 import { MuscleSummary } from '@/components/MusclePicker';
-import { ExercisePhoto } from '@/components/ExercisePhoto';
+import { ExerciseIllustration } from '@/components/ExerciseIllustration';
 
 /**
- * Catalog exercises matching the typed name, with their photos. Picking one takes over its name,
- * muscles and photos, so the exercise counts towards weekly sets per muscle.
+ * Catalog exercises matching the typed name, with their drawings. Picking one takes over its name,
+ * muscles and drawing, so the exercise counts towards weekly sets per muscle.
  */
 export function CatalogSuggestions({
   catalog,
@@ -46,8 +46,8 @@ export function CatalogSuggestions({
           activeOpacity={0.7}
         >
           <View className="w-12 items-center">
-            {entry.hasImages !== false ? (
-              <ExercisePhoto catalogExerciseId={entry.id} width={48} height={36} className="rounded-sm" />
+            {entry.hasIllustration ? (
+              <ExerciseIllustration catalogExerciseId={entry.id} width={44} height={44} />
             ) : (
               <Ionicons name="body-outline" size={16} color={c.accent} />
             )}

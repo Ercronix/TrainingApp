@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTraining } from '@/hooks/useTraining';
 import { RestTimer } from '@/components/RestTimer';
-import { ExerciseThumb } from '@/components/ExercisePhoto';
+import { ExerciseThumb } from '@/components/ExerciseIllustration';
 import { useRestTimerStore } from '@/store/restTimerStore';
 import { useSetDraftStore } from '@/store/setDraftStore';
 import { useElapsedSeconds } from '@/hooks/useElapsedSeconds';

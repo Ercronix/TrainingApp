@@ -7,7 +7,7 @@ import { useLibrary } from '@/hooks/useLibrary';
 import { useTheme } from '@/hooks/useTheme';
 import { LibraryExercise } from '@/types';
 import { MuscleSummary } from '@/components/MusclePicker';
-import { ExerciseThumb } from '@/components/ExercisePhoto';
+import { ExerciseThumb } from '@/components/ExerciseIllustration';
 
 export default function LibraryScreen() {
   const router = useRouter();

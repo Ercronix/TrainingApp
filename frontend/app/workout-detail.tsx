@@ -13,7 +13,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
 import { combineMuscles, muscleNames } from '@/utils/muscles';
 import { BodyMap, targetFills } from '@/components/BodyMap';
-import { ExerciseThumb } from '@/components/ExercisePhoto';
+import { ExerciseThumb } from '@/components/ExerciseIllustration';
 
 import { Tactile } from '@/components/Tactile';
 export default function WorkoutDetailScreen() {
