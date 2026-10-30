@@ -10,6 +10,9 @@ import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { useTheme } from '@/hooks/useTheme';
 import { formatDuration } from '@/hooks/useDashboard';
 import { Tactile } from '@/components/Tactile';
+import { BodyMap, targetFills } from '@/components/BodyMap';
+import { useLibrary } from '@/hooks/useLibrary';
+import { combineMuscles, muscleNames } from '@/utils/muscles';
 import { EASE_OUT, spring } from '@/constants/motion';
 import { formatSets, previousSetsOf, setsOf, setVolume } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
@@ -110,6 +113,7 @@ export default function SessionSummaryScreen() {
   const reduceMotion = useReduceMotion();
   const [dockHeight, setDockHeight] = useState(0);
   const { training } = useTraining(trainingLogId);
+  const { library } = useLibrary();
   const elapsedSeconds = useElapsedSeconds({
     startedAt: training?.startedAt,
     completedAt: training?.completedAt,
@@ -132,6 +136,10 @@ export default function SessionSummaryScreen() {
     .map((e) => ({ id: e.id, name: e.exerciseName, record: personalRecordOf(e) }))
     .filter((r): r is { id: number; name: string; record: string } => r.record != null);
   const recordIds = new Set(records.map((r) => r.id));
+  const musclesById = new Map(library.map((e) => [e.id, e.muscles ?? []]));
+  const trained = combineMuscles(
+    exercises.filter((e) => e.completed).map((e) => musclesById.get(e.libraryExerciseId) ?? []),
+  );
 
   return (
     <View className="flex-1 bg-base">
@@ -193,6 +201,22 @@ export default function SessionSummaryScreen() {
                   </View>
                 </View>
               ))}
+            </View>
+          </Appear>
+        )}
+
+        {/* Muscles trained */}
+        {trained.length > 0 && (
+          <Appear order={2} reduceMotion={reduceMotion}>
+            <View className="mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-4">
+              <Text className="text-muted text-[9px] tracking-[3px] mb-3">MUSCLES TRAINED</Text>
+              <BodyMap
+                fills={targetFills(trained, c)}
+                height={170}
+                animateIn
+                delay={450}
+                accessibilityLabel={`Muscles trained: ${muscleNames(trained.map((m) => m.muscle))}`}
+              />
             </View>
           </Appear>
         )}

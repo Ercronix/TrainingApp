@@ -13,10 +13,12 @@ import { setsOf, workingSets } from '@/utils/sets';
 import { useLibrary } from '@/hooks/useLibrary';
 import { confirm } from '@/utils/confirm';
 import { MusclePicker, MuscleSummary } from '@/components/MusclePicker';
+import { BodyMap, targetFills } from '@/components/BodyMap';
 import { CatalogSuggestions } from '@/components/CatalogSuggestions';
 import { useCatalog } from '@/hooks/useCatalog';
 import { EQUIPMENT_OPTIONS } from '@/constants/equipment';
 import { MuscleTarget } from '@/types';
+import { muscleNames } from '@/utils/muscles';
 
 import { Tactile } from '@/components/Tactile';
 export default function ExerciseDetailScreen() {
@@ -177,15 +179,21 @@ export default function ExerciseDetailScreen() {
                 </Tactile>
               </View>
             ) : entry.muscles?.length ? (
-              <TouchableOpacity onPress={startEditingMuscles}>
-                <MuscleSummary muscles={entry.muscles} className="text-sm" />
+              <TouchableOpacity onPress={startEditingMuscles} activeOpacity={0.85}>
+                <BodyMap
+                  fills={targetFills(entry.muscles, c)}
+                  height={180}
+                  animateIn
+                  accessibilityLabel={`Muscles: ${muscleNames(entry.muscles.map((m) => m.muscle))}`}
+                />
+                <MuscleSummary muscles={entry.muscles} className="text-sm text-center mt-3" />
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                className="h-20 items-center justify-center bg-base rounded gap-2"
+                className="items-center justify-center bg-base rounded gap-2 py-4"
                 onPress={startEditingMuscles}
               >
-                <Ionicons name="body-outline" size={28} color={c.elevated} />
+                <BodyMap fills={{}} height={90} background={c.base} showLabels={false} />
                 <Text className="text-elevated text-[10px] tracking-[2px]">TAP TO SET MUSCLES</Text>
               </TouchableOpacity>
             )}

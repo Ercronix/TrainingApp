@@ -10,6 +10,9 @@ import { confirm } from '@/utils/confirm';
 import SwipeableRow from '@/components/SwipeableRow';
 import { Exercise } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
+import { useLibrary } from '@/hooks/useLibrary';
+import { combineMuscles, muscleNames } from '@/utils/muscles';
+import { BodyMap, targetFills } from '@/components/BodyMap';
 
 import { Tactile } from '@/components/Tactile';
 export default function WorkoutDetailScreen() {
@@ -22,6 +25,9 @@ export default function WorkoutDetailScreen() {
   const [reorderMode, setReorderMode] = useState(false);
   const insets = useSafeAreaInsets();
   const c = useTheme();
+  const { library } = useLibrary();
+  const musclesById = new Map(library.map((e) => [e.id, e.muscles ?? []]));
+  const workoutMuscles = combineMuscles(exercises.map((e) => musclesById.get(e.libraryExerciseId) ?? []));
 
   const handleDelete = (id: number, name: string) => {
     confirm('Delete Exercise', `Delete "${name}"?`, () => deleteExercise.mutate(id), 'Delete');
@@ -139,12 +145,25 @@ export default function WorkoutDetailScreen() {
             )}
           </View>
         </View>
-        <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">WORKOUT DAY</Text>
-        <Text className="text-primary text-[36px] font-bold tracking-tighter mb-1">{workoutName}</Text>
-        <Text className="text-muted text-[10px] tracking-[2px]">
-          {exercises.length} {exercises.length === 1 ? 'EXERCISE' : 'EXERCISES'}
-          {reorderMode ? ' · HOLD TO REORDER' : ''}
-        </Text>
+        <View className="flex-row items-end gap-3">
+          <View className="flex-1">
+            <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">WORKOUT DAY</Text>
+            <Text className="text-primary text-[36px] font-bold tracking-tighter mb-1">{workoutName}</Text>
+            <Text className="text-muted text-[10px] tracking-[2px]">
+              {exercises.length} {exercises.length === 1 ? 'EXERCISE' : 'EXERCISES'}
+              {reorderMode ? ' · HOLD TO REORDER' : ''}
+            </Text>
+          </View>
+          {workoutMuscles.length > 0 && (
+            <BodyMap
+              fills={targetFills(workoutMuscles, c, c.base)}
+              height={96}
+              background={c.base}
+              showLabels={false}
+              accessibilityLabel={`Trains ${muscleNames(workoutMuscles.map((m) => m.muscle))}`}
+            />
+          )}
+        </View>
       </View>
 
       {/* Start Training */}

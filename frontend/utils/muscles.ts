@@ -122,6 +122,15 @@ export function secondaryMuscles(muscles: MuscleTarget[]): Muscle[] {
 
 export const muscleNames = (muscles: Muscle[]) => muscles.map((m) => MUSCLE_LABELS[m]).join(', ');
 
+/** The muscles of several exercises together; a muscle that is primary in any of them stays primary. */
+export function combineMuscles(lists: MuscleTarget[][]): MuscleTarget[] {
+  const roles = new Map<Muscle, MuscleTarget['role']>();
+  for (const { muscle, role } of lists.flat()) {
+    if (roles.get(muscle) !== 'PRIMARY') roles.set(muscle, role);
+  }
+  return [...roles].map(([muscle, role]) => ({ muscle, role }));
+}
+
 /** Order-insensitive comparison, so an unchanged selection isn't sent to the server. */
 export function sameMuscles(a: MuscleTarget[], b: MuscleTarget[]): boolean {
   if (a.length !== b.length) return false;
