@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Animated, Platform } from 'react-native';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,7 +16,10 @@ import { SetDraft, SetRow, useSetDraftStore } from '@/store/setDraftStore';
 import { STEP_INCREMENT_KG, useStepSize, useStepSizeStore } from '@/store/stepSizeStore';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { previousSetsOf, workingSets } from '@/utils/sets';
-import { formatKg } from '@/utils/strength';
+import { detectPersonalRecord, estimateOneRepMax, formatKg } from '@/utils/strength';
+import { toast } from '@/utils/confirm';
+import { useReduceMotion } from '@/hooks/useReduceMotion';
+import { spring } from '@/constants/motion';
 import { usesPlates } from '@/constants/equipment';
 import { ExerciseLog, SetLog, TrainingLog } from '@/types';
 import { haptics } from '@/utils/haptics';
@@ -87,6 +90,76 @@ const keyOf = (payload: ReturnType<typeof payloadOf>) => JSON.stringify(payload)
 const targetOf = (rows: SetRow[], index: number, log: ExerciseLog | undefined) =>
   parseInt(rows[index]?.reps || String(log?.plannedReps ?? ''), 10);
 
+interface Gain {
+  /** Beats the sessions before (and the sets before it in this one). */
+  record: string | null;
+  label: string;
+}
+
+/**
+ * What a logged working set improves on: a record, else the set at the same position last
+ * session (more weight without losing strength, or more reps at the same weight). Null when it
+ * improves on nothing; falling short isn't called out.
+ */
+function gainOf(rows: SetRow[], index: number, log: ExerciseLog | undefined, previous: SetLog[]): Gain | null {
+  const row = rows[index];
+  const set = row?.done && !row.warmup ? toSet(row) : null;
+  if (!set || !log) return null;
+  const timed = log.repUnit === 'seconds';
+  const weight = Number(set.weight ?? 0);
+
+  const earlier = rows.slice(0, index)
+    .filter((r) => r.done && !r.warmup)
+    .map(toSet)
+    .filter((s): s is SetLog => s != null);
+  const record = log.bestWeight == null ? null : detectPersonalRecord({
+    bestWeight: Math.max(log.bestWeight, ...earlier.map((s) => Number(s.weight ?? 0))),
+    bestOneRepMax: timed || log.bestOneRepMax == null
+      ? null
+      : Math.max(log.bestOneRepMax, ...earlier.map((s) => estimateOneRepMax(Number(s.weight ?? 0), s.reps))),
+  }, weight, set.reps);
+  if (record) return { record, label: 'PR' };
+
+  const last = previous[index];
+  if (!last || last.warmup) return null;
+  const lastWeight = Number(last.weight ?? 0);
+  const stronger = set.reps >= last.reps
+    || (!timed && estimateOneRepMax(weight, set.reps) > estimateOneRepMax(lastWeight, last.reps));
+  if (weight > lastWeight && stronger) return { record: null, label: `+${formatKg(weight - lastWeight)} kg` };
+  const more = set.reps - last.reps;
+  if (weight === lastWeight && more > 0) {
+    return { record: null, label: `+${more}${timed ? 's' : more === 1 ? ' rep' : ' reps'}` };
+  }
+  return null;
+}
+
+/** A set's improvement over last session; pops in when the set was just logged. */
+function GainBadge({ gain, animate }: { gain: Gain; animate: boolean }) {
+  const c = useTheme();
+  const reduceMotion = useReduceMotion();
+  const scale = useRef(new Animated.Value(animate ? 0.3 : 1)).current;
+  useEffect(() => {
+    if (!animate || reduceMotion == null) return;
+    if (reduceMotion) {
+      scale.setValue(1);
+      return;
+    }
+    Animated.spring(scale, { toValue: 1, ...spring(0.4, 0.45), useNativeDriver: Platform.OS !== 'web' }).start();
+  }, [animate, reduceMotion, scale]);
+
+  return (
+    <Animated.View style={{ alignSelf: 'flex-start', transform: [{ scale }] }}>
+      <View
+        className={`flex-row items-center gap-1 rounded-sm px-1.5 py-0.5 ${gain.record ? 'bg-accent' : 'bg-accent-muted'}`}
+        accessibilityLabel={gain.record ?? `${gain.label} on last session`}
+      >
+        <Ionicons name={gain.record ? 'trophy' : 'trending-up'} size={10} color={gain.record ? c.accentFg : c.accentText} />
+        <Text className={`text-[9px] font-mono-bold ${gain.record ? 'text-accent-fg' : 'text-accent-text'}`}>{gain.label}</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
 export default function LogExerciseModal() {
   const { exerciseLogId, trainingLogId, exerciseName } = useLocalSearchParams<{
     exerciseLogId: string; trainingLogId: string; exerciseName: string;
@@ -112,6 +185,8 @@ export default function LogExerciseModal() {
   // Stopwatch of the set being performed, for timed exercises
   const [timing, setTiming] = useState<SetDraft['timing']>(draft?.timing ?? null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  // The set logged last, whose gain badge pops in
+  const [lastLogged, setLastLogged] = useState<number | null>(null);
   // A stopwatch restored past its target already buzzed (or ran out while away)
   const vibrated = useRef(draft?.timing != null && Date.now() - draft.timing.startedAt >= targetOf(draft.rows, draft.timing.index, log) * 1000);
   // What the server already has, so only real changes are sent
@@ -245,18 +320,26 @@ export default function LogExerciseModal() {
       updateRow(index, { done: false });
       return;
     }
-    haptics.check();
     // One tap logs the set as shown; empty values take the plan's
-    updateRow(index, {
+    const patch = {
       done: true,
       reps: row.reps.trim() || (log?.plannedReps != null ? String(log.plannedReps) : ''),
       weight: row.weight.trim() || (log?.plannedWeight != null ? String(log.plannedWeight) : ''),
-    });
-    finishSet(index);
+    };
+    updateRow(index, patch);
+    finishSet(index, { ...row, ...patch });
   };
 
-  // Rest starts, and editing moves on to the next set
-  const finishSet = (index: number) => {
+  // Rest starts, editing moves on to the next set, and a record is celebrated
+  const finishSet = (index: number, logged: SetRow) => {
+    const gain = gainOf(rows.map((r, i) => (i === index ? logged : r)), index, log, previous);
+    if (gain?.record) {
+      haptics.record();
+      toast('New record!', gain.record, 'trophy');
+    } else {
+      haptics.check();
+    }
+    setLastLogged(index);
     useRestTimerStore.getState().restart();
     if (index + 1 < rows.length) setFocused(index + 1);
   };
@@ -265,10 +348,9 @@ export default function LogExerciseModal() {
     if (timing?.index === index) {
       // Stopping records the time held as the set's seconds and finishes it
       saveNow.current = true;
-      haptics.check();
       updateRow(index, { reps: String(elapsed), done: true });
       setTiming(null);
-      finishSet(index);
+      finishSet(index, { ...rows[index], reps: String(elapsed), done: true });
       return;
     }
     haptics.tap();
@@ -331,6 +413,8 @@ export default function LogExerciseModal() {
     </View>
   );
 
+  const gains = rows.map((_, i) => gainOf(rows, i, log, previous));
+
   // What the set at this position was last session, e.g. 80×8
   const previousLabel = (i: number) => {
     const p = previous[i];
@@ -350,7 +434,10 @@ export default function LogExerciseModal() {
         accessibilityLabel={`Edit set ${i + 1}`}
       >
         <View className="w-12">{badge(row, i)}</View>
-        <Text className="flex-1 text-muted text-xs font-mono">{previousLabel(i)}</Text>
+        <View className="flex-1 gap-1">
+          <Text className="text-muted text-xs font-mono">{previousLabel(i)}</Text>
+          {gains[i] && <GainBadge gain={gains[i]} animate={lastLogged === i} />}
+        </View>
         <Text className={`flex-1 text-lg font-bold tracking-tight ${row.done ? 'text-primary' : 'text-muted'}`}>
           {row.weight || log?.plannedWeight || 0}<Text className="text-muted text-xs font-normal"> kg</Text>
         </Text>
@@ -386,6 +473,7 @@ export default function LogExerciseModal() {
             {row.warmup ? 'Warm-up' : `Set ${labels[i]}`}
             {previous[i] && <Text className="text-muted text-xs font-normal">  last {previousLabel(i)}</Text>}
           </Text>
+          {gains[i] && <GainBadge gain={gains[i]} animate={false} />}
           <Tactile
             variant={row.warmup ? 'accent' : 'elevated'}
             depth={3}
