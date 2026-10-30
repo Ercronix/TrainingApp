@@ -29,6 +29,10 @@ public class CatalogExercise {
   @Column(nullable = false, length = 30)
   private String category;
 
+  // free-exercise-db has a start and an end photo for all but a few exercises
+  @Column(name = "has_images", nullable = false)
+  private boolean hasImages;
+
   @ElementCollection
   @CollectionTable(name = "exercise_catalog_muscles", joinColumns = @JoinColumn(name = "catalog_exercise_id"))
   @BatchSize(size = 1000)

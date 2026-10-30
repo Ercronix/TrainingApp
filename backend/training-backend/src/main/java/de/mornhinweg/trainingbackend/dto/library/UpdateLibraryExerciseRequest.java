@@ -17,4 +17,6 @@ public class UpdateLibraryExerciseRequest {
   @Size(max = 30) private String equipment;
   // Replaces the entry's muscles when present; an empty list clears them
   private List<@Valid MuscleTargetDto> muscles;
+  // The catalog exercise picked for it; null leaves the link unchanged, 0 removes it
+  private Long catalogExerciseId;
 }

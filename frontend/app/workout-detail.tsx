@@ -13,6 +13,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
 import { combineMuscles, muscleNames } from '@/utils/muscles';
 import { BodyMap, targetFills } from '@/components/BodyMap';
+import { ExerciseThumb } from '@/components/ExercisePhoto';
 
 import { Tactile } from '@/components/Tactile';
 export default function WorkoutDetailScreen() {
@@ -88,7 +89,8 @@ export default function WorkoutDetailScreen() {
           disabled={isActive}
           activeOpacity={0.85}
         >
-          <View className="flex-row items-center px-5 py-4 gap-3">
+          <View className="flex-row items-center pl-3 pr-5 py-3 gap-3">
+            <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
             <View className="flex-1">
               <Text className="text-primary text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
               {item.sets && item.reps && (

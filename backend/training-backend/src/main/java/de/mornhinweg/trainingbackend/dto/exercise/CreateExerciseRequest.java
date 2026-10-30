@@ -24,4 +24,6 @@ public class CreateExerciseRequest {
   private BigDecimal plannedWeight;
   // Replaces the library entry's muscles when present
   private List<@Valid MuscleTargetDto> muscles;
+  // The catalog exercise picked for it; null leaves the link unchanged, 0 removes it
+  private Long catalogExerciseId;
 }

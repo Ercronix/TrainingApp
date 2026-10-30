@@ -47,6 +47,21 @@ class ExerciseCatalogControllerTest {
         .andExpect(status().is(anyOf(is(401), is(403))));
   }
 
+  @Test
+  void catalogMarksExercisesWithoutImages() throws Exception {
+    String catalog = mockMvc.perform(get("/api/exercise-catalog").header("Authorization", "Bearer " + register()))
+        .andReturn().getResponse().getContentAsString();
+    assertTrue(JsonPath.<List<Boolean>>read(catalog, "$[?(@.name == 'Kettlebell Halo')].hasImages").contains(false));
+    assertTrue(JsonPath.<List<Boolean>>read(catalog, "$[?(@.name == 'Barbell Squat')].hasImages").contains(true));
+  }
+
+  @Test
+  void imagesArePublicButChecked() throws Exception {
+    // No token needed; these fail before anything is fetched
+    mockMvc.perform(get("/api/exercise-catalog/1/images/2")).andExpect(status().isBadRequest());
+    mockMvc.perform(get("/api/exercise-catalog/999999/images/0")).andExpect(status().isNotFound());
+  }
+
   private static void assertMuscles(String catalog, String name, String muscle, String role) {
     List<String> roles = JsonPath.read(catalog,
         "$[?(@.name == '" + name + "')].muscles[?(@.muscle == '" + muscle + "')].role");

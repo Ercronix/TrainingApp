@@ -19,6 +19,7 @@ import { previousSetsOf, workingSets } from '@/utils/sets';
 import { detectPersonalRecord, estimateOneRepMax, formatKg } from '@/utils/strength';
 import { toast } from '@/utils/confirm';
 import { useReduceMotion } from '@/hooks/useReduceMotion';
+import { ExercisePhoto, usePhotoCatalogId } from '@/components/ExercisePhoto';
 import { spring } from '@/constants/motion';
 import { usesPlates } from '@/constants/equipment';
 import { ExerciseLog, SetLog, TrainingLog } from '@/types';
@@ -206,6 +207,7 @@ export default function LogExerciseModal() {
   const { library } = useLibrary();
   const equipment = library.find((l) => l.id === log?.libraryExerciseId)?.equipment ?? log?.equipment;
   const showPlates = usesPlates(equipment) && !isTimed;
+  const photoId = usePhotoCatalogId(log?.libraryExerciseId);
   const elapsed = timing ? Math.max(0, Math.floor((nowMs - timing.startedAt) / 1000)) : 0;
 
   useEffect(() => {
@@ -599,6 +601,18 @@ export default function LogExerciseModal() {
     );
   };
 
+  // Notes, video, muscles, equipment and history
+  const openDetails = () =>
+    log && router.push({
+      pathname: '/exercise-detail' as any,
+      params: {
+        exerciseId: log.exerciseId?.toString() ?? '', exerciseName: log.exerciseName,
+        libraryExerciseId: log.libraryExerciseId?.toString() ?? '', description: '', videoUrl: '',
+        sets: log.plannedSets?.toString() || '', reps: log.plannedReps?.toString() || '',
+        weight: log.plannedWeight?.toString() || '', workoutId: log.workoutId?.toString() ?? '',
+      },
+    });
+
   return (
     <View className="flex-1 bg-base">
       <KeyboardAvoidingWrapper>
@@ -608,19 +622,8 @@ export default function LogExerciseModal() {
           <Ionicons name="close" size={22} color={c.muted} />
         </TouchableOpacity>
         <Text className="text-muted text-[10px] tracking-[4px]">LOG EXERCISE</Text>
-        {/* Notes, video, muscles, equipment and history */}
         <TouchableOpacity
-          onPress={() =>
-            log && router.push({
-              pathname: '/exercise-detail' as any,
-              params: {
-                exerciseId: log.exerciseId?.toString() ?? '', exerciseName: log.exerciseName,
-                libraryExerciseId: log.libraryExerciseId?.toString() ?? '', description: '', videoUrl: '',
-                sets: log.plannedSets?.toString() || '', reps: log.plannedReps?.toString() || '',
-                weight: log.plannedWeight?.toString() || '', workoutId: log.workoutId?.toString() ?? '',
-              },
-            })
-          }
+          onPress={openDetails}
           disabled={!log}
           accessibilityLabel="Exercise details"
         >
@@ -629,9 +632,16 @@ export default function LogExerciseModal() {
       </View>
 
       <View className="flex-1 px-4 pb-10">
-        <Text className="text-primary text-[32px] font-bold tracking-tighter leading-9 mb-4 px-1">
-          {log?.exerciseName ?? exerciseName}
-        </Text>
+        <View className="flex-row items-center gap-3 mb-4 px-1">
+          <Text className="flex-1 text-primary text-[32px] font-bold tracking-tighter leading-9">
+            {log?.exerciseName ?? exerciseName}
+          </Text>
+          {photoId != null && (
+            <TouchableOpacity onPress={openDetails} activeOpacity={0.85} accessibilityLabel="How it's done, and exercise details">
+              <ExercisePhoto catalogExerciseId={photoId} width={96} animate className="rounded-sm" />
+            </TouchableOpacity>
+          )}
+        </View>
 
         <View className="flex-row flex-wrap gap-2 mb-6 px-1">
           {log?.plannedSets != null && log.plannedReps != null && (

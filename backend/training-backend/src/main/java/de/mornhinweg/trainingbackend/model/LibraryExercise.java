@@ -49,6 +49,10 @@ public class LibraryExercise {
   @Column(length = 30)
   private String equipment;
 
+  // The catalog exercise the entry was picked from, whose photos the client shows; null when none
+  @Column(name = "catalog_exercise_id")
+  private Long catalogExerciseId;
+
   @ElementCollection
   @CollectionTable(name = "library_exercise_muscles", joinColumns = @JoinColumn(name = "library_exercise_id"))
   @BatchSize(size = 100)

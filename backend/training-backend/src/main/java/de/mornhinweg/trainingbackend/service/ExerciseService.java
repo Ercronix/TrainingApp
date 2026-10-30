@@ -49,6 +49,7 @@ public class ExerciseService {
         request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
     libraryExerciseService.applyEquipment(libraryExercise, request.getEquipment());
     libraryExerciseService.applyMuscles(libraryExercise, request.getMuscles());
+    libraryExerciseService.applyCatalogExercise(libraryExercise, request.getCatalogExerciseId());
     Exercise exercise = Exercise.builder()
         .workout(workout)
         .libraryExercise(libraryExercise)

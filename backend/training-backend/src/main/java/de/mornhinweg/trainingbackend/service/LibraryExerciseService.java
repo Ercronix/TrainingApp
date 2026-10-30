@@ -14,6 +14,7 @@ import de.mornhinweg.trainingbackend.model.LibraryExercise;
 import de.mornhinweg.trainingbackend.model.Muscle;
 import de.mornhinweg.trainingbackend.model.MuscleTarget;
 import de.mornhinweg.trainingbackend.model.User;
+import de.mornhinweg.trainingbackend.repository.CatalogExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseLogRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.LibraryExerciseRepository;
@@ -40,6 +41,7 @@ public class LibraryExerciseService {
   private final ExerciseRepository exerciseRepository;
   private final ExerciseLogRepository exerciseLogRepository;
   private final UserRepository userRepository;
+  private final CatalogExerciseRepository catalogExerciseRepository;
 
   public List<LibraryExerciseResponse> getLibrary(Authentication authentication) {
     User user = getCurrentUser(authentication);
@@ -67,6 +69,7 @@ public class LibraryExerciseService {
         .build();
     applyEquipment(entry, request.getEquipment());
     applyMuscles(entry, request.getMuscles());
+    applyCatalogExercise(entry, request.getCatalogExerciseId());
     return toResponse(libraryExerciseRepository.save(entry), null);
   }
 
@@ -78,6 +81,7 @@ public class LibraryExerciseService {
     applyDetails(entry, request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
     applyEquipment(entry, request.getEquipment());
     applyMuscles(entry, request.getMuscles());
+    applyCatalogExercise(entry, request.getCatalogExerciseId());
     entry = libraryExerciseRepository.save(entry);
     List<Object[]> usage = exerciseRepository.findUsageByLibraryExerciseId(entry.getId());
     return toResponse(entry, usage.isEmpty() ? null : usage.get(0));
@@ -142,6 +146,7 @@ public class LibraryExerciseService {
               .videoId(current.getVideoId())
               .repUnit(current.getRepUnit())
               .equipment(current.getEquipment())
+              .catalogExerciseId(current.getCatalogExerciseId())
               .muscles(new HashSet<>(current.getMuscles()))
               .build());
         });
@@ -195,6 +200,19 @@ public class LibraryExerciseService {
     entry.getMuscles().addAll(targets);
   }
 
+  /** Links the entry to a catalog exercise unless {@code catalogExerciseId} is null; 0 removes the link. */
+  void applyCatalogExercise(LibraryExercise entry, Long catalogExerciseId) {
+    if (catalogExerciseId == null) return;
+    if (catalogExerciseId == 0) {
+      entry.setCatalogExerciseId(null);
+      return;
+    }
+    if (!catalogExerciseRepository.existsById(catalogExerciseId)) {
+      throw new BadRequestException("Catalog exercise " + catalogExerciseId + " doesn't exist");
+    }
+    entry.setCatalogExerciseId(catalogExerciseId);
+  }
+
   ExerciseProgressResponse buildProgress(LibraryExercise entry, Long exerciseId) {
     List<ExerciseLog> logs = exerciseLogRepository.findCompletedByLibraryExerciseIdOrderByDate(entry.getId());
 
@@ -239,6 +257,7 @@ public class LibraryExerciseService {
         .videoId(entry.getVideoId())
         .repUnit(entry.getRepUnit())
         .equipment(entry.getEquipment())
+        .catalogExerciseId(entry.getCatalogExerciseId())
         .muscles(MuscleTargetDto.fromAll(entry.getMuscles()))
         .workoutCount(usage != null ? ((Number) usage[1]).longValue() : 0)
         .lastTrainedAt(usage != null ? (LocalDateTime) usage[2] : null)
