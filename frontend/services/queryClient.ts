@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { Platform } from 'react-native';
 import { isAxiosError } from 'axios';
-import { trainingLogsApi } from './api';
+import { stretchApi, trainingLogsApi } from './api';
 import { UpdateExerciseLogRequest } from '@/types';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import type { AddExerciseLogDto } from '@/hooks/useAddExerciseLog';
@@ -21,6 +21,8 @@ export const MUTATION_KEYS = {
   replaceExerciseLog: ['replaceExerciseLog'] as const,
   deleteExerciseLog: ['deleteExerciseLog'] as const,
   completeTraining: ['completeTraining'] as const,
+  stretchCheckIn: ['stretchCheckIn'] as const,
+  stretchUndoCheckIn: ['stretchUndoCheckIn'] as const,
 };
 
 /**
@@ -48,6 +50,14 @@ export interface ReplaceExerciseLogVariables {
 export interface DeleteExerciseLogVariables {
   trainingLogId: number;
   exerciseLogId: number;
+}
+
+// Check-ins and undos run one at a time, in order, so a quick check in and undo replay the same way offline
+export const STRETCH_SCOPE = { id: 'stretch-check-ins' };
+
+export interface StretchCheckInVariables {
+  // The device's local date, YYYY-MM-DD
+  day: string;
 }
 
 export interface CompleteTrainingVariables {
@@ -118,6 +128,21 @@ queryClient.setMutationDefaults(MUTATION_KEYS.completeTraining, {
     void queryClient.invalidateQueries({ queryKey: ['history'] });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeTraining });
+  },
+});
+
+// Checking in (or undoing it) is idempotent on the server, so a replay after a lost response is harmless
+queryClient.setMutationDefaults(MUTATION_KEYS.stretchCheckIn, {
+  mutationFn: ({ day }: StretchCheckInVariables) => stretchApi.checkIn(day),
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stretchCheckIns });
+  },
+});
+
+queryClient.setMutationDefaults(MUTATION_KEYS.stretchUndoCheckIn, {
+  mutationFn: ({ day }: StretchCheckInVariables) => stretchApi.undoCheckIn(day),
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stretchCheckIns });
   },
 });
 

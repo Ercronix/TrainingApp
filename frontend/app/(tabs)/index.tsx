@@ -12,6 +12,7 @@ import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { WorkoutRow } from '@/components/WorkoutRow';
 import { PickerAnchor, SplitPicker } from '@/components/SplitPicker';
 import { WeekStrip } from '@/components/WeekStrip';
+import { StretchCard } from '@/components/StretchCard';
 import { useExercises } from '@/hooks/useExercises';
 import { formatDaysAgo } from '@/utils/dates';
 import { TrainingLog, Workout } from '@/types';
@@ -235,6 +236,8 @@ export default function HomeScreen() {
           </Tactile>
         </View>
       ) : null}
+
+      <StretchCard />
 
       {workouts.length > 0 && (
         <Text className="text-muted text-[10px] tracking-[4px] px-2 mb-3">ALL WORKOUTS</Text>
