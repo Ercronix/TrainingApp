@@ -16,6 +16,8 @@ public interface StretchCheckInRepository extends JpaRepository<StretchCheckIn, 
   @Query("SELECT c.day FROM StretchCheckIn c WHERE c.user.id = :userId ORDER BY c.day ASC")
   List<LocalDate> findDaysByUserId(@Param("userId") Long userId);
 
+  boolean existsByUserIdAndDay(Long userId, LocalDate day);
+
   // Idempotent, also when the same day is checked in twice at once (a replayed offline mutation)
   @Modifying
   @Query(value = "INSERT INTO stretch_check_ins (user_id, day) VALUES (:userId, :day) ON CONFLICT (user_id, day) DO NOTHING",

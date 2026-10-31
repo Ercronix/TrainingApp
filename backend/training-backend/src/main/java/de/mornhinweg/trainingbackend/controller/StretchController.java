@@ -3,8 +3,11 @@ package de.mornhinweg.trainingbackend.controller;
 import de.mornhinweg.trainingbackend.dto.stretch.ReorderStretchItemsRequest;
 import de.mornhinweg.trainingbackend.dto.stretch.StretchItemRequest;
 import de.mornhinweg.trainingbackend.dto.stretch.StretchItemResponse;
+import de.mornhinweg.trainingbackend.dto.stretch.StretchReminderResponse;
 import de.mornhinweg.trainingbackend.dto.stretch.StretchRoutineResponse;
+import de.mornhinweg.trainingbackend.dto.stretch.UpdateStretchReminderRequest;
 import de.mornhinweg.trainingbackend.dto.stretch.UpdateStretchRoutineRequest;
+import de.mornhinweg.trainingbackend.service.StretchReminderService;
 import de.mornhinweg.trainingbackend.service.StretchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ import java.util.List;
 public class StretchController {
 
   private final StretchService stretchService;
+  private final StretchReminderService reminderService;
 
   @GetMapping("/routine")
   public ResponseEntity<StretchRoutineResponse> getRoutine(Authentication authentication) {
@@ -84,6 +88,31 @@ public class StretchController {
       @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate day,
       Authentication authentication) {
     stretchService.undoCheckIn(day, authentication);
+    return ResponseEntity.noContent().build();
+  }
+
+  @GetMapping("/reminder")
+  public ResponseEntity<StretchReminderResponse> getReminder(Authentication authentication) {
+    return ResponseEntity.ok(reminderService.getReminder(authentication));
+  }
+
+  @PutMapping("/reminder")
+  public ResponseEntity<StretchReminderResponse> updateReminder(
+      @Valid @RequestBody UpdateStretchReminderRequest request,
+      Authentication authentication) {
+    return ResponseEntity.ok(reminderService.updateReminder(request, authentication));
+  }
+
+  @PostMapping("/reminder/test")
+  public ResponseEntity<Void> sendTestReminder(Authentication authentication) {
+    reminderService.sendTest(authentication);
+    return ResponseEntity.noContent().build();
+  }
+
+  /** The notification's "Done" button. Public: the token in the path identifies the user. */
+  @PostMapping("/reminder/done/{token}")
+  public ResponseEntity<Void> checkInFromNotification(@PathVariable String token) {
+    reminderService.checkInFromNotification(token);
     return ResponseEntity.noContent().build();
   }
 }
