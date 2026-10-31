@@ -134,6 +134,10 @@ export default function HomeScreen() {
             {hasSplits ? 'CHOOSE A SPLIT' : 'CREATE A SPLIT'}
           </Text>
         </Tactile>
+        {/* Stretching doesn't need a split */}
+        <View className="mt-10">
+          <StretchCard />
+        </View>
         {picker}
       </View>
     );

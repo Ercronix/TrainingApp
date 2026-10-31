@@ -29,7 +29,7 @@ export function StretchCard() {
           <Ionicons name="checkmark" size={20} color={c.accentFg} />
         </View>
         <TouchableOpacity className="flex-1" onPress={() => router.push('/stretch' as any)} accessibilityLabel={`${name}, done today`}>
-          <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">STRETCHED TODAY</Text>
+          <Text className="text-accent-text text-[10px] tracking-[4px] mb-1" numberOfLines={1}>DONE TODAY</Text>
           {streakText}
         </TouchableOpacity>
         <TouchableOpacity
