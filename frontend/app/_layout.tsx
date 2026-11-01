@@ -1,3 +1,4 @@
+import '@/utils/pointerCapture';
 import { Stack } from 'expo-router';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
