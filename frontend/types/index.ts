@@ -286,3 +286,20 @@ export interface StretchItemRequest {
   perSide?: boolean;
   note?: string;
 }
+
+/** The daily ntfy push, skipped on days already stretched. */
+export interface StretchReminder {
+  enabled: boolean;
+  time: string; // HH:mm in timeZone
+  timeZone: string;
+  available: boolean; // false when the server has no ntfy server set up
+  topic: string;
+  topicUrl: string | null;
+  doneButton: boolean;
+}
+
+export interface StretchReminderRequest {
+  enabled: boolean;
+  time: string;
+  timeZone: string;
+}

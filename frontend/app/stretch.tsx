@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-native-draggable-flatlist';
 import { useStretchRoutine } from '@/hooks/useStretchRoutine';
 import { useStretchCheckIns } from '@/hooks/useStretchCheckIns';
+import { useStretchReminder } from '@/hooks/useStretchReminder';
 import { confirm } from '@/utils/confirm';
 import { formatAmount, formatClock, routineSeconds } from '@/utils/stretch';
 import SwipeableRow from '@/components/SwipeableRow';
@@ -18,6 +19,7 @@ export default function StretchRoutineScreen() {
   const router = useRouter();
   const { routine, items, isLoading, isRefetching, refetch, deleteItem, reorderItems } = useStretchRoutine();
   const { streak } = useStretchCheckIns();
+  const { reminder } = useStretchReminder();
   const [reorderMode, setReorderMode] = useState(false);
   const insets = useSafeAreaInsets();
   const c = useTheme();
@@ -104,6 +106,15 @@ export default function StretchRoutineScreen() {
             <Ionicons name="arrow-back" size={20} color={c.accent} />
           </TouchableOpacity>
           <View className="flex-row gap-4 items-center">
+            {!reorderMode && (
+              <TouchableOpacity onPress={() => router.push('/stretch-reminder' as any)} accessibilityLabel="Daily reminder">
+                <Ionicons
+                  name={reminder?.enabled ? 'notifications' : 'notifications-outline'}
+                  size={20}
+                  color={reminder?.enabled ? c.accent : c.muted}
+                />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity onPress={() => setReorderMode((v) => !v)} accessibilityLabel={reorderMode ? 'Done reordering' : 'Reorder'}>
               <Ionicons
                 name={reorderMode ? 'checkmark-done-outline' : 'reorder-three-outline'}
@@ -127,6 +138,7 @@ export default function StretchRoutineScreen() {
           {items.length} {items.length === 1 ? 'STRETCH' : 'STRETCHES'}
           {items.length > 0 ? ` · ${formatClock(routineSeconds(items))}` : ''}
           {` · ${streak} DAY STREAK`}
+          {reminder?.enabled ? ` · REMINDER\u00A0${reminder.time}` : ''}
           {reorderMode ? ' · HOLD TO REORDER' : ''}
         </Text>
       </View>

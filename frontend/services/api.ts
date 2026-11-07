@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest, StretchReminder, StretchReminderRequest } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -436,5 +436,19 @@ export const stretchApi = {
 
   undoCheckIn: async (day: string): Promise<void> => {
     await api.delete(`/stretch/check-ins/${day}`);
+  },
+
+  getReminder: async (): Promise<StretchReminder> => {
+    const response = await api.get("/stretch/reminder");
+    return response.data;
+  },
+
+  updateReminder: async (data: StretchReminderRequest): Promise<StretchReminder> => {
+    const response = await api.put("/stretch/reminder", data);
+    return response.data;
+  },
+
+  sendTestReminder: async (): Promise<void> => {
+    await api.post("/stretch/reminder/test");
   },
 };
