@@ -11,4 +11,6 @@ export const QUERY_KEYS = {
   catalog: ['catalog', 2] as const,
   illustration: (catalogExerciseId: number, index: 0 | 1) => ['illustration', catalogExerciseId, index] as const,
   stats: ['stats'] as const,
+  stretchRoutine: ['stretchRoutine'] as const,
+  stretchCheckIns: ['stretchCheckIns'] as const,
 };

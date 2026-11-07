@@ -256,3 +256,33 @@ export interface DashboardStats {
 }
 
 
+
+// A stretch of the daily stretch routine, kept apart from the training data
+export type StretchKind = 'hold' | 'reps';
+
+export interface StretchItem {
+  id: number;
+  name: string;
+  // 'hold': amount is seconds; 'reps': amount is repetitions
+  kind: StretchKind;
+  amount: number;
+  // Done once on each side, left then right
+  perSide: boolean;
+  note: string | null;
+  orderIndex: number;
+}
+
+export interface StretchRoutine {
+  id: number;
+  name: string;
+  items: StretchItem[];
+}
+
+// On update, missing fields stay unchanged and an empty note clears it
+export interface StretchItemRequest {
+  name?: string;
+  kind?: StretchKind;
+  amount?: number;
+  perSide?: boolean;
+  note?: string;
+}

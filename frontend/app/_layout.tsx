@@ -85,6 +85,8 @@ function AppLayout() {
               <Stack.Screen name="edit-workout"   options={{ presentation: 'modal', headerShown: false }} />
               <Stack.Screen name="edit-exercise"  options={{ presentation: 'modal', headerShown: false }} />
               <Stack.Screen name="account"        options={{ presentation: 'modal', headerShown: false }} />
+              <Stack.Screen name="stretch-item"   options={{ presentation: 'modal', headerShown: false }} />
+              <Stack.Screen name="edit-stretch-routine" options={{ presentation: 'modal', headerShown: false }} />
 
               {/* Screens */}
               <Stack.Screen name="splits"          options={{ headerShown: false }} />
@@ -97,6 +99,8 @@ function AppLayout() {
               <Stack.Screen name="library"         options={{ headerShown: false }} />
               <Stack.Screen name="assign-muscles"  options={{ headerShown: false }} />
               <Stack.Screen name="one-rep-max"     options={{ headerShown: false }} />
+              <Stack.Screen name="stretch"         options={{ headerShown: false }} />
+              <Stack.Screen name="stretch-session" options={{ headerShown: false }} />
             </Stack>
             <ActiveTrainingBanner />
             <TrainingAutoEnd />

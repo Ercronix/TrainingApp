@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -393,3 +393,48 @@ export const statsApi = {
 };
 
 export default api;
+
+export const stretchApi = {
+  getRoutine: async (): Promise<StretchRoutine> => {
+    const response = await api.get("/stretch/routine");
+    return response.data;
+  },
+
+  renameRoutine: async (name: string): Promise<StretchRoutine> => {
+    const response = await api.put("/stretch/routine", { name });
+    return response.data;
+  },
+
+  addItem: async (data: StretchItemRequest): Promise<StretchItem> => {
+    const response = await api.post("/stretch/items", data);
+    return response.data;
+  },
+
+  updateItem: async (id: number, data: StretchItemRequest): Promise<StretchItem> => {
+    const response = await api.put(`/stretch/items/${id}`, data);
+    return response.data;
+  },
+
+  deleteItem: async (id: number): Promise<void> => {
+    await api.delete(`/stretch/items/${id}`);
+  },
+
+  reorderItems: async (items: { id: number; orderIndex: number }[]): Promise<void> => {
+    await api.patch("/stretch/items/reorder", { items });
+  },
+
+  // Every day the user stretched as YYYY-MM-DD, ascending
+  getCheckIns: async (): Promise<string[]> => {
+    const response = await api.get("/stretch/check-ins");
+    return response.data;
+  },
+
+  // day is the device's local date (YYYY-MM-DD); checking in twice is fine
+  checkIn: async (day: string): Promise<void> => {
+    await api.put(`/stretch/check-ins/${day}`);
+  },
+
+  undoCheckIn: async (day: string): Promise<void> => {
+    await api.delete(`/stretch/check-ins/${day}`);
+  },
+};
