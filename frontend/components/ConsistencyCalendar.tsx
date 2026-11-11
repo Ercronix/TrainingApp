@@ -6,7 +6,6 @@ import { blendHex } from '@/utils/color';
 import { formatNumber, startOfWeek, totalsOf } from '@/utils/stats';
 
 const WEEKS = 18;
-const DAY_LABELS = ['M', '', 'W', '', 'F', '', 'S'];
 // The faintest and strongest fill of a trained day, as the share of the accent in the card color
 const MIN_FILL = 0.35;
 const LEGEND_STEPS = [0.25, 0.5, 0.75, 1];
@@ -123,9 +122,10 @@ export function ConsistencyCalendar({ logs }: { logs: TrainingLog[] }) {
 
       <View className="flex-row" accessibilityLabel={`${total} sessions in the last ${WEEKS} weeks`}>
         <View className="w-4 gap-[3px]">
-          {DAY_LABELS.map((label, i) => (
-            <View key={i} className="flex-1 justify-center">
-              <Text className="text-muted text-[8px]">{label}</Text>
+          {/* Every weekday, in the device's language like the months above */}
+          {weeks[0].map((day) => (
+            <View key={day.time} className="flex-1 justify-center">
+              <Text className="text-muted text-[8px]">{new Date(day.time).toLocaleDateString(undefined, { weekday: 'narrow' })}</Text>
             </View>
           ))}
         </View>
@@ -144,7 +144,8 @@ export function ConsistencyCalendar({ logs }: { logs: TrainingLog[] }) {
                     className={`rounded-[4px] ${color || day.future ? '' : 'bg-elevated'}`}
                     style={{
                       aspectRatio: 1,
-                      backgroundColor: color,
+                      // Only when set: an undefined backgroundColor overrides the class on native
+                      ...(color ? { backgroundColor: color } : null),
                       borderWidth: day.today || isSelected || day.future ? 1.5 : 0,
                       borderStyle: day.future && !isSelected ? 'dashed' : 'solid',
                       borderColor: isSelected ? c.primary : day.today ? c.accentText : c.elevated,

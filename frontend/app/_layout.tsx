@@ -82,8 +82,9 @@ function AppLayout() {
           <AuthProvider>
             <Stack
               screenOptions={{ headerShown: false }}
-              // In a glass theme the screens are see-through, so each one brings its own aurora
-              screenLayout={({ children }) => (palette.glass ? <AuroraBackdrop>{children}</AuroraBackdrop> : <>{children}</>)}
+              // In a glass theme the screens are see-through, so each one brings its own aurora. The
+              // wrapper stays in other themes too, so switching theme doesn't remount the screens.
+              screenLayout={({ children }) => <AuroraBackdrop>{children}</AuroraBackdrop>}
             >
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />

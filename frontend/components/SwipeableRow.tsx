@@ -135,7 +135,8 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
             bottom: 0,
             flexDirection: 'row',
             width: rightWidth,
-            transform: glass ? [{ translateX: Animated.add(translateX, rightWidth) }] : undefined,
+            // Always a transform: Animated can't drop one when the theme changes
+            transform: [{ translateX: glass ? Animated.add(translateX, rightWidth) : 0 }],
           }}
         >
           {rightActions.map((action, index) => (
@@ -154,7 +155,7 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
             bottom: 0,
             flexDirection: 'row',
             width: leftWidth,
-            transform: glass ? [{ translateX: Animated.add(translateX, -leftWidth) }] : undefined,
+            transform: [{ translateX: glass ? Animated.add(translateX, -leftWidth) : 0 }],
           }}
         >
           {leftActions.map((action, index) => (

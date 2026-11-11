@@ -638,7 +638,7 @@ export default function LogExerciseModal() {
           </Text>
           {drawingId != null && (
             <TouchableOpacity onPress={openDetails} activeOpacity={0.85} accessibilityLabel="How it's done, and exercise details">
-              <ExerciseIllustration catalogExerciseId={drawingId} width={76} height={76} background={c.base} animate />
+              <ExerciseIllustration catalogExerciseId={drawingId} width={76} height={76} background={c.glass ? 'transparent' : c.base} animate />
             </TouchableOpacity>
           )}
         </View>

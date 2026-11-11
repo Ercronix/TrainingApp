@@ -22,6 +22,10 @@ interface Light {
  * The backdrop of a glass theme: the base color with a few soft lights drifting slowly across it,
  * like an aurora wallpaper behind translucent windows. Every instance takes its position from the
  * clock, so the lights don't jump when one screen covers another.
+ *
+ * It wraps every screen in every theme and only draws in a glass one. Wrapping only in glass would
+ * change the screens' parent when the theme loads or changes, which remounts them, and the tab
+ * pager on Android comes back blank after a remount.
  */
 export function AuroraBackdrop({ children }: { children: ReactNode }) {
   const c = useTheme();
@@ -33,7 +37,7 @@ export function AuroraBackdrop({ children }: { children: ReactNode }) {
   const gradientId = useId();
 
   useEffect(() => {
-    if (reduceMotion !== false) return;
+    if (!c.glass || reduceMotion !== false) return;
     const useNativeDriver = Platform.OS !== 'web';
     const easing = Easing.inOut(Easing.sin);
     // Where the clock puts the drift right now: 0 → 1 in the first half of a period, then back
@@ -51,7 +55,7 @@ export function AuroraBackdrop({ children }: { children: ReactNode }) {
       firstLeg.stop();
       loop.stop();
     };
-  }, [reduceMotion, drift]);
+  }, [c.glass, reduceMotion, drift]);
 
   const strength = isLight ? 0.7 : 1;
   const lights: Light[] = [
@@ -62,41 +66,43 @@ export function AuroraBackdrop({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.base }}>
-      <View style={StyleSheet.absoluteFill} pointerEvents="none">
-        {lights.map((l, i) => {
-          const w = l.rx * 2 * width;
-          const h = l.ry * 2 * height;
-          return (
-            <Animated.View
-              key={i}
-              style={{
-                position: 'absolute',
-                left: l.cx * width - w / 2,
-                top: l.cy * height - h / 2,
-                width: w,
-                height: h,
-                transform: [
-                  { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [0, l.dx] }) },
-                  { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [0, l.dy] }) },
-                  { scale: drift.interpolate({ inputRange: [0, 1], outputRange: [1, 1 + l.grow] }) },
-                ],
-              }}
-            >
-              <Svg width={w} height={h}>
-                <Defs>
-                  <RadialGradient id={`${gradientId}-${i}`} cx="50%" cy="50%" rx="50%" ry="50%">
-                    <Stop offset="0" stopColor={l.color} stopOpacity={l.opacity} />
-                    <Stop offset="0.55" stopColor={l.color} stopOpacity={l.opacity * 0.4} />
-                    <Stop offset="1" stopColor={l.color} stopOpacity={0} />
-                  </RadialGradient>
-                </Defs>
-                <Ellipse cx={w / 2} cy={h / 2} rx={w / 2} ry={h / 2} fill={`url(#${gradientId}-${i})`} />
-              </Svg>
-            </Animated.View>
-          );
-        })}
-      </View>
+    <View style={{ flex: 1, backgroundColor: c.glass ? c.base : undefined }}>
+      {c.glass && (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          {lights.map((l, i) => {
+            const w = l.rx * 2 * width;
+            const h = l.ry * 2 * height;
+            return (
+              <Animated.View
+                key={i}
+                style={{
+                  position: 'absolute',
+                  left: l.cx * width - w / 2,
+                  top: l.cy * height - h / 2,
+                  width: w,
+                  height: h,
+                  transform: [
+                    { translateX: drift.interpolate({ inputRange: [0, 1], outputRange: [0, l.dx] }) },
+                    { translateY: drift.interpolate({ inputRange: [0, 1], outputRange: [0, l.dy] }) },
+                    { scale: drift.interpolate({ inputRange: [0, 1], outputRange: [1, 1 + l.grow] }) },
+                  ],
+                }}
+              >
+                <Svg width={w} height={h}>
+                  <Defs>
+                    <RadialGradient id={`${gradientId}-${i}`} cx="50%" cy="50%" rx="50%" ry="50%">
+                      <Stop offset="0" stopColor={l.color} stopOpacity={l.opacity} />
+                      <Stop offset="0.55" stopColor={l.color} stopOpacity={l.opacity * 0.4} />
+                      <Stop offset="1" stopColor={l.color} stopOpacity={0} />
+                    </RadialGradient>
+                  </Defs>
+                  <Ellipse cx={w / 2} cy={h / 2} rx={w / 2} ry={h / 2} fill={`url(#${gradientId}-${i})`} />
+                </Svg>
+              </Animated.View>
+            );
+          })}
+        </View>
+      )}
       {children}
     </View>
   );
