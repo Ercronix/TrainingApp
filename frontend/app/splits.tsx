@@ -49,7 +49,7 @@ export default function SplitsScreen() {
       }
     >
       <TouchableOpacity
-        className={`bg-surface rounded-md border-2 border-b-[6px] px-5 py-5 flex-row items-center ${
+        className={`bg-surface rounded-md rim px-5 py-5 flex-row items-center ${
           item.isActive ? 'border-accent' : 'border-edge'
         }`}
         onPress={() =>

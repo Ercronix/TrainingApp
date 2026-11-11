@@ -14,6 +14,9 @@ type Range = 'week' | 'average';
 
 // The running week plus the four finished ones the average covers
 const WEEK_COUNT = 5;
+// Weeks in the trend of a selected muscle, the running one included
+const TREND_WEEKS = 8;
+const TREND_HEIGHT = 44;
 
 const formatSets = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 
@@ -27,6 +30,8 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
   const [range, setRange] = useState<Range>('week');
   const [selected, setSelected] = useState<Muscle | null>(null);
   const volume = useMemo(() => computeMuscleVolume(logs, library, WEEK_COUNT), [logs, library]);
+
+  const trend = useMemo(() => computeMuscleVolume(logs, library, TREND_WEEKS).weeks, [logs, library]);
 
   const current = volume.weeks[volume.weeks.length - 1];
   const finished = volume.weeks.slice(0, -1);
@@ -59,9 +64,17 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
     MUSCLES.filter((m) => setsFor(m) > 0).map((m) => [m, heatOf(setsFor(m))]),
   );
   const selectedSets = selected ? Math.round(setsFor(selected) * 10) / 10 : 0;
+  const selectedTrend = selected ? trend.map((w) => w.sets[selected] ?? 0) : [];
+  // The trend's axis ends at the top of the target, or above it for a muscle trained beyond that
+  const trendMax = Math.max(WEEKLY_SET_TARGET.max, Math.ceil(Math.max(0, ...selectedTrend) / 10) * 10);
+  const selectedStatus = selectedSets === 0
+    ? 'Not trained'
+    : selectedSets < WEEKLY_SET_TARGET.min
+      ? `Under the ${WEEKLY_SET_TARGET.min}–${WEEKLY_SET_TARGET.max} target`
+      : selectedSets <= WEEKLY_SET_TARGET.max ? 'In the target range' : `Over ${WEEKLY_SET_TARGET.max} sets`;
 
   return (
-    <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
+    <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5">
       <View className="flex-row justify-between items-center mb-1">
         <Text className="text-muted text-[9px] tracking-[3px]">WEEKLY SETS PER MUSCLE</Text>
         <Text className="text-accent-text text-[10px] font-mono-bold">
@@ -95,26 +108,64 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
         onPressMuscle={(m) => setSelected((current) => (current === m ? null : m))}
         accessibilityLabel={`Weekly sets per muscle: ${rows.filter((r) => r.sets > 0).map((r) => `${MUSCLE_LABELS[r.muscle]} ${formatSets(Math.round(r.sets * 10) / 10)}`).join(', ') || 'none yet'}`}
       />
-      <View className="h-8 justify-center items-center mb-2">
+      {/* The selected muscle's sets and 8-week trend, or the legend. A fixed height, so selecting doesn't move the rows below. */}
+      <View className="h-24 justify-center mb-2">
         {selected ? (
-          <Text className="text-primary text-xs">
-            <Text className="font-bold">{MUSCLE_LABELS[selected]}</Text>
-            <Text className="text-muted"> · </Text>
-            <Text className="font-mono-bold">{formatSets(selectedSets)}</Text>
-            <Text className="text-muted"> {selectedSets === 1 ? 'set' : 'sets'}</Text>
-          </Text>
-        ) : (
           <View className="flex-row items-center gap-4">
-            {([
-              ['UNDER', blendHex(c.accentText, c.surface, 0.45)],
-              ['IN RANGE', c.accentText],
-              ['OVER', c.info],
-            ] as const).map(([label, color]) => (
-              <View key={label} className="flex-row items-center gap-1.5">
-                <View className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
-                <Text className="text-muted text-[8px] tracking-[2px]">{label}</Text>
+            <View className="flex-1">
+              <Text className="text-primary text-sm font-bold" numberOfLines={1}>{MUSCLE_LABELS[selected]}</Text>
+              <Text className="text-primary text-2xl font-mono-bold">
+                {formatSets(selectedSets)}
+                <Text className="text-muted text-xs font-normal"> {selectedSets === 1 ? 'set' : 'sets'}</Text>
+              </Text>
+              <Text className="text-muted text-[10px]" numberOfLines={1}>{selectedStatus}</Text>
+            </View>
+            <View
+              className="w-40"
+              accessibilityLabel={`${MUSCLE_LABELS[selected]}, sets per week over ${TREND_WEEKS} weeks: ${selectedTrend.map((v) => formatSets(Math.round(v * 10) / 10)).join(', ')}`}
+            >
+              <Text className="text-muted text-[8px] tracking-[2px] mb-1.5 ml-5">SETS · {TREND_WEEKS} WEEKS</Text>
+              <View className="flex-row">
+                <View className="w-5 justify-between" style={{ height: TREND_HEIGHT }}>
+                  {[trendMax, trendMax / 2, 0].map((tick) => (
+                    <Text key={tick} className="text-muted text-[8px] font-mono" style={{ lineHeight: 8 }}>{tick}</Text>
+                  ))}
+                </View>
+                <View className="flex-1 border-l border-b border-subtle" style={{ height: TREND_HEIGHT }}>
+                  <View className="absolute left-0 right-0 border-t border-elevated" style={{ top: 0 }} />
+                  <View className="absolute left-0 right-0 border-t border-elevated" style={{ top: TREND_HEIGHT / 2 }} />
+                  <View className="flex-1 flex-row items-end gap-[3px] px-[3px]">
+                    {selectedTrend.map((sets, i) => (
+                      <View
+                        key={trend[i].start}
+                        className={`flex-1 rounded-t-[2px] ${i === selectedTrend.length - 1 ? 'bg-accent' : 'bg-accent-muted'}`}
+                        style={{ height: sets > 0 ? Math.max(2, (sets / trendMax) * (TREND_HEIGHT - 1)) : 0 }}
+                      />
+                    ))}
+                  </View>
+                </View>
               </View>
-            ))}
+              <View className="flex-row justify-between ml-5 mt-0.5">
+                <Text className="text-muted text-[8px]">{TREND_WEEKS - 1} wk ago</Text>
+                <Text className="text-muted text-[8px]">this wk</Text>
+              </View>
+            </View>
+          </View>
+        ) : (
+          <View className="items-center gap-2">
+            <View className="flex-row items-center gap-4">
+              {([
+                ['UNDER', blendHex(c.accentText, c.surface, 0.45)],
+                ['IN RANGE', c.accentText],
+                ['OVER', c.info],
+              ] as const).map(([label, color]) => (
+                <View key={label} className="flex-row items-center gap-1.5">
+                  <View className="w-2 h-2 rounded-sm" style={{ backgroundColor: color }} />
+                  <Text className="text-muted text-[8px] tracking-[2px]">{label}</Text>
+                </View>
+              ))}
+            </View>
+            <Text className="text-muted text-[10px]">Tap a muscle for its sets and trend</Text>
           </View>
         )}
       </View>

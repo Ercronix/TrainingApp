@@ -100,7 +100,7 @@ export default function HistoryScreen() {
         ]}
       >
         <TouchableOpacity
-          className="bg-surface rounded-md border-2 border-edge border-b-[6px] p-5"
+          className="bg-surface rounded-md rim border-edge p-5"
           onPress={() =>
             // Sessions still in progress reopen in the training screen so they can be continued
             router.push({
@@ -127,7 +127,7 @@ export default function HistoryScreen() {
           </View>
 
           {/* Stats row */}
-          <View className="flex-row items-center bg-base rounded p-3 mb-3">
+          <View className="flex-row items-center bg-inset rounded p-3 mb-3">
             <View className="flex-1 items-center">
               <Text className="text-primary text-sm font-bold tracking-tight">{formatTime(item.startedAt)}</Text>
               <Text className="text-muted text-[8px] tracking-widest mt-0.5">TIME</Text>
@@ -199,7 +199,7 @@ export default function HistoryScreen() {
 
       {/* Search bar */}
       <View className="px-4 mb-3">
-        <View className="flex-row items-center bg-surface border-2 border-edge border-b-4 rounded-md px-4 py-3">
+        <View className="flex-row items-center bg-surface rim-sm border-edge rounded-md px-4 py-3">
           <Ionicons name="search" size={16} color={c.muted} />
           <TextInput
             className="flex-1 text-primary text-sm ml-3"

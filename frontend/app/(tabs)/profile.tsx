@@ -11,7 +11,7 @@ import { useColorScheme } from 'nativewind';
 import { storage } from '@/services/storage';
 import { useTheme } from '@/hooks/useTheme';
 import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
-import { THEMES } from '@/constants/theme';
+import { GLASS_OPACITY_MAX, GLASS_OPACITY_MIN, THEMES } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { useHapticsStore } from '@/store/hapticsStore';
 import { haptics } from '@/utils/haptics';
@@ -56,6 +56,16 @@ export default function ProfileScreen() {
     // Let turning them on be felt
     if (enabled) haptics.check();
     await storage.setItem('haptics', enabled ? 'on' : 'off');
+  };
+
+  const glassOpacity = useThemeStore((s) => s.glassOpacity);
+  const setGlassOpacity = useThemeStore((s) => s.setGlassOpacity);
+
+  // In steps of 10%, within the range where the cards stay see-through but readable
+  const stepGlassOpacity = async (direction: 1 | -1) => {
+    const next = Math.min(GLASS_OPACITY_MAX, Math.max(GLASS_OPACITY_MIN, Math.round((glassOpacity + direction * 0.1) * 10) / 10));
+    setGlassOpacity(next);
+    await storage.setItem('glass-opacity', String(next));
   };
 
   const selectTheme = async (id: string) => {
@@ -112,7 +122,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Avatar card */}
-      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-8 items-center">
+      <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-8 items-center">
         <View className="w-20 h-20 rounded-full bg-accent items-center justify-center mb-4">
           <Text className="text-accent-fg text-[36px] font-bold tracking-tighter leading-10">
             {(user?.username || 'U')[0].toUpperCase()}
@@ -125,7 +135,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Info rows */}
-      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md px-5">
+      <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md px-5">
         <View className="flex-row items-center justify-between py-4">
           <View className="flex-row items-center gap-2">
             <Ionicons name="person-outline" size={16} color={c.muted} />
@@ -174,7 +184,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Theme picker */}
-      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
+      <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5">
         <Text className="text-muted text-[10px] tracking-[3px] mb-4">THEME</Text>
         <View className="flex-row flex-wrap gap-4">
           {THEMES.map((t) => {
@@ -212,10 +222,40 @@ export default function ProfileScreen() {
             );
           })}
         </View>
+        {c.glass && (
+          <>
+            <View className="h-px bg-elevated mt-5" />
+            <View className="flex-row items-center justify-between pt-4">
+              <View className="flex-1 mr-3">
+                <Text className="text-muted text-[10px] tracking-[2px]">GLASS OPACITY</Text>
+                <Text className="text-muted text-xs mt-1">How solid the cards are</Text>
+              </View>
+              <View className="flex-row items-center gap-2">
+                <TouchableOpacity
+                  onPress={() => stepGlassOpacity(-1)}
+                  disabled={glassOpacity <= GLASS_OPACITY_MIN}
+                  accessibilityLabel="Less opaque"
+                  className={`w-11 h-11 rounded-sm bg-elevated items-center justify-center ${glassOpacity <= GLASS_OPACITY_MIN ? 'opacity-40' : ''}`}
+                >
+                  <Ionicons name="remove" size={18} color={c.primary} />
+                </TouchableOpacity>
+                <Text className="text-accent-text text-sm font-bold w-12 text-center">{Math.round(glassOpacity * 100)}%</Text>
+                <TouchableOpacity
+                  onPress={() => stepGlassOpacity(1)}
+                  disabled={glassOpacity >= GLASS_OPACITY_MAX}
+                  accessibilityLabel="More opaque"
+                  className={`w-11 h-11 rounded-sm bg-elevated items-center justify-center ${glassOpacity >= GLASS_OPACITY_MAX ? 'opacity-40' : ''}`}
+                >
+                  <Ionicons name="add" size={18} color={c.primary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        )}
       </View>
 
       {/* Accent picker */}
-      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
+      <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5">
         <View className="flex-row items-center justify-between mb-4">
           <Text className="text-muted text-[10px] tracking-[3px]">ACCENT</Text>
           {customAccent && (
@@ -259,7 +299,7 @@ export default function ProfileScreen() {
             autoCapitalize="none"
             autoCorrect={false}
             maxLength={7}
-            className="flex-1 bg-base rounded-sm px-3 py-2.5 text-primary text-sm"
+            className="flex-1 bg-inset rounded-sm px-3 py-2.5 text-primary text-sm"
             onSubmitEditing={() => applyCustomAccent(accentInput)}
           />
           <Tactile
@@ -274,7 +314,7 @@ export default function ProfileScreen() {
 
       {/* Account management */}
       <TouchableOpacity
-        className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 flex-row items-center justify-center gap-2"
+        className="mx-4 mb-3 bg-surface rim border-edge rounded-md py-5 flex-row items-center justify-center gap-2"
         onPress={() => router.push('/account' as any)}
         activeOpacity={0.85}
       >
@@ -284,7 +324,7 @@ export default function ProfileScreen() {
 
       {/* Exercise library */}
       <TouchableOpacity
-        className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 flex-row items-center justify-center gap-2"
+        className="mx-4 mb-3 bg-surface rim border-edge rounded-md py-5 flex-row items-center justify-center gap-2"
         onPress={() => router.push('/library' as any)}
         activeOpacity={0.85}
       >
@@ -294,7 +334,7 @@ export default function ProfileScreen() {
 
       {/* Export */}
       <TouchableOpacity
-        className={`mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 flex-row items-center justify-center gap-2 ${exporting ? 'opacity-50' : ''}`}
+        className={`mx-4 mb-3 bg-surface rim border-edge rounded-md py-5 flex-row items-center justify-center gap-2 ${exporting ? 'opacity-50' : ''}`}
         onPress={handleExport}
         disabled={exporting}
         activeOpacity={0.85}
@@ -307,7 +347,7 @@ export default function ProfileScreen() {
 
       {/* Logout */}
       <TouchableOpacity
-        className="mx-4 bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 flex-row items-center justify-center gap-2"
+        className="mx-4 bg-surface rim border-edge rounded-md py-5 flex-row items-center justify-center gap-2"
         onPress={handleLogout}
         activeOpacity={0.85}
       >

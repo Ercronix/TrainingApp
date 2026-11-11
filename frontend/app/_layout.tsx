@@ -8,10 +8,11 @@ import { useEffect, useCallback } from 'react';
 import { useColorScheme } from 'nativewind';
 import { useFonts, JetBrainsMono_400Regular, JetBrainsMono_700Bold } from '@expo-google-fonts/jetbrains-mono';
 import * as SplashScreen from 'expo-splash-screen';
-import { getPalette, getThemeVars } from '@/constants/theme';
+import { getPalette, getThemeVars, GLASS_OPACITY_MAX, GLASS_OPACITY_MIN } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { useHapticsStore } from '@/store/hapticsStore';
 import { storage } from '@/services/storage';
+import { AuroraBackdrop } from '@/components/AuroraBackdrop';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
 import { ToastHost } from '@/components/ToastHost';
 import { ActiveTrainingBanner } from '@/components/ActiveTrainingBanner';
@@ -27,6 +28,8 @@ function AppLayout() {
   const setThemeId = useThemeStore((s) => s.setThemeId);
   const customAccent = useThemeStore((s) => s.customAccent);
   const setCustomAccent = useThemeStore((s) => s.setCustomAccent);
+  const glassOpacity = useThemeStore((s) => s.glassOpacity);
+  const setGlassOpacity = useThemeStore((s) => s.setGlassOpacity);
 
   const [fontsLoaded] = useFonts({
     JetBrainsMono_400Regular,
@@ -44,6 +47,10 @@ function AppLayout() {
     storage.getItem('custom-accent').then((saved) => {
       if (saved) setCustomAccent(saved);
     });
+    storage.getItem('glass-opacity').then((saved) => {
+      const value = Number(saved);
+      if (saved && value >= GLASS_OPACITY_MIN && value <= GLASS_OPACITY_MAX) setGlassOpacity(value);
+    });
     storage.getItem('haptics').then((saved) => {
       if (saved === 'off') useHapticsStore.getState().setEnabled(false);
     });
@@ -59,12 +66,13 @@ function AppLayout() {
   if (!fontsLoaded) return null;
 
   const isLight = colorScheme === 'light';
-  const bgColor = getPalette(themeId, isLight ? 'light' : 'dark', customAccent).base;
+  const palette = getPalette(themeId, isLight ? 'light' : 'dark', customAccent);
+  const bgColor = palette.base;
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bgColor }} onLayout={onLayoutRootView}>
       <StatusBar style={isLight ? 'dark' : 'light'} backgroundColor={bgColor} />
-      <View style={[{ flex: 1 }, getThemeVars(themeId, isLight ? 'light' : 'dark', customAccent)]}>
+      <View style={[{ flex: 1 }, getThemeVars(themeId, isLight ? 'light' : 'dark', customAccent, glassOpacity)]}>
         <PersistQueryClientProvider
           client={queryClient}
           persistOptions={{ persister, maxAge: CACHE_MAX_AGE }}
@@ -72,7 +80,11 @@ function AppLayout() {
           onSuccess={() => { void queryClient.resumePausedMutations(); }}
         >
           <AuthProvider>
-            <Stack screenOptions={{ headerShown: false }}>
+            <Stack
+              screenOptions={{ headerShown: false }}
+              // In a glass theme the screens are see-through, so each one brings its own aurora
+              screenLayout={({ children }) => (palette.glass ? <AuroraBackdrop>{children}</AuroraBackdrop> : <>{children}</>)}
+            >
               <Stack.Screen name="(auth)" options={{ headerShown: false }} />
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 

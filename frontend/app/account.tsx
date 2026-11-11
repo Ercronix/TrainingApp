@@ -108,14 +108,14 @@ export default function AccountModal() {
           </Text>
 
           {/* Details */}
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-3">
+          <View className="bg-surface rim border-edge rounded-md p-5 mb-3">
             <Text className="text-muted text-[10px] tracking-[3px] mb-4">DETAILS</Text>
             <Field label="USERNAME" value={username} onChangeText={setUsername} editable={!busy} />
             <Field label="EMAIL" value={email} onChangeText={setEmail} keyboardType="email-address" editable={!busy} />
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">CONFIRM WITH PASSWORD</Text>
             <View className="flex-row gap-2">
               <TextInput
-                className="flex-1 bg-base rounded-sm px-4 py-3 text-primary text-base"
+                className="flex-1 bg-inset rounded-sm px-4 py-3 text-primary text-base"
                 value={detailsPassword}
                 onChangeText={setDetailsPassword}
                 secureTextEntry
@@ -125,7 +125,7 @@ export default function AccountModal() {
                 editable={!busy}
               />
               <Tactile
-                className={`rounded-md px-5 justify-center ${busy ? 'opacity-50' : ''}`}
+                className={`flex-1 rounded-md px-5 justify-center ${busy ? 'opacity-50' : ''}`}
                 onPress={saveDetails}
                 disabled={busy}
                 activeOpacity={0.85}
@@ -138,7 +138,7 @@ export default function AccountModal() {
           </View>
 
           {/* Password */}
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-3">
+          <View className="bg-surface rim border-edge rounded-md p-5 mb-3">
             <Text className="text-muted text-[10px] tracking-[3px] mb-4">PASSWORD</Text>
             <Field label="CURRENT PASSWORD" value={currentPassword} onChangeText={setCurrentPassword} secure editable={!busy} />
             <Field label="NEW PASSWORD" value={newPassword} onChangeText={setNewPassword} secure editable={!busy} />
@@ -156,7 +156,7 @@ export default function AccountModal() {
           </View>
 
           {/* Delete */}
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
+          <View className="bg-surface rim border-edge rounded-md p-5">
             <Text className="text-danger text-[10px] tracking-[3px] mb-2">DELETE ACCOUNT</Text>
             <Text className="text-muted text-xs mb-4">
               Permanently deletes your account and all of your data. Export your history from the profile first if you want to keep it.
@@ -197,7 +197,7 @@ function Field({
     <>
       <Text className="text-muted text-[9px] tracking-[3px] mb-2">{label}</Text>
       <TextInput
-        className="bg-base rounded-sm px-4 py-3 text-primary text-base mb-4"
+        className="bg-inset rounded-sm px-4 py-3 text-primary text-base mb-4"
         secureTextEntry={secure}
         autoCapitalize="none"
         autoCorrect={false}

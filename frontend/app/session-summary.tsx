@@ -76,8 +76,11 @@ function Medal({ record, reduceMotion }: { record: boolean; reduceMotion: boolea
         );
       })}
       <Animated.View style={{ transform: [{ scale }] }}>
-        <View className="w-20 h-20 rounded-full bg-accent border-b-[6px] border-accent-lip justify-center items-center">
-          <Ionicons name={record ? 'trophy' : 'checkmark-done'} size={34} color={c.accentFg} />
+        {/* Raised on its lip, or ringed by a soft halo of the accent in a glass theme */}
+        <View className="rounded-full" style={c.glass ? { padding: 6, margin: -6, backgroundColor: `${c.accent}40` } : undefined}>
+          <View className={`w-20 h-20 rounded-full bg-accent justify-center items-center ${c.glass ? '' : 'border-b-[6px] border-accent-lip'}`}>
+            <Ionicons name={record ? 'trophy' : 'checkmark-done'} size={34} color={c.accentFg} />
+          </View>
         </View>
       </Animated.View>
     </View>
@@ -96,11 +99,29 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 /** Volume change against the exercise's last session, for weighted exercises trained before. */
-function volumeDelta(log: ExerciseLog): number | null {
+function volumeDelta(log: ExerciseLog): { kg: number; share: number } | null {
   if (log.repUnit === 'seconds') return null;
   const previous = setVolume(previousSetsOf(log));
   const current = setVolume(setsOf(log));
-  return previous > 0 && current > 0 ? current - previous : null;
+  return previous > 0 && current > 0 ? { kg: current - previous, share: (current - previous) / previous } : null;
+}
+
+// A change of this share or more fills the delta bar's half
+const DELTA_BAR_FULL = 0.2;
+
+/** A small bar growing from a center line: right for more volume than last time, left for less. */
+function DeltaBar({ share }: { share: number }) {
+  const width = `${Math.min(1, Math.abs(share) / DELTA_BAR_FULL) * 50}%` as const;
+  return (
+    <View className="w-14 h-1.5 mt-1" accessibilityLabel={`${formatSigned(Math.round(share * 100), 0)} percent`}>
+      <View className="absolute inset-0 rounded-full bg-elevated" />
+      <View
+        className={`absolute h-full rounded-full ${share > 0 ? 'bg-accent' : 'bg-muted'}`}
+        style={share > 0 ? { left: '50%', width } : { right: '50%', width }}
+      />
+      <View className="absolute w-px bg-primary" style={{ left: '50%', top: -2, bottom: -2 }} />
+    </View>
+  );
 }
 
 /** Shown right after finishing a session: what was done, and the records it set. */
@@ -162,7 +183,7 @@ export default function SessionSummaryScreen() {
 
         {/* Stats row */}
         <Appear order={1} reduceMotion={reduceMotion}>
-          <View className="flex-row mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md py-4">
+          <View className="flex-row mb-3 bg-surface rim border-edge rounded-md py-4">
             <Stat
               value={elapsedSeconds == null ? '—' : elapsedSeconds < 60 ? `${elapsedSeconds}s` : formatDuration(elapsedSeconds)}
               label="DURATION"
@@ -188,7 +209,7 @@ export default function SessionSummaryScreen() {
         {/* Records */}
         {records.length > 0 && (
           <Appear order={2} reduceMotion={reduceMotion}>
-            <View className="mb-3 bg-surface border-2 border-accent border-b-[6px] rounded-md p-4 gap-3">
+            <View className="mb-3 bg-surface rim border-accent rounded-md p-4 gap-3">
               <Text className="text-accent-text text-[9px] tracking-[3px]">PERSONAL RECORDS</Text>
               {records.map((r) => (
                 <View key={r.id} className="flex-row items-start gap-3">
@@ -208,7 +229,7 @@ export default function SessionSummaryScreen() {
         {/* Muscles trained */}
         {trained.length > 0 && (
           <Appear order={2} reduceMotion={reduceMotion}>
-            <View className="mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-4">
+            <View className="mb-3 bg-surface rim border-edge rounded-md p-4">
               <Text className="text-muted text-[9px] tracking-[3px] mb-3">MUSCLES TRAINED</Text>
               <BodyMap
                 fills={targetFills(trained, c)}
@@ -229,7 +250,7 @@ export default function SessionSummaryScreen() {
           const delta = e.completed ? volumeDelta(e) : null;
           return (
             <Appear key={e.id} order={4 + i} reduceMotion={reduceMotion}>
-              <View className={`flex-row items-center gap-3 mb-2 rounded-md px-4 py-3 border-2 border-b-[6px] ${e.completed ? 'bg-surface-done border-edge-done' : 'bg-surface border-edge'}`}>
+              <View className={`flex-row items-center gap-3 mb-2 rounded-md px-4 py-3 rim ${e.completed ? 'bg-surface-done border-edge-done' : 'bg-surface border-edge'}`}>
                 <View className="flex-1 gap-0.5">
                   <View className="flex-row items-center gap-2">
                     <Text className="text-primary text-sm font-bold tracking-tight flex-shrink" numberOfLines={1}>{e.exerciseName}</Text>
@@ -244,12 +265,15 @@ export default function SessionSummaryScreen() {
                     {e.completed ? formatSets(setsOf(e), e.repUnit) || 'Done' : 'Skipped'}
                   </Text>
                 </View>
-                {delta != null && delta !== 0 && (
+                {delta != null && delta.kg !== 0 && (
                   <View className="items-end">
-                    <Text className={`text-xs font-mono-bold ${delta > 0 ? 'text-accent-text' : 'text-muted'}`}>
-                      {formatSigned(Math.round(delta), 0)} kg
+                    <Text className={`text-xs font-mono-bold ${delta.kg > 0 ? 'text-accent-text' : 'text-muted'}`}>
+                      {formatSigned(Math.round(delta.kg), 0)} kg
                     </Text>
-                    <Text className="text-muted text-[8px] tracking-[1.5px]">VS LAST</Text>
+                    <Text className="text-muted text-[8px] tracking-[1.5px]">
+                      {formatSigned(Math.round(delta.share * 100), 0)}% VS LAST
+                    </Text>
+                    <DeltaBar share={delta.share} />
                   </View>
                 )}
               </View>
@@ -260,7 +284,7 @@ export default function SessionSummaryScreen() {
 
       {/* Bottom dock */}
       <View
-        className="absolute bottom-0 left-0 right-0 bg-base px-4 pt-3"
+        className="absolute bottom-0 left-0 right-0 bg-dock px-4 pt-3"
         style={{ paddingBottom: 32 + insets.bottom }}
         onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
       >

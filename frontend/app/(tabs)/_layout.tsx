@@ -36,11 +36,12 @@ export default function TabsLayout() {
             screenLayout={({ route, navigation, children }) => (
                 <TabScene route={route} navigation={navigation}>{children}</TabScene>
             )}
-            style={{ backgroundColor: c.base }}
+            // A glass theme shows the aurora of the stack screen below (see app/_layout.tsx)
+            style={{ backgroundColor: c.glass ? 'transparent' : c.base }}
             // Every tab switch, by tap or swipe, brings the bar back
             screenListeners={{ focus: () => setHidden(false) }}
             screenOptions={{
-                sceneStyle: { backgroundColor: c.base },
+                sceneStyle: { backgroundColor: c.glass ? 'transparent' : c.base },
                 swipeEnabled: !swipeLocked,
                 animationEnabled: false,
                 // Mount a tab when it is next to the current one, so swiping never shows a blank page

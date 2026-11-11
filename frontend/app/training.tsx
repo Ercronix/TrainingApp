@@ -160,7 +160,7 @@ export default function TrainingScreen() {
         ]}
       >
         <View
-          className={`rounded-md ${swipeable ? '' : 'mb-2'} flex-row items-center overflow-hidden border-2 border-b-[6px] ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
+          className={`rounded-md ${swipeable ? '' : 'mb-2'} flex-row items-center overflow-hidden rim ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
         >
           {/* The whole row opens the log screen */}
           <TouchableOpacity
@@ -292,7 +292,7 @@ export default function TrainingScreen() {
 
       {/* Bottom dock */}
       <View
-        className="absolute bottom-0 left-0 right-0 bg-base px-4 pt-3"
+        className="absolute bottom-0 left-0 right-0 bg-dock px-4 pt-3"
         style={{ paddingBottom: 32 + insets.bottom }}
         onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
       >

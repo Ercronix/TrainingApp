@@ -42,7 +42,7 @@ export default function EditExerciseModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
         <TextInput
-          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-[22px] font-bold tracking-tight mb-5"
+          className="bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-[22px] font-bold tracking-tight mb-5"
           value={form.name}
           onChangeText={updateField('name')}
           autoFocus
@@ -54,7 +54,7 @@ export default function EditExerciseModal() {
           <View className="flex-1">
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">SETS</Text>
             <TextInput
-              className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
+              className="bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
               value={form.sets}
               onChangeText={updateField('sets')}
               keyboardType="numeric"
@@ -67,7 +67,7 @@ export default function EditExerciseModal() {
           <View className="flex-1">
             <Text className="text-muted text-[9px] tracking-[3px] mb-2">{repUnit === 'seconds' ? 'SECONDS' : 'REPS'}</Text>
             <TextInput
-              className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
+              className="bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
               value={form.reps}
               onChangeText={updateField('reps')}
               keyboardType="numeric"
@@ -106,7 +106,7 @@ export default function EditExerciseModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">TARGET WEIGHT (KG)</Text>
         <TextInput
-          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-lg font-bold tracking-tight mb-6"
+          className="bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-lg font-bold tracking-tight mb-6"
           value={form.plannedWeight}
           onChangeText={updateField('plannedWeight')}
           keyboardType="decimal-pad"
