@@ -140,7 +140,9 @@ export function ConsistencyCalendar({ logs }: { logs: TrainingLog[] }) {
                     key={day.time}
                     onPress={() => setSelected(isSelected ? null : day.time)}
                     hitSlop={2}
+                    accessibilityRole="button"
                     accessibilityLabel={describe(day)}
+                    accessibilityState={{ selected: isSelected }}
                     className={`rounded-[4px] ${color || day.future ? '' : 'bg-elevated'}`}
                     style={{
                       aspectRatio: 1,
