@@ -428,7 +428,7 @@ export default function LogExerciseModal() {
   // A set not being edited: its values at a glance, tap to edit, check to log, swipe to delete
   const compactRow = (row: SetRow, i: number) => (
     <View
-      className={`flex-row items-center h-16 rounded-md pl-3 border-2 border-b-[6px] ${row.done ? 'bg-surface-done' : 'bg-surface'} ${invalid(row) ? 'border-danger' : row.done ? 'border-edge-done' : 'border-edge'}`}
+      className={`flex-row items-center h-16 rounded-md pl-3 rim ${row.done ? 'bg-surface-done' : 'bg-surface'} ${invalid(row) ? 'border-danger' : row.done ? 'border-edge-done' : 'border-edge'}`}
     >
       <TouchableOpacity
         className="flex-1 h-full flex-row items-center"
@@ -468,7 +468,7 @@ export default function LogExerciseModal() {
   const expandedRow = (row: SetRow, i: number) => {
     const rowTiming = timing?.index === i;
     return (
-      <View className={`bg-surface rounded-md p-3 mb-2 gap-4 border-2 border-b-[6px] ${invalid(row) ? 'border-danger' : 'border-accent'}`}>
+      <View className={`bg-surface rounded-md p-3 mb-2 gap-4 rim ${invalid(row) ? 'border-danger' : 'border-accent'}`}>
         <View className="flex-row items-center gap-3">
           {badge(row, i)}
           <Text className="flex-1 text-primary text-base font-bold tracking-tight" numberOfLines={1}>
@@ -498,7 +498,7 @@ export default function LogExerciseModal() {
 
         {/* Weight and reps side by side */}
         <View className="flex-row gap-2">
-          <View className="flex-[1.3] bg-base rounded-sm p-1 gap-1">
+          <View className="flex-[1.3] bg-inset rounded-sm p-1 gap-1">
             <View className="flex-row items-center justify-center gap-1.5 pt-1">
               <Text className="text-muted text-[9px] tracking-[2px]">KG · STEP</Text>
               <TouchableOpacity
@@ -525,7 +525,7 @@ export default function LogExerciseModal() {
               {stepButton('add', () => stepWeight(i, 1), `Increase weight by ${formatNumber(step)} kg`)}
             </View>
           </View>
-          <View className="flex-1 bg-base rounded-sm p-1 gap-1">
+          <View className="flex-1 bg-inset rounded-sm p-1 gap-1">
             <Text className="text-muted text-[9px] tracking-[2px] text-center pt-1">{unitShort.toUpperCase()}</Text>
             <View className="flex-row items-center">
               {stepButton('remove', () => stepReps(i, -1), `Decrease ${unitShort}`, rowTiming)}
@@ -638,7 +638,7 @@ export default function LogExerciseModal() {
           </Text>
           {drawingId != null && (
             <TouchableOpacity onPress={openDetails} activeOpacity={0.85} accessibilityLabel="How it's done, and exercise details">
-              <ExerciseIllustration catalogExerciseId={drawingId} width={76} height={76} background={c.base} animate />
+              <ExerciseIllustration catalogExerciseId={drawingId} width={76} height={76} background={c.glass ? 'transparent' : c.base} animate />
             </TouchableOpacity>
           )}
         </View>

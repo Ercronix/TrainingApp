@@ -4,6 +4,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { blendHex } from '@/utils/color';
 import { useTabSwipeLock } from '@/hooks/useTabSwipeLock';
+import { useTheme } from '@/hooks/useTheme';
 
 export interface SwipeAction {
   icon: keyof typeof Ionicons.glyphMap;
@@ -32,9 +33,14 @@ const ACTION_GAP = 6;
 const LIP = 4;
 const RIM = 2;
 
-/** A raised action tile like the rows: a rim, a thicker bottom lip, and it sinks while pressed. */
-function ActionTile({ action, onPress, side }: { action: SwipeAction; onPress: () => void; side: 'left' | 'right' }) {
+/**
+ * A raised action tile like the rows: a rim, a thicker bottom lip, and it sinks while pressed.
+ * Flat with a hairline in a glass theme.
+ */
+function ActionTile({ action, onPress, side, flat }: { action: SwipeAction; onPress: () => void; side: 'left' | 'right'; flat: boolean }) {
   const edge = blendHex(action.color, action.backgroundColor, 0.35);
+  const rim = flat ? 1 : RIM;
+  const lip = flat ? 0 : LIP;
   return (
     <Pressable
       onPress={onPress}
@@ -45,12 +51,13 @@ function ActionTile({ action, onPress, side }: { action: SwipeAction; onPress: (
         <View
           style={{
             flex: 1,
-            marginTop: pressed ? LIP : 0,
+            marginTop: pressed ? lip : 0,
+            opacity: flat && pressed ? 0.7 : 1,
             backgroundColor: action.backgroundColor,
             borderRadius: CLIP_RADIUS,
             borderColor: edge,
-            borderWidth: RIM,
-            borderBottomWidth: RIM + (pressed ? 0 : LIP),
+            borderWidth: rim,
+            borderBottomWidth: rim + (pressed ? 0 : lip),
             justifyContent: 'center',
             alignItems: 'center',
           }}
@@ -69,6 +76,9 @@ function ActionTile({ action, onPress, side }: { action: SwipeAction; onPress: (
 
 export default function SwipeableRow({ children, rightActions, leftActions, enabled = true }: SwipeableRowProps) {
   const translateX = useRef(new Animated.Value(0)).current;
+  // A glass row is see-through, so its actions can't wait underneath it. They sit past its edge
+  // instead and slide in along with it.
+  const { glass } = useTheme();
   // Where the row rests: 0 when closed, or the width of the open actions (negative on the right)
   const [offset, setOffset] = useState(0);
 
@@ -117,7 +127,7 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
     <View style={{ position: 'relative', overflow: 'hidden', borderRadius: CLIP_RADIUS, marginBottom: 8 }}>
       {/* Right actions (revealed when swiping left) */}
       {rightActions && rightActions.length > 0 && (
-        <View
+        <Animated.View
           style={{
             position: 'absolute',
             right: 0,
@@ -125,17 +135,19 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
             bottom: 0,
             flexDirection: 'row',
             width: rightWidth,
+            // Always a transform: Animated can't drop one when the theme changes
+            transform: [{ translateX: glass ? Animated.add(translateX, rightWidth) : 0 }],
           }}
         >
           {rightActions.map((action, index) => (
-            <ActionTile key={index} action={action} side="right" onPress={() => { close(); action.onPress(); }} />
+            <ActionTile key={index} action={action} side="right" flat={glass} onPress={() => { close(); action.onPress(); }} />
           ))}
-        </View>
+        </Animated.View>
       )}
 
       {/* Left actions (revealed when swiping right) */}
       {leftActions && leftActions.length > 0 && (
-        <View
+        <Animated.View
           style={{
             position: 'absolute',
             left: 0,
@@ -143,12 +155,13 @@ export default function SwipeableRow({ children, rightActions, leftActions, enab
             bottom: 0,
             flexDirection: 'row',
             width: leftWidth,
+            transform: [{ translateX: glass ? Animated.add(translateX, -leftWidth) : 0 }],
           }}
         >
           {leftActions.map((action, index) => (
-            <ActionTile key={index} action={action} side="left" onPress={() => { close(); action.onPress(); }} />
+            <ActionTile key={index} action={action} side="left" flat={glass} onPress={() => { close(); action.onPress(); }} />
           ))}
-        </View>
+        </Animated.View>
       )}
 
       {/* Main content */}

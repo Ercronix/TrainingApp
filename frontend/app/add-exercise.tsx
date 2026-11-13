@@ -52,7 +52,7 @@ export default function AddExerciseScreen() {
       <View className="flex-1 justify-center items-center bg-base p-6">
         <Text className="text-muted text-base mb-4">Missing training session.</Text>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text className="text-accent-text text-base">Go Back</Text>
+          <Text className="text-accent-text text-[16px] leading-6">Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -100,7 +100,7 @@ export default function AddExerciseScreen() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView className="flex-1 px-6" keyboardShouldPersistTaps="handled">
         {replacing ? (
-          <View className="flex-row items-center gap-3 mb-6 bg-surface border-2 border-edge border-b-[6px] rounded-md px-4 py-3">
+          <View className="flex-row items-center gap-3 mb-6 bg-surface rim border-edge rounded-md px-4 py-3">
             <Ionicons name="swap-horizontal" size={18} color={c.accent} />
             <View className="flex-1">
               <Text className="text-primary text-sm font-bold" numberOfLines={1}>Instead of {replaceName}</Text>
@@ -151,7 +151,7 @@ export default function AddExerciseScreen() {
         {/* Name */}
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">EXERCISE NAME *</Text>
         <TextInput
-          className="bg-surface border-2 border-edge border-b-4 text-primary rounded-md px-4 py-3 text-base mb-4"
+          className="bg-surface rim-sm border-edge text-primary rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., Cable Fly, Dips"
           placeholderTextColor={c.subtle}
           value={form.name}
@@ -179,7 +179,7 @@ export default function AddExerciseScreen() {
         {/* Sets */}
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">SETS</Text>
         <TextInput
-          className="bg-surface border-2 border-edge border-b-4 text-primary rounded-md px-4 py-3 text-base mb-4"
+          className="bg-surface rim-sm border-edge text-primary rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., 3"
           placeholderTextColor={c.subtle}
           value={form.sets}
@@ -192,7 +192,7 @@ export default function AddExerciseScreen() {
         {/* Reps */}
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">REPS</Text>
         <TextInput
-          className="bg-surface border-2 border-edge border-b-4 text-primary rounded-md px-4 py-3 text-base mb-4"
+          className="bg-surface rim-sm border-edge text-primary rounded-md px-4 py-3 text-base mb-4"
           placeholder="e.g., 12"
           placeholderTextColor={c.subtle}
           value={form.reps}
@@ -205,7 +205,7 @@ export default function AddExerciseScreen() {
         {/* Weight */}
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">PLANNED WEIGHT (KG)</Text>
         <TextInput
-          className="bg-surface border-2 border-edge border-b-4 text-primary rounded-md px-4 py-3 text-base mb-6"
+          className="bg-surface rim-sm border-edge text-primary rounded-md px-4 py-3 text-base mb-6"
           placeholder="e.g., 25"
           placeholderTextColor={c.subtle}
           value={form.weight}

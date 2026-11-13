@@ -65,7 +65,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
 
   if (!stats) {
     return (
-      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2 items-center py-8 gap-2">
+      <View className="bg-surface rim border-edge rounded-md p-5 mb-2 items-center py-8 gap-2">
         <Ionicons name="analytics-outline" size={36} color={c.muted} />
         <Text className="text-muted text-sm font-bold tracking-widest">NO DATA YET</Text>
         <Text className="text-muted text-[11px] text-center">Complete a session with this exercise to unlock its stats</Text>
@@ -101,7 +101,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
   return (
     <>
       {/* Chart */}
-      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+      <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-3">PROGRESS</Text>
         <View className="flex-row gap-1 mb-3 flex-wrap">
           {metrics.map((m) => (
@@ -137,7 +137,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       </View>
 
       {/* Numbers */}
-      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+      <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-3">
           {kind === 'weighted' ? 'TOP WEIGHT' : kind === 'timed' ? 'BEST HOLD' : 'BEST SET'}
         </Text>
@@ -166,7 +166,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       </View>
 
       {/* Progression model */}
-      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+      <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-3">PROGRESSION TREND</Text>
         {!progression ? (
           <Text className="text-muted text-xs">
@@ -190,7 +190,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
             </View>
 
             <Text className="text-muted text-[9px] tracking-[2px] mb-2">IF THE TREND HOLDS</Text>
-            <View className="flex-row bg-base rounded-sm mb-3">
+            <View className="flex-row bg-inset rounded-sm mb-3">
               <View className="flex-1 items-center py-3">
                 <Text className="text-primary text-sm font-mono-bold">{fmt(progression.trendValue)}</Text>
                 <Text className="text-muted text-[8px] tracking-[2px] mt-0.5">TREND NOW</Text>
@@ -224,7 +224,7 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
       </View>
 
       {/* Record sets */}
-      <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+      <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">RECORD SESSIONS</Text>
         {stats.bestWeight && <RecordRow label="Heaviest weight" value={fmt(stats.bestWeight.weight)} point={stats.bestWeight} kind={kind} />}
         {stats.bestVolume && <RecordRow label="Most volume" value={`${formatNumber(stats.bestVolume.volume)} kg`} point={stats.bestVolume} kind={kind} />}
@@ -275,7 +275,7 @@ function RecordRow({ label, value, point, kind }: { label: string; value: string
           {longDate(point.date)} · {formatSets(point.workingSets, kind === 'timed' ? 'seconds' : 'reps')}
         </Text>
       </View>
-      <Text className="text-accent-text text-base font-mono-bold">{value}</Text>
+      <Text className="text-accent-text text-[16px] leading-6 font-mono-bold">{value}</Text>
     </View>
   );
 }
