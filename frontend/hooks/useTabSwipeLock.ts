@@ -4,7 +4,7 @@ import { useTabBarStore } from '@/store/tabBarStore';
 const noop = () => {};
 
 /**
- * Keeps the tab pager from swiping while a pan inside a tab (a swipeable row, a chart scrub) handles
+ * Keeps the tab pager from swiping while a pan inside a tab (such as a chart scrub) handles
  * the touch. Natively the pan claims the touch first by itself. On web the pager claims moves
  * through JS responders, which a gesture-handler pan can't refuse, so the pager is locked from the
  * touch's start until the pan ends or fails; a swipe the pan can't use still switches tabs.
