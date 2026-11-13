@@ -32,7 +32,7 @@ export function WorkoutRow({ workout, index, splitId, onDelete, lastDoneAt, isNe
         }
         activeOpacity={0.85}
       >
-        <Text className="text-dim text-[28px] font-mono-bold tracking-tighter min-w-[36px]">
+        <Text className="text-subtle text-[28px] font-mono-bold tracking-tighter min-w-[36px]">
           {String(index + 1).padStart(2, '0')}
         </Text>
         <View className="flex-1">
