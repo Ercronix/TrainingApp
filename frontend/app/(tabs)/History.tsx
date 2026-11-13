@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useHistory } from '@/hooks/useHistory';
 import { isInProgress } from '@/hooks/useActiveTraining';
 import { confirm } from '@/utils/confirm';
-import SwipeableRow from '@/components/SwipeableRow';
+import { ActionMenu } from '@/components/ActionMenu';
 import { TrainingLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
@@ -88,88 +88,86 @@ export default function HistoryScreen() {
     const completionRate = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
 
     return (
-      <SwipeableRow
-        rightActions={[
-          {
-            icon: 'trash-outline',
-            color: c.danger,
-            backgroundColor: c.dangerMuted,
-            label: 'DELETE',
-            onPress: () => handleDelete(item.id, item.workoutName || item.splitName),
-          },
-        ]}
+      <TouchableOpacity
+        className="bg-surface rounded-md rim border-edge p-5 mb-2"
+        onPress={() =>
+          // Sessions still in progress reopen in the training screen so they can be continued
+          router.push({
+            pathname: isInProgress(item) ? '/training' : '/history-detail' as any,
+            params: { trainingLogId: item.id.toString() },
+          })
+        }
+        activeOpacity={0.85}
       >
-        <TouchableOpacity
-          className="bg-surface rounded-md rim border-edge p-5"
-          onPress={() =>
-            // Sessions still in progress reopen in the training screen so they can be continued
-            router.push({
-              pathname: isInProgress(item) ? '/training' : '/history-detail' as any,
-              params: { trainingLogId: item.id.toString() },
-            })
-          }
-          activeOpacity={0.85}
-        >
-          {/* Top row */}
-          <View className="flex-row items-start mb-4 gap-3">
-            <Text className="text-subtle text-xl font-mono-bold tracking-tight min-w-[28px]">
-              {String(index + 1).padStart(2, '0')}
+        {/* Top row */}
+        <View className="flex-row items-start mb-4 gap-3">
+          <Text className="text-subtle text-xl font-mono-bold tracking-tight min-w-[28px]">
+            {String(index + 1).padStart(2, '0')}
+          </Text>
+          <View className="flex-1">
+            <Text className="text-primary text-lg font-bold tracking-tight mb-0.5">
+              {item.workoutName || item.splitName}
             </Text>
-            <View className="flex-1">
-              <Text className="text-primary text-lg font-bold tracking-tight mb-0.5">
-                {item.workoutName || item.splitName}
-              </Text>
-              <Text className="text-muted text-[11px] tracking-wider">
-                {item.splitName} · {formatDate(item.startedAt)}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={c.subtle} />
+            <Text className="text-muted text-[11px] tracking-wider">
+              {item.splitName} · {formatDate(item.startedAt)}
+            </Text>
           </View>
+          <ActionMenu
+            accessibilityLabel={`Options for ${item.workoutName || item.splitName}`}
+            actions={[
+              {
+                icon: 'trash-outline',
+                label: 'Delete',
+                destructive: true,
+                onPress: () => handleDelete(item.id, item.workoutName || item.splitName),
+              },
+            ]}
+          />
+        </View>
 
-          {/* Stats row */}
-          <View className="flex-row items-center bg-inset rounded p-3 mb-3">
-            <View className="flex-1 items-center">
-              <Text className="text-primary text-sm font-bold tracking-tight">{formatTime(item.startedAt)}</Text>
-              <Text className="text-muted text-[8px] tracking-widest mt-0.5">TIME</Text>
-            </View>
-            <View className="w-px h-7 bg-elevated" />
-            <View className="flex-1 items-center">
-              <Text className="text-primary text-sm font-bold tracking-tight">{formatDuration(item.durationSeconds)}</Text>
-              <Text className="text-muted text-[8px] tracking-widest mt-0.5">DURATION</Text>
-            </View>
-            <View className="w-px h-7 bg-elevated" />
-            <View className="flex-1 items-center">
-              <Text className={`text-sm font-bold tracking-tight ${completionRate === 100 ? 'text-accent-text' : 'text-primary'}`}>
-                {completionRate}%
+        {/* Stats row */}
+        <View className="flex-row items-center bg-inset rounded p-3 mb-3">
+          <View className="flex-1 items-center">
+            <Text className="text-primary text-sm font-bold tracking-tight">{formatTime(item.startedAt)}</Text>
+            <Text className="text-muted text-[8px] tracking-widest mt-0.5">TIME</Text>
+          </View>
+          <View className="w-px h-7 bg-elevated" />
+          <View className="flex-1 items-center">
+            <Text className="text-primary text-sm font-bold tracking-tight">{formatDuration(item.durationSeconds)}</Text>
+            <Text className="text-muted text-[8px] tracking-widest mt-0.5">DURATION</Text>
+          </View>
+          <View className="w-px h-7 bg-elevated" />
+          <View className="flex-1 items-center">
+            <Text className={`text-sm font-bold tracking-tight ${completionRate === 100 ? 'text-accent-text' : 'text-primary'}`}>
+              {completionRate}%
+            </Text>
+            <Text className="text-muted text-[8px] tracking-widest mt-0.5">DONE</Text>
+          </View>
+        </View>
+
+        {/* Exercise pills */}
+        <View className="flex-row flex-wrap gap-1">
+          {item.exercises?.slice(0, 4).map((exercise) => (
+            <View
+              key={exercise.id}
+              className={`px-2 py-1 rounded-sm ${exercise.completed ? 'bg-accent/10' : 'bg-elevated'}`}
+            >
+              <Text className={`text-[10px] ${exercise.completed ? 'text-accent-text' : 'text-muted'}`}>
+                {exercise.exerciseName}
               </Text>
-              <Text className="text-muted text-[8px] tracking-widest mt-0.5">DONE</Text>
             </View>
-          </View>
-
-          {/* Exercise pills */}
-          <View className="flex-row flex-wrap gap-1">
-            {item.exercises?.slice(0, 4).map((exercise) => (
-              <View
-                key={exercise.id}
-                className={`px-2 py-1 rounded-sm ${exercise.completed ? 'bg-accent/10' : 'bg-elevated'}`}
-              >
-                <Text className={`text-[10px] ${exercise.completed ? 'text-accent-text' : 'text-muted'}`}>
-                  {exercise.exerciseName}
-                </Text>
-              </View>
-            ))}
-            {item.exercises?.length > 4 && (
-              <View className="px-2 py-1 rounded-sm bg-elevated">
-                <Text className="text-[10px] text-muted">+{item.exercises.length - 4}</Text>
-              </View>
-            )}
-          </View>
-
-          {item.notes && (
-            <Text className="text-subtle text-xs italic mt-2">"{item.notes}"</Text>
+          ))}
+          {item.exercises?.length > 4 && (
+            <View className="px-2 py-1 rounded-sm bg-elevated">
+              <Text className="text-[10px] text-muted">+{item.exercises.length - 4}</Text>
+            </View>
           )}
-        </TouchableOpacity>
-      </SwipeableRow>
+        </View>
+
+        {item.notes && (
+          <Text className="text-subtle text-xs italic mt-2">"{item.notes}"</Text>
+        )}
+      </TouchableOpacity>
     );
   };
 

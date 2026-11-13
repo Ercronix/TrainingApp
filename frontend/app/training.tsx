@@ -14,7 +14,7 @@ import { useKeepScreenOn } from '@/hooks/useKeepScreenOn';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { Tactile } from '@/components/Tactile';
-import SwipeableRow from '@/components/SwipeableRow';
+import { ActionMenu } from '@/components/ActionMenu';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
@@ -150,77 +150,79 @@ export default function TrainingScreen() {
     const unit = item.repUnit === 'seconds' ? 'sec' : 'reps';
     const previous = previousSetsOf(item);
     // Swap or remove it for this session only
-    const swipeable = !syncing && !training?.isCompleted;
+    const editable = !syncing && !training?.isCompleted;
     return (
-      <SwipeableRow
-        enabled={swipeable}
-        rightActions={[
-          { icon: 'swap-horizontal', color: c.accent, backgroundColor: c.accentMuted, label: 'REPLACE', onPress: () => openReplace(item) },
-          { icon: 'trash-outline', color: c.danger, backgroundColor: c.dangerMuted, label: 'REMOVE', onPress: () => handleDelete(item) },
-        ]}
+      <View
+        className={`rounded-md mb-2 flex-row items-center overflow-hidden rim ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
       >
-        <View
-          className={`rounded-md ${swipeable ? '' : 'mb-2'} flex-row items-center overflow-hidden rim ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
+        {/* The whole row opens the log screen */}
+        <TouchableOpacity
+          className="flex-1 flex-row items-center gap-3 pl-3 pr-2 py-3"
+          onPress={() => openLog(item)}
+          activeOpacity={0.85}
+          disabled={syncing}
+          accessibilityLabel={`Log ${item.exerciseName}`}
         >
-          {/* The whole row opens the log screen */}
-          <TouchableOpacity
-            className="flex-1 flex-row items-center gap-3 pl-3 pr-2 py-3"
-            onPress={() => openLog(item)}
-            activeOpacity={0.85}
-            disabled={syncing}
-            accessibilityLabel={`Log ${item.exerciseName}`}
-          >
-            <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
-            <View className="flex-1 gap-1">
-              {isCurrent && <Text className="text-accent-text text-[9px] tracking-[3px]">NOW</Text>}
-              <View className="flex-row items-center gap-2">
-                <Text className="text-primary text-base font-bold tracking-tight flex-shrink" numberOfLines={1}>
-                  {item.exerciseName}
-                </Text>
-                {isRecord && (
-                  <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
-                    <Ionicons name="trophy" size={10} color={c.accentFg} />
-                    <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
-                  </View>
-                )}
-              </View>
-              {item.completed || logged > 0 ? (
-                <Text className={`text-xs font-mono ${item.completed ? 'text-accent-text' : 'text-primary'}`} numberOfLines={1}>
-                  {formatSets(setsOf(item), item.repUnit)}
-                </Text>
-              ) : (
-                <Text className="text-muted text-xs" numberOfLines={1}>
-                  {item.plannedSets && item.plannedReps
-                    ? `${item.plannedSets} × ${item.plannedReps} ${unit}${item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}`
-                    : 'No plan'}
-                  {previous.length > 0 ? ` · last ${formatSets(previous, item.repUnit)}` : ''}
-                </Text>
-              )}
-              {/* Sets logged so far against the plan */}
-              {!item.completed && planned > 0 && (
-                <View className="flex-row gap-1 mt-1">
-                  {Array.from({ length: Math.max(planned, logged) }, (_, i) => (
-                    <View key={i} className={`w-2 h-2 rounded-full ${i < logged ? 'bg-accent' : 'bg-elevated'}`} />
-                  ))}
+          <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
+          <View className="flex-1 gap-1">
+            {isCurrent && <Text className="text-accent-text text-[9px] tracking-[3px]">NOW</Text>}
+            <View className="flex-row items-center gap-2">
+              <Text className="text-primary text-base font-bold tracking-tight flex-shrink" numberOfLines={1}>
+                {item.exerciseName}
+              </Text>
+              {isRecord && (
+                <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
+                  <Ionicons name="trophy" size={10} color={c.accentFg} />
+                  <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
                 </View>
               )}
-              {syncing && <Text className="text-muted text-[10px] tracking-[2px]">SYNCING…</Text>}
             </View>
-          </TouchableOpacity>
+            {item.completed || logged > 0 ? (
+              <Text className={`text-xs font-mono ${item.completed ? 'text-accent-text' : 'text-primary'}`} numberOfLines={1}>
+                {formatSets(setsOf(item), item.repUnit)}
+              </Text>
+            ) : (
+              <Text className="text-muted text-xs" numberOfLines={1}>
+                {item.plannedSets && item.plannedReps
+                  ? `${item.plannedSets} × ${item.plannedReps} ${unit}${item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}`
+                  : 'No plan'}
+                {previous.length > 0 ? ` · last ${formatSets(previous, item.repUnit)}` : ''}
+              </Text>
+            )}
+            {/* Sets logged so far against the plan */}
+            {!item.completed && planned > 0 && (
+              <View className="flex-row gap-1 mt-1">
+                {Array.from({ length: Math.max(planned, logged) }, (_, i) => (
+                  <View key={i} className={`w-2 h-2 rounded-full ${i < logged ? 'bg-accent' : 'bg-elevated'}`} />
+                ))}
+              </View>
+            )}
+            {syncing && <Text className="text-muted text-[10px] tracking-[2px]">SYNCING…</Text>}
+          </View>
+        </TouchableOpacity>
 
-          {/* Tick off without opening it (records the plan when nothing is logged) */}
-          <TouchableOpacity
-            className="w-14 self-stretch justify-center items-center"
-            onPress={() => toggleExercise(item)}
-            disabled={syncing}
-            accessibilityLabel={item.completed ? `Mark ${item.exerciseName} as not done` : `Mark ${item.exerciseName} as done`}
-          >
-            <View className={`w-7 h-7 rounded-full justify-center items-center ${item.completed ? 'bg-accent' : 'border-2 border-elevated'}`}>
-              {item.completed && <Ionicons name="checkmark" size={16} color={c.accentFg} />}
-            </View>
-          </TouchableOpacity>
-        </View>
-      </SwipeableRow>
+        {editable && (
+          <ActionMenu
+            accessibilityLabel={`Options for ${item.exerciseName}`}
+            actions={[
+              { icon: 'swap-horizontal', label: 'Replace', onPress: () => openReplace(item) },
+              { icon: 'trash-outline', label: 'Remove', destructive: true, onPress: () => handleDelete(item) },
+            ]}
+          />
+        )}
+
+        {/* Tick off without opening it (records the plan when nothing is logged) */}
+        <TouchableOpacity
+          className="w-14 self-stretch justify-center items-center"
+          onPress={() => toggleExercise(item)}
+          disabled={syncing}
+          accessibilityLabel={item.completed ? `Mark ${item.exerciseName} as not done` : `Mark ${item.exerciseName} as done`}
+        >
+          <View className={`w-7 h-7 rounded-full justify-center items-center ${item.completed ? 'bg-accent' : 'border-2 border-elevated'}`}>
+            {item.completed && <Ionicons name="checkmark" size={16} color={c.accentFg} />}
+          </View>
+        </TouchableOpacity>
+      </View>
     );
   };
 

@@ -1,8 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import SwipeableRow from '@/components/SwipeableRow';
-import { useTheme } from '@/hooks/useTheme';
+import { ActionMenu } from '@/components/ActionMenu';
 import { confirm } from '@/utils/confirm';
 import { formatDaysAgo } from '@/utils/dates';
 import { Workout } from '@/types';
@@ -17,43 +15,24 @@ interface Props {
   isNext?: boolean;
 }
 
-/** A workout day of a split: opens its detail, swipe to edit or delete. */
+/** A workout day of a split: opens its detail, with a menu to edit or delete it. */
 export function WorkoutRow({ workout, index, splitId, onDelete, lastDoneAt, isNext }: Props) {
   const router = useRouter();
-  const c = useTheme();
 
   const handleDelete = () => {
     confirm('Delete Workout', `Delete "${workout.name}" and all its exercises?`, () => onDelete(workout.id), 'Delete');
   };
 
   return (
-    <SwipeableRow
-      rightActions={[
-        {
-          icon: 'pencil-outline',
-          color: c.accent,
-          backgroundColor: c.accentMuted,
-          label: 'EDIT',
-          onPress: () =>
-            router.push({ pathname: '/edit-workout' as any, params: { workoutId: workout.id.toString(), splitId, currentName: workout.name } }),
-        },
-        {
-          icon: 'trash-outline',
-          color: c.danger,
-          backgroundColor: c.dangerMuted,
-          label: 'DELETE',
-          onPress: handleDelete,
-        },
-      ]}
-    >
+    <View className="bg-surface rounded-md rim border-edge mb-2 flex-row items-center pr-3">
       <TouchableOpacity
-        className="bg-surface rounded-md rim border-edge px-5 py-5 flex-row items-center gap-3"
+        className="flex-1 pl-5 pr-2 py-5 flex-row items-center gap-3"
         onPress={() =>
           router.push({ pathname: '/workout-detail' as any, params: { workoutId: workout.id.toString(), workoutName: workout.name, splitId } })
         }
         activeOpacity={0.85}
       >
-        <Text className="text-dim text-[28px] font-mono-bold tracking-tighter min-w-[36px]">
+        <Text className="text-subtle text-[28px] font-mono-bold tracking-tighter min-w-[36px]">
           {String(index + 1).padStart(2, '0')}
         </Text>
         <View className="flex-1">
@@ -76,8 +55,19 @@ export function WorkoutRow({ workout, index, splitId, onDelete, lastDoneAt, isNe
             {lastDoneAt != null ? ` · ${formatDaysAgo(lastDoneAt)}` : ''}
           </Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color={c.subtle} />
       </TouchableOpacity>
-    </SwipeableRow>
+      <ActionMenu
+        accessibilityLabel={`Options for ${workout.name}`}
+        actions={[
+          {
+            icon: 'pencil-outline',
+            label: 'Edit',
+            onPress: () =>
+              router.push({ pathname: '/edit-workout' as any, params: { workoutId: workout.id.toString(), splitId, currentName: workout.name } }),
+          },
+          { icon: 'trash-outline', label: 'Delete', destructive: true, onPress: handleDelete },
+        ]}
+      />
+    </View>
   );
 }
