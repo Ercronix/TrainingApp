@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Pressable, View, Text, TouchableOpacity } from 'react-native';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,12 +29,12 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
   const c = useTheme();
   const [range, setRange] = useState<Range>('week');
   const [selected, setSelected] = useState<Muscle | null>(null);
-  const volume = useMemo(() => computeMuscleVolume(logs, library, WEEK_COUNT), [logs, library]);
-
+  // One pass over the trend's weeks; the bars and the average use the last WEEK_COUNT of them
   const trend = useMemo(() => computeMuscleVolume(logs, library, TREND_WEEKS).weeks, [logs, library]);
+  const toggle = (muscle: Muscle) => setSelected((s) => (s === muscle ? null : muscle));
 
-  const current = volume.weeks[volume.weeks.length - 1];
-  const finished = volume.weeks.slice(0, -1);
+  const current = trend[trend.length - 1];
+  const finished = trend.slice(-WEEK_COUNT, -1);
   const setsFor = (muscle: Muscle) =>
     range === 'week'
       ? current.sets[muscle] ?? 0
@@ -67,11 +67,17 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
   const selectedTrend = selected ? trend.map((w) => w.sets[selected] ?? 0) : [];
   // The trend's axis ends at the top of the target, or above it for a muscle trained beyond that
   const trendMax = Math.max(WEEKLY_SET_TARGET.max, Math.ceil(Math.max(0, ...selectedTrend) / 10) * 10);
+  // The running week isn't over, so below the target it says what is left rather than judging it
   const selectedStatus = selectedSets === 0
-    ? 'Not trained'
+    ? range === 'week' ? 'None yet this week' : 'Not trained'
     : selectedSets < WEEKLY_SET_TARGET.min
-      ? `Under the ${WEEKLY_SET_TARGET.min}–${WEEKLY_SET_TARGET.max} target`
+      ? range === 'week'
+        ? `${formatSets(Math.round((WEEKLY_SET_TARGET.min - selectedSets) * 10) / 10)} more to reach ${WEEKLY_SET_TARGET.min}`
+        : `Under the ${WEEKLY_SET_TARGET.min}–${WEEKLY_SET_TARGET.max} target`
       : selectedSets <= WEEKLY_SET_TARGET.max ? 'In the target range' : `Over ${WEEKLY_SET_TARGET.max} sets`;
+  // The weeks behind the shown number: the running one, or the finished ones the average covers
+  const highlighted = (i: number) =>
+    range === 'week' ? i === trend.length - 1 : i >= trend.length - WEEK_COUNT && i < trend.length - 1;
 
   return (
     <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5">
@@ -105,7 +111,7 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
       <BodyMap
         fills={fills}
         height={190}
-        onPressMuscle={(m) => setSelected((current) => (current === m ? null : m))}
+        onPressMuscle={toggle}
         accessibilityLabel={`Weekly sets per muscle: ${rows.filter((r) => r.sets > 0).map((r) => `${MUSCLE_LABELS[r.muscle]} ${formatSets(Math.round(r.sets * 10) / 10)}`).join(', ') || 'none yet'}`}
       />
       {/* The selected muscle's sets and 8-week trend, or the legend. A fixed height, so selecting doesn't move the rows below. */}
@@ -132,22 +138,36 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
                   ))}
                 </View>
                 <View className="flex-1 border-l border-b border-subtle" style={{ height: TREND_HEIGHT }}>
-                  <View className="absolute left-0 right-0 border-t border-elevated" style={{ top: 0 }} />
-                  <View className="absolute left-0 right-0 border-t border-elevated" style={{ top: TREND_HEIGHT / 2 }} />
+                  {/* The target range, like the band behind the bars below */}
+                  <View
+                    className="absolute left-0 right-0 bg-accent"
+                    style={{
+                      opacity: 0.14,
+                      top: (1 - WEEKLY_SET_TARGET.max / trendMax) * TREND_HEIGHT,
+                      height: ((WEEKLY_SET_TARGET.max - WEEKLY_SET_TARGET.min) / trendMax) * TREND_HEIGHT,
+                    }}
+                  />
                   <View className="flex-1 flex-row items-end gap-[3px] px-[3px]">
-                    {selectedTrend.map((sets, i) => (
-                      <View
-                        key={trend[i].start}
-                        className={`flex-1 rounded-t-[2px] ${i === selectedTrend.length - 1 ? 'bg-accent' : 'bg-accent-muted'}`}
-                        style={{ height: sets > 0 ? Math.max(2, (sets / trendMax) * (TREND_HEIGHT - 1)) : 0 }}
-                      />
-                    ))}
+                    {selectedTrend.map((sets, i) => {
+                      // The running week is outlined: it is still filling up
+                      const running = i === selectedTrend.length - 1;
+                      const look = running
+                        ? `border border-dashed ${highlighted(i) ? 'border-accent' : 'border-subtle'}`
+                        : highlighted(i) ? 'bg-accent' : 'bg-accent-muted';
+                      return (
+                        <View
+                          key={trend[i].start}
+                          className={`flex-1 rounded-t-[2px] ${look}`}
+                          style={{ height: sets > 0 ? Math.max(2, (sets / trendMax) * (TREND_HEIGHT - 1)) : 0 }}
+                        />
+                      );
+                    })}
                   </View>
                 </View>
               </View>
               <View className="flex-row justify-between ml-5 mt-0.5">
                 <Text className="text-muted text-[8px]">{TREND_WEEKS - 1} wk ago</Text>
-                <Text className="text-muted text-[8px]">this wk</Text>
+                <Text className="text-muted text-[8px]">this wk so far</Text>
               </View>
             </View>
           </View>
@@ -165,7 +185,7 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
                 </View>
               ))}
             </View>
-            <Text className="text-muted text-[10px]">Tap a muscle for its sets and trend</Text>
+            <Text className="text-muted text-[10px]">Tap a muscle for its sets and 8-week trend</Text>
           </View>
         )}
       </View>
@@ -173,7 +193,14 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
       {rows.map(({ muscle, sets }) => {
         const tone = sets < WEEKLY_SET_TARGET.min ? 'bg-subtle' : sets <= WEEKLY_SET_TARGET.max ? 'bg-accent' : 'bg-info';
         return (
-          <View key={muscle} className={`flex-row items-center gap-3 py-1.5 px-1.5 -mx-1.5 rounded-sm ${selected === muscle ? 'bg-elevated' : ''}`}>
+          <Pressable
+            key={muscle}
+            onPress={() => toggle(muscle)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: selected === muscle }}
+            accessibilityLabel={`${MUSCLE_LABELS[muscle]}, ${formatSets(Math.round(sets * 10) / 10)} sets`}
+            className={`flex-row items-center gap-3 py-1.5 px-1.5 -mx-1.5 rounded-sm ${selected === muscle ? 'bg-elevated' : ''}`}
+          >
             <Text className="text-primary text-xs w-24" numberOfLines={1}>{MUSCLE_LABELS[muscle]}</Text>
             <View className="flex-1 h-2.5 bg-elevated rounded-full overflow-hidden">
               <View
@@ -185,7 +212,7 @@ export function MuscleVolumeCard({ logs, library }: { logs: TrainingLog[]; libra
             <Text className={`text-xs font-mono-bold w-9 text-right ${sets > 0 ? 'text-primary' : 'text-subtle'}`}>
               {formatSets(Math.round(sets * 10) / 10)}
             </Text>
-          </View>
+          </Pressable>
         );
       })}
 

@@ -14,7 +14,7 @@ import { BodyMap, targetFills } from '@/components/BodyMap';
 import { useLibrary } from '@/hooks/useLibrary';
 import { combineMuscles, muscleNames } from '@/utils/muscles';
 import { EASE_OUT, spring } from '@/constants/motion';
-import { formatSets, previousSetsOf, setsOf, setVolume } from '@/utils/sets';
+import { formatSets, previousSetsOf, setsOf, summarizeSets, workingSets } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
 import { formatNumber, formatSigned, totalsOf } from '@/utils/stats';
 import { ExerciseLog } from '@/types';
@@ -98,31 +98,32 @@ function Stat({ value, label }: { value: string; label: string }) {
   );
 }
 
-/** Volume change against the exercise's last session, for weighted exercises trained before. */
-function volumeDelta(log: ExerciseLog): { kg: number; share: number } | null {
-  if (log.repUnit === 'seconds') return null;
-  const previous = setVolume(previousSetsOf(log));
-  const current = setVolume(setsOf(log));
-  return previous > 0 && current > 0 ? { kg: current - previous, share: (current - previous) / previous } : null;
+interface TopSetDelta {
+  value: number;
+  unit: 'kg' | 'reps' | 's';
 }
 
-// A change of this share or more fills the delta bar's half
-const DELTA_BAR_FULL = 0.2;
-
-/** A small bar growing from a center line: right for more volume than last time, left for less. */
-function DeltaBar({ share }: { share: number }) {
-  const width = `${Math.min(1, Math.abs(share) / DELTA_BAR_FULL) * 50}%` as const;
-  return (
-    <View className="w-14 h-1.5 mt-1" accessibilityLabel={`${formatSigned(Math.round(share * 100), 0)} percent`}>
-      <View className="absolute inset-0 rounded-full bg-elevated" />
-      <View
-        className={`absolute h-full rounded-full ${share > 0 ? 'bg-accent' : 'bg-muted'}`}
-        style={share > 0 ? { left: '50%', width } : { right: '50%', width }}
-      />
-      <View className="absolute w-px bg-primary" style={{ left: '50%', top: -2, bottom: -2 }} />
-    </View>
-  );
+/**
+ * The top working set against the exercise's last session: heavier or lighter first, and at the
+ * same weight more or fewer reps (or seconds). Unlike total volume it isn't swayed by doing one set
+ * more or less, and it works for bodyweight exercises too.
+ */
+function topSetDelta(log: ExerciseLog): TopSetDelta | null {
+  const previous = previousSetsOf(log);
+  const current = setsOf(log);
+  if (workingSets(previous).length === 0 || workingSets(current).length === 0) return null;
+  const before = summarizeSets(previous);
+  const now = summarizeSets(current);
+  const kg = Math.round((Number(now.weightUsed ?? 0) - Number(before.weightUsed ?? 0)) * 100) / 100;
+  if (kg !== 0) return { value: kg, unit: 'kg' };
+  const reps = now.repsCompleted - before.repsCompleted;
+  return reps !== 0 ? { value: reps, unit: log.repUnit === 'seconds' ? 's' : 'reps' } : null;
 }
+
+const describeDelta = ({ value, unit }: TopSetDelta) =>
+  unit === 'kg'
+    ? `${formatSigned(value, Number.isInteger(value) ? 0 : 1)} kg`
+    : unit === 's' ? `${formatSigned(value, 0)} s` : `${formatSigned(value, 0)} ${Math.abs(value) === 1 ? 'rep' : 'reps'}`;
 
 /** Shown right after finishing a session: what was done, and the records it set. */
 export default function SessionSummaryScreen() {
@@ -247,7 +248,7 @@ export default function SessionSummaryScreen() {
           <Text className="text-muted text-[9px] tracking-[3px] mt-2 mb-3">EXERCISES</Text>
         </Appear>
         {exercises.map((e, i) => {
-          const delta = e.completed ? volumeDelta(e) : null;
+          const delta = e.completed ? topSetDelta(e) : null;
           return (
             <Appear key={e.id} order={4 + i} reduceMotion={reduceMotion}>
               <View className={`flex-row items-center gap-3 mb-2 rounded-md px-4 py-3 rim ${e.completed ? 'bg-surface-done border-edge-done' : 'bg-surface border-edge'}`}>
@@ -265,15 +266,16 @@ export default function SessionSummaryScreen() {
                     {e.completed ? formatSets(setsOf(e), e.repUnit) || 'Done' : 'Skipped'}
                   </Text>
                 </View>
-                {delta != null && delta.kg !== 0 && (
-                  <View className="items-end">
-                    <Text className={`text-xs font-mono-bold ${delta.kg > 0 ? 'text-accent-text' : 'text-muted'}`}>
-                      {formatSigned(Math.round(delta.kg), 0)} kg
+                {delta != null && (
+                  <View
+                    className="items-end"
+                    accessible
+                    accessibilityLabel={`Top set ${describeDelta(delta)} against last time`}
+                  >
+                    <Text className={`text-xs font-mono-bold ${delta.value > 0 ? 'text-accent-text' : 'text-muted'}`}>
+                      {describeDelta(delta)}
                     </Text>
-                    <Text className="text-muted text-[8px] tracking-[1.5px]">
-                      {formatSigned(Math.round(delta.share * 100), 0)}% VS LAST
-                    </Text>
-                    <DeltaBar share={delta.share} />
+                    <Text className="text-muted text-[8px] tracking-[1.5px]">TOP SET</Text>
                   </View>
                 )}
               </View>
