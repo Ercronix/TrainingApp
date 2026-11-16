@@ -594,15 +594,17 @@ export function formatNumber(value: number, decimals = 0): string {
 }
 
 export function formatSigned(value: number, decimals = 1, suffix = ''): string {
-  const fixed = value.toFixed(decimals);
-  const sign = value > 0 && Number(fixed) !== 0 ? '+' : '';
+  let fixed = value.toFixed(decimals);
+  if (Number(fixed) === 0) fixed = (0).toFixed(decimals); // no "-0.0"
+  const sign = Number(fixed) > 0 ? '+' : '';
   return `${sign}${fixed}${suffix}`;
 }
 
 export function formatDuration(minutes: number): string {
-  if (minutes < 60) return `${Math.round(minutes)}m`;
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
+  const total = Math.round(minutes); // round first so 119.6 is "2h", not "1h 60m"
+  if (total < 60) return `${total}m`;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
