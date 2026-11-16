@@ -2,6 +2,8 @@ package de.mornhinweg.trainingbackend.controller;
 
 import de.mornhinweg.trainingbackend.dto.training.*;
 import de.mornhinweg.trainingbackend.service.TrainingLogService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Training logs", description = "Workout sessions: start one from a workout, log sets, complete it, and the history")
 @RestController
 @RequestMapping("/api/training-logs")
 @RequiredArgsConstructor
@@ -18,6 +21,7 @@ public class TrainingLogController {
 
   private final TrainingLogService trainingLogService;
 
+  @Operation(summary = "Start a session from a workout")
   @PostMapping("/start")
   public ResponseEntity<TrainingLogResponse> startTraining(
       @Valid @RequestBody StartTrainingRequest request,
@@ -34,6 +38,7 @@ public class TrainingLogController {
     return ResponseEntity.ok(trainingLogService.updateExerciseLog(exerciseLogId, request, authentication));
   }
 
+  @Operation(summary = "Swap a running session's exercise for another, for this session only")
   @PutMapping("/exercise-logs/{exerciseLogId}/replace")
   public ResponseEntity<ExerciseLogResponse> replaceExerciseLog(
       @PathVariable Long exerciseLogId,
@@ -80,6 +85,7 @@ public class TrainingLogController {
     return ResponseEntity.ok(trainingLogService.getAllTrainings(authentication));
   }
 
+  @Operation(summary = "Sessions that are not completed yet, newest first")
   @GetMapping("/active")
   public ResponseEntity<List<TrainingLogResponse>> getActiveTrainings(Authentication authentication) {
     return ResponseEntity.ok(trainingLogService.getActiveTrainings(authentication));

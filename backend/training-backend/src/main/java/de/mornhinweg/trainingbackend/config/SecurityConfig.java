@@ -67,6 +67,8 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
             // Sent by the ntfy app, which has no login; the secret token in the path stands in for it
             .requestMatchers(HttpMethod.POST, "/api/stretch/reminder/done/*").permitAll()
+            // API docs: the OpenAPI spec and Swagger UI (see springdoc.* in application.properties)
+            .requestMatchers(HttpMethod.GET, "/api/docs", "/api/docs/**", "/api/swagger-ui/**").permitAll()
             .anyRequest().authenticated()
         )
         // Missing/expired token -> 401 (default would be 403), so clients know to refresh
