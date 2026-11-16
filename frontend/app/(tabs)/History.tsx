@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useHistory } from '@/hooks/useHistory';
 import { isInProgress } from '@/hooks/useActiveTraining';
 import { confirm } from '@/utils/confirm';
-import SwipeableRow from '@/components/SwipeableRow';
+import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { TrainingLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
@@ -88,19 +88,9 @@ export default function HistoryScreen() {
     const completionRate = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
 
     return (
-      <SwipeableRow
-        rightActions={[
-          {
-            icon: 'trash-outline',
-            color: c.danger,
-            backgroundColor: c.dangerMuted,
-            label: 'DELETE',
-            onPress: () => handleDelete(item.id, item.workoutName || item.splitName),
-          },
-        ]}
-      >
+      <ActionCard className="bg-surface rounded-md rim border-edge mb-2">
         <TouchableOpacity
-          className="bg-surface rounded-md rim border-edge p-5"
+          className="p-5"
           onPress={() =>
             // Sessions still in progress reopen in the training screen so they can be continued
             router.push({
@@ -123,7 +113,17 @@ export default function HistoryScreen() {
                 {item.splitName} · {formatDate(item.startedAt)}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={c.subtle} />
+            <ActionMenu
+              accessibilityLabel={`Options for ${item.workoutName || item.splitName}`}
+              actions={[
+                {
+                  icon: 'trash-outline',
+                  label: 'Delete',
+                  destructive: true,
+                  onPress: () => handleDelete(item.id, item.workoutName || item.splitName),
+                },
+              ]}
+            />
           </View>
 
           {/* Stats row */}
@@ -169,7 +169,7 @@ export default function HistoryScreen() {
             <Text className="text-subtle text-xs italic mt-2">"{item.notes}"</Text>
           )}
         </TouchableOpacity>
-      </SwipeableRow>
+      </ActionCard>
     );
   };
 

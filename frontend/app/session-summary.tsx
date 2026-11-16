@@ -76,12 +76,22 @@ function Medal({ record, reduceMotion }: { record: boolean; reduceMotion: boolea
         );
       })}
       <Animated.View style={{ transform: [{ scale }] }}>
-        {/* Raised on its lip, or ringed by a soft halo of the accent in a glass theme */}
-        <View className="rounded-full" style={c.glass ? { padding: 6, margin: -6, backgroundColor: `${c.accent}40` } : undefined}>
-          <View className={`w-20 h-20 rounded-full bg-accent justify-center items-center ${c.glass ? '' : 'border-b-[6px] border-accent-lip'}`}>
-            <Ionicons name={record ? 'trophy' : 'checkmark-done'} size={34} color={c.accentFg} />
+        {/* Raised on a lip (a second circle showing below it, as a bottom border warps a round view),
+            or ringed by a soft halo of the accent in a glass theme */}
+        {c.glass ? (
+          <View className="rounded-full" style={{ padding: 6, margin: -6, backgroundColor: `${c.accent}40` }}>
+            <View className="w-20 h-20 rounded-full bg-accent justify-center items-center">
+              <Ionicons name={record ? 'trophy' : 'checkmark-done'} size={34} color={c.accentFg} />
+            </View>
           </View>
-        </View>
+        ) : (
+          <View className="w-20 h-20 mb-1.5">
+            <View className="absolute left-0 right-0 top-1.5 h-20 rounded-full bg-accent-lip" />
+            <View className="w-20 h-20 rounded-full bg-accent justify-center items-center">
+              <Ionicons name={record ? 'trophy' : 'checkmark-done'} size={34} color={c.accentFg} />
+            </View>
+          </View>
+        )}
       </Animated.View>
     </View>
   );

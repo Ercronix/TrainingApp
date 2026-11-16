@@ -3,7 +3,7 @@ import { TrainingSplit } from '@/types';
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSplits } from '@/hooks/useSplits';
-import SwipeableRow from '@/components/SwipeableRow';
+import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { useTheme } from '@/hooks/useTheme';
 import { confirm } from '@/utils/confirm';
 import { Tactile } from '@/components/Tactile';
@@ -24,34 +24,12 @@ export default function SplitsScreen() {
   };
 
   const renderSplitItem = ({ item, index }: { item: TrainingSplit; index: number }) => (
-    <SwipeableRow
-      rightActions={[
-        {
-          icon: 'trash-outline',
-          color: c.danger,
-          backgroundColor: c.dangerMuted,
-          label: 'DELETE',
-          onPress: () => handleDelete(item.id, item.name),
-        },
-      ]}
-      leftActions={
-        !item.isActive
-          ? [
-              {
-                icon: 'flash-outline',
-                color: c.accent,
-                backgroundColor: c.accentMuted,
-                label: 'ACTIVATE',
-                onPress: () => handleActivate(item.id, item.name),
-              },
-            ]
-          : undefined
-      }
+    <ActionCard
+      className={`bg-surface rounded-md rim mb-2 ${item.isActive ? 'border-accent' : 'border-edge'}`}
+      contentClassName="flex-row items-center pr-3"
     >
       <TouchableOpacity
-        className={`bg-surface rounded-md rim px-5 py-5 flex-row items-center ${
-          item.isActive ? 'border-accent' : 'border-edge'
-        }`}
+        className="flex-1 pl-5 pr-2 py-5 flex-row items-center"
         onPress={() =>
           router.push({ pathname: '/workouts', params: { splitId: item.id.toString(), splitName: item.name, currentBlock: item.currentBlock?.toString() || '1' } })
         }
@@ -75,17 +53,22 @@ export default function SplitsScreen() {
           </View>
         </View>
 
-        {/* Actions */}
-        <View className="flex-row items-center gap-3">
-          {item.isActive && (
-            <View className="bg-accent px-2 py-1 rounded-sm">
-              <Text className="text-accent-fg text-[9px] font-bold tracking-widest">ACTIVE</Text>
-            </View>
-          )}
-          <Ionicons name="chevron-forward" size={18} color={c.subtle} />
-        </View>
+        {item.isActive && (
+          <View className="bg-accent px-2 py-1 rounded-sm">
+            <Text className="text-accent-fg text-[9px] font-bold tracking-widest">ACTIVE</Text>
+          </View>
+        )}
       </TouchableOpacity>
-    </SwipeableRow>
+      <ActionMenu
+        accessibilityLabel={`Options for ${item.name}`}
+        actions={[
+          ...(item.isActive
+            ? []
+            : [{ icon: 'flash-outline' as const, label: 'Activate', onPress: () => handleActivate(item.id, item.name) }]),
+          { icon: 'trash-outline', label: 'Delete', destructive: true, onPress: () => handleDelete(item.id, item.name) },
+        ]}
+      />
+    </ActionCard>
   );
 
   if (isLoading) {

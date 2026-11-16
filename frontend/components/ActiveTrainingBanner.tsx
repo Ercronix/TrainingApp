@@ -16,6 +16,7 @@ import { EASE_STANDARD } from '@/constants/motion';
 const HIDDEN_ROUTES = new Set([
   '/training', '/add-exercise', '/log-exercise', '/create-split', '/create-workout',
   '/create-exercise', '/edit-split', '/edit-workout', '/edit-exercise',
+  '/stretch-session', '/stretch-item', '/edit-stretch-routine', '/stretch-reminder',
 ]);
 
 function formatElapsed(seconds: number | null): string {

@@ -9,7 +9,6 @@ import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 import { PlateCalculator } from '@/components/PlateCalculator';
-import SwipeableRow from '@/components/SwipeableRow';
 import { RestCountdown } from '@/components/RestTimer';
 import { useRestTimerStore } from '@/store/restTimerStore';
 import { SetDraft, SetRow, useSetDraftStore } from '@/store/setDraftStore';
@@ -425,7 +424,7 @@ export default function LogExerciseModal() {
     return p.weight != null && Number(p.weight) > 0 ? `${formatKg(Number(p.weight))}×${reps}` : reps;
   };
 
-  // A set not being edited: its values at a glance, tap to edit, check to log, swipe to delete
+  // A set not being edited: its values at a glance, tap to edit (and delete), check to log
   const compactRow = (row: SetRow, i: number) => (
     <View
       className={`flex-row items-center h-16 rounded-md pl-3 rim ${row.done ? 'bg-surface-done' : 'bg-surface'} ${invalid(row) ? 'border-danger' : row.done ? 'border-edge-done' : 'border-edge'}`}
@@ -666,19 +665,6 @@ export default function LogExerciseModal() {
         {rows.map((row, i) =>
           i === focused ? (
             <View key={i}>{expandedRow(row, i)}</View>
-          ) : rows.length > 1 ? (
-            <SwipeableRow
-              key={i}
-              rightActions={[{
-                icon: 'trash-outline',
-                color: c.danger,
-                backgroundColor: c.dangerMuted,
-                label: 'DELETE',
-                onPress: () => removeSet(i),
-              }]}
-            >
-              {compactRow(row, i)}
-            </SwipeableRow>
           ) : (
             <View key={i} className="mb-2">{compactRow(row, i)}</View>
           ),
