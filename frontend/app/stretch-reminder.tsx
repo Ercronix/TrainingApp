@@ -70,7 +70,7 @@ export default function StretchReminderModal() {
     Linking.openURL(ntfyAppUrl(topicUrl)).catch(() => Linking.openURL(topicUrl));
   };
 
-  const fieldClass = 'bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary font-bold tracking-tight';
+  const fieldClass = 'bg-surface rim-sm border-edge rounded px-4 py-4 text-primary font-bold tracking-tight';
   const host = reminder?.topicUrl?.replace(/^https?:\/\//, '').split('/')[0];
 
   return (
@@ -95,7 +95,7 @@ export default function StretchReminderModal() {
         {isLoading || !reminder ? (
           <Text className="text-accent-text text-sm font-bold tracking-[4px]">LOADING...</Text>
         ) : !reminder.available ? (
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4">
+          <View className="bg-surface rim border-edge rounded-md px-5 py-4">
             <Text className="text-muted text-[10px] tracking-[2px] mb-1">NOT SET UP</Text>
             <Text className="text-primary text-sm">
               This server has no ntfy server configured. Set NTFY_BASE_URL on the backend to turn reminders on.
@@ -103,7 +103,7 @@ export default function StretchReminderModal() {
           </View>
         ) : (
           <>
-            <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4 mb-5 flex-row items-center justify-between">
+            <View className="bg-surface rim border-edge rounded-md px-5 py-4 mb-5 flex-row items-center justify-between">
               <View>
                 <Text className="text-muted text-[10px] tracking-[2px] mb-1">REMIND ME</Text>
                 <Text className="text-primary text-sm font-bold">
@@ -152,7 +152,7 @@ export default function StretchReminderModal() {
               })}
             </View>
 
-            <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4 mb-6 gap-3">
+            <View className="bg-surface rim border-edge rounded-md px-5 py-4 mb-6 gap-3">
               <Text className="text-muted text-[10px] tracking-[2px]">SUBSCRIBE IN NTFY</Text>
               <Text className="text-primary text-sm">
                 In the ntfy app, subscribe to this topic on {host}. Keep it to yourself: anyone with the topic gets your reminders.

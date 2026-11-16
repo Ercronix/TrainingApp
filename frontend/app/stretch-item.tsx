@@ -84,7 +84,7 @@ export default function StretchItemModal() {
     });
   };
 
-  const fieldClass = 'bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary font-bold tracking-tight';
+  const fieldClass = 'bg-surface rim-sm border-edge rounded px-4 py-4 text-primary font-bold tracking-tight';
 
   return (
     <View className="flex-1 bg-base">
@@ -104,7 +104,7 @@ export default function StretchItemModal() {
         <Text className="text-subtle text-sm mb-6">Stretches stay out of your training stats.</Text>
 
         {added.length > 0 && (
-          <View className="bg-surface-done border-2 border-edge-done border-b-[6px] rounded-md px-4 py-3.5 mb-6 gap-2.5">
+          <View className="bg-surface-done rim border-edge-done rounded-md px-4 py-3.5 mb-6 gap-2.5">
             <Text className="text-accent-text text-[10px] tracking-[3px]">{added.length} ADDED</Text>
             <View className="flex-row flex-wrap gap-1.5">
               {added.map((label, i) => (
@@ -190,7 +190,7 @@ export default function StretchItemModal() {
           })}
         </View>
 
-        <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4 mb-5 flex-row items-center justify-between">
+        <View className="bg-surface rim border-edge rounded-md px-5 py-4 mb-5 flex-row items-center justify-between">
           <View>
             <Text className="text-muted text-[10px] tracking-[2px] mb-1">EACH SIDE</Text>
             <Text className="text-primary text-sm font-bold">Left, then right</Text>
@@ -207,7 +207,7 @@ export default function StretchItemModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">NOTE</Text>
         <TextInput
-          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-sm mb-6"
+          className="bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-sm mb-6"
           value={note}
           onChangeText={setNote}
           placeholder="Squeeze the glute, keep hips square"

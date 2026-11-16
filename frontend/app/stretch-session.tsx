@@ -124,7 +124,7 @@ export default function StretchSessionScreen() {
           <Text className="text-primary text-[40px] font-bold tracking-tighter leading-[44px] mb-6">
             STRETCHED{'\n'}FOR TODAY
           </Text>
-          <View className="bg-surface-done border-2 border-edge-done border-b-[6px] rounded-md flex-row">
+          <View className="bg-surface-done rim border-edge-done rounded-md flex-row">
             <View className="flex-1 px-5 py-4">
               <Text className="text-accent-text text-[28px] font-mono-bold">{streak}</Text>
               <Text className="text-muted text-[9px] tracking-[3px]">DAY STREAK</Text>
@@ -258,7 +258,7 @@ export default function StretchSessionScreen() {
         </View>
 
         <View className="flex-1" />
-        <View className="self-stretch bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4 flex-row items-center gap-3">
+        <View className="self-stretch bg-surface rim border-edge rounded-md px-5 py-4 flex-row items-center gap-3">
           <Text className="text-muted text-[10px] tracking-[4px]">UP NEXT</Text>
           <Text className="flex-1 text-primary text-[15px] font-bold text-right" numberOfLines={1}>
             {next ? `${next.item.name}${next.side === 'right' ? ', right' : ''}` : 'Finish'}

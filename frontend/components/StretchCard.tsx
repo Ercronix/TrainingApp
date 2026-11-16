@@ -24,7 +24,7 @@ export function StretchCard() {
 
   if (doneToday) {
     return (
-      <View className="bg-surface-done border-2 border-edge-done border-b-[6px] rounded-md p-5 mb-6 flex-row items-center gap-4">
+      <View className="bg-surface-done rim border-edge-done rounded-md p-5 mb-6 flex-row items-center gap-4">
         <View className="w-11 h-11 rounded-full bg-accent items-center justify-center">
           <Ionicons name="checkmark" size={20} color={c.accentFg} />
         </View>
@@ -48,7 +48,7 @@ export function StretchCard() {
 
   const hasItems = items.length > 0;
   return (
-    <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-6 gap-4">
+    <View className="bg-surface rim border-edge rounded-md p-5 mb-6 gap-4">
       <TouchableOpacity
         className="flex-row justify-between items-start gap-3"
         onPress={() => router.push('/stretch' as any)}
