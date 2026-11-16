@@ -51,6 +51,7 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 - `backend/docker-compose.yml`: local PostgreSQL container setup.
 - `docker-compose.yml` (repo root): production deployment (PostgreSQL, backend, Expo web build behind Nginx).
 - JWT-protected API routes (`/api/**`, except `/api/auth/**`).
+- Brute-force protection: login is rate limited per client IP and per username, registration and token refresh per IP (429 with `Retry-After`; limits under `auth.rate-limit.*` in `application.properties`). Behind Nginx the client IP is taken from `X-Forwarded-For` of trusted proxies only (`AUTH_RATE_LIMIT_TRUSTED_PROXIES`, see `.env.example`).
 - Flyway migrations in `backend/training-backend/src/main/resources/db/migration` manage the schema.
 
 ## Run Locally

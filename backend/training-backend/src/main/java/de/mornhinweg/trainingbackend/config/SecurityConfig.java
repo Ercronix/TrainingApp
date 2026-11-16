@@ -1,5 +1,6 @@
 package de.mornhinweg.trainingbackend.config;
 
+import de.mornhinweg.trainingbackend.security.AuthRateLimitFilter;
 import de.mornhinweg.trainingbackend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ import java.util.List;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final AuthRateLimitFilter authRateLimitFilter;
   private final UserDetailsService userDetailsService;
 
   @Value("${cors.allowed.origins}")
@@ -75,6 +77,8 @@ public class SecurityConfig {
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
         .authenticationProvider(authenticationProvider())
+        // Rate limits on the public auth endpoints, ahead of the JWT filter (same slot, added first)
+        .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();

@@ -12,6 +12,7 @@ import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.repository.TrainingSplitRepository;
 import de.mornhinweg.trainingbackend.repository.UserRepository;
+import de.mornhinweg.trainingbackend.security.AuthRateLimits;
 import de.mornhinweg.trainingbackend.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,6 +33,7 @@ public class AuthService {
   private final JwtUtil jwtUtil;
   private final AuthenticationManager authenticationManager;
   private final RefreshTokenService refreshTokenService;
+  private final AuthRateLimits authRateLimits;
 
   public AuthResponse register(RegisterRequest request) {
     if (userRepository.existsByUsername(request.getUsername())) {
@@ -53,6 +55,8 @@ public class AuthService {
   }
 
   public AuthResponse login(LoginRequest request) {
+    // Counted before checking the password, so a locked-out username gets a 429 either way
+    authRateLimits.acquireLogin(request.getUsername());
     Authentication authentication = authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(
             request.getUsername(),
@@ -63,6 +67,7 @@ public class AuthService {
     User user = userRepository.findByUsername(authentication.getName())
         .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+    authRateLimits.loginSucceeded(request.getUsername());
     return issueTokens(user);
   }
 
