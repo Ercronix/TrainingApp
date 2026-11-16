@@ -2,10 +2,12 @@ package de.mornhinweg.trainingbackend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.TimeZone;
 
 @SpringBootApplication
+@EnableScheduling
 public class TrainingBackendApplication {
 
   // LocalDateTime.now() and the stored timestamps are UTC whatever the host's zone, and are sent

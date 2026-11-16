@@ -256,3 +256,50 @@ export interface DashboardStats {
 }
 
 
+
+// A stretch of the daily stretch routine, kept apart from the training data
+export type StretchKind = 'hold' | 'reps';
+
+export interface StretchItem {
+  id: number;
+  name: string;
+  // 'hold': amount is seconds; 'reps': amount is repetitions
+  kind: StretchKind;
+  amount: number;
+  // Done once on each side, left then right
+  perSide: boolean;
+  note: string | null;
+  orderIndex: number;
+}
+
+export interface StretchRoutine {
+  id: number;
+  name: string;
+  items: StretchItem[];
+}
+
+// On update, missing fields stay unchanged and an empty note clears it
+export interface StretchItemRequest {
+  name?: string;
+  kind?: StretchKind;
+  amount?: number;
+  perSide?: boolean;
+  note?: string;
+}
+
+/** The daily ntfy push, skipped on days already stretched. */
+export interface StretchReminder {
+  enabled: boolean;
+  time: string; // HH:mm in timeZone
+  timeZone: string;
+  available: boolean; // false when the server has no ntfy server set up
+  topic: string;
+  topicUrl: string | null;
+  doneButton: boolean;
+}
+
+export interface StretchReminderRequest {
+  enabled: boolean;
+  time: string;
+  timeZone: string;
+}
