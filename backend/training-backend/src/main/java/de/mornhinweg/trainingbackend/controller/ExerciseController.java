@@ -2,6 +2,7 @@ package de.mornhinweg.trainingbackend.controller;
 
 import de.mornhinweg.trainingbackend.dto.exercise.*;
 import de.mornhinweg.trainingbackend.service.ExerciseService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Workout exercises", description = "A workout's planned exercises (sets, reps, weight) in order")
 @RestController
 @RequestMapping("/api/workouts/{workoutId}/exercises")
 @RequiredArgsConstructor
