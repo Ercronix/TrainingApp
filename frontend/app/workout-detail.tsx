@@ -7,7 +7,7 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-nativ
 import { useExercises } from '@/hooks/useExercises';
 import { useStartTraining } from '@/hooks/useStartTraining';
 import { confirm } from '@/utils/confirm';
-import SwipeableRow from '@/components/SwipeableRow';
+import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { Exercise } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
@@ -40,37 +40,8 @@ export default function WorkoutDetailScreen() {
 
   const renderExerciseItem = ({ item, drag, isActive }: RenderItemParams<Exercise>) => (
     <ScaleDecorator>
-      <SwipeableRow
-        enabled={!reorderMode}
-        rightActions={[
-          {
-            icon: 'pencil-outline',
-            color: c.accent,
-            backgroundColor: c.accentMuted,
-            label: 'EDIT',
-            onPress: () =>
-              router.push({
-                pathname: '/edit-exercise' as any,
-                params: {
-                  workoutId, exerciseId: item.id.toString(),
-                  currentName: item.name, currentSets: item.sets?.toString() || '',
-                  currentReps: item.reps?.toString() || '', currentWeight: item.plannedWeight?.toString() || '',
-                  currentRepUnit: item.repUnit || 'reps',
-                },
-              }),
-          },
-          {
-            icon: 'trash-outline',
-            color: c.danger,
-            backgroundColor: c.dangerMuted,
-            label: 'DELETE',
-            onPress: () => handleDelete(item.id, item.name),
-          },
-        ]}
-      >
+      <ActionCard className={`rounded-md rim mb-2 ${isActive ? 'bg-elevated border-accent' : 'bg-surface border-edge'}`}>
         <TouchableOpacity
-          // Rows only get the swipeable's gap while it is enabled
-          className={`rounded-md overflow-hidden border-2 border-b-[6px] ${reorderMode ? 'mb-2' : ''} ${isActive ? 'bg-elevated border-accent' : 'bg-surface border-edge'}`}
           onPress={() => {
             if (reorderMode) return;
             router.push({
@@ -89,7 +60,7 @@ export default function WorkoutDetailScreen() {
           disabled={isActive}
           activeOpacity={0.85}
         >
-          <View className="flex-row items-center pl-3 pr-5 py-3 gap-3">
+          <View className="flex-row items-center pl-3 pr-3 py-3 gap-3">
             <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
             <View className="flex-1">
               <Text className="text-primary text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
@@ -110,13 +81,32 @@ export default function WorkoutDetailScreen() {
               ) : (
                 <>
                   {item.videoUrl && <Ionicons name="play-circle" size={18} color={c.info} />}
-                  <Ionicons name="chevron-forward" size={18} color={c.subtle} />
+                  <ActionMenu
+                    accessibilityLabel={`Options for ${item.name}`}
+                    actions={[
+                      {
+                        icon: 'pencil-outline',
+                        label: 'Edit',
+                        onPress: () =>
+                          router.push({
+                            pathname: '/edit-exercise' as any,
+                            params: {
+                              workoutId, exerciseId: item.id.toString(),
+                              currentName: item.name, currentSets: item.sets?.toString() || '',
+                              currentReps: item.reps?.toString() || '', currentWeight: item.plannedWeight?.toString() || '',
+                              currentRepUnit: item.repUnit || 'reps',
+                            },
+                          }),
+                      },
+                      { icon: 'trash-outline', label: 'Delete', destructive: true, onPress: () => handleDelete(item.id, item.name) },
+                    ]}
+                  />
                 </>
               )}
             </View>
           </View>
         </TouchableOpacity>
-      </SwipeableRow>
+      </ActionCard>
     </ScaleDecorator>
   );
 

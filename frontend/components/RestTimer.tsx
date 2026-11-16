@@ -130,7 +130,7 @@ export function RestTimer() {
   const isUrgent = seconds <= 10 && isRunning;
 
   return (
-    <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md">
+    <View className="bg-surface rim border-edge rounded-md">
       <View className="flex-row items-center gap-2 pl-2.5 pr-2 py-2">
         <TouchableOpacity
           className="flex-1 flex-row items-center gap-3"

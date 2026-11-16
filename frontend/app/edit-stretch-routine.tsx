@@ -42,7 +42,7 @@ export default function EditStretchRoutineModal() {
 
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">ROUTINE NAME</Text>
         <TextInput
-          className="bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-xl font-bold tracking-tight mb-6"
+          className="bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-xl font-bold tracking-tight mb-6"
           value={name}
           onChangeText={setName}
           placeholder="Evening stretch"

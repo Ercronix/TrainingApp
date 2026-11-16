@@ -10,6 +10,8 @@ import { useTabBarStore } from '@/store/tabBarStore';
 
 import { Tactile } from '@/components/Tactile';
 import { TAB_BAR_OFFSET } from '@/components/FloatingTabBar';
+import { EASE_STANDARD } from '@/constants/motion';
+
 // Screens the banner stays off: the session itself and the modals
 const HIDDEN_ROUTES = new Set([
   '/training', '/add-exercise', '/log-exercise', '/create-split', '/create-workout',
@@ -45,6 +47,7 @@ export function ActiveTrainingBanner() {
     Animated.timing(translateY, {
       toValue: dropBy,
       duration: 220,
+      easing: EASE_STANDARD,
       useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [dropBy, translateY]);

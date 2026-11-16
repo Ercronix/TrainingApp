@@ -9,6 +9,7 @@ import { Tactile } from '@/components/Tactile';
 import { useLibrary } from '@/hooks/useLibrary';
 import { BarChart } from '@/components/charts/BarChart';
 import { MuscleVolumeCard } from '@/components/MuscleVolumeCard';
+import { ConsistencyCalendar } from '@/components/ConsistencyCalendar';
 import { formatKg } from '@/utils/strength';
 import {
   ExerciseTrend, PeriodTotals, RecentRecord, StatsRange, formatDuration, formatNumber, formatSigned, summarizePeriods,
@@ -143,7 +144,7 @@ export default function DashboardScreen() {
       </View>
 
       {/* Streak in one row */}
-      <View className="mx-4 mb-2 bg-surface border-2 border-edge border-b-[6px] rounded-md px-4 py-3.5 flex-row items-center gap-3">
+      <View className="mx-4 mb-2 bg-surface rim border-edge rounded-md px-4 py-3.5 flex-row items-center gap-3">
         <Ionicons name="flame" size={26} color={stats.streak.current > 0 ? c.danger : c.subtle} />
         <View className="flex-1">
           <Text className="text-primary text-lg font-bold">
@@ -179,7 +180,7 @@ export default function DashboardScreen() {
 
       {/* Records from the last 30 days */}
       {analytics.recentRecords.length > 0 && (
-        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 gap-3">
+        <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5 gap-3">
           <Text className="text-muted text-[9px] tracking-[3px]">NEW RECORDS · LAST 30 DAYS</Text>
           {analytics.recentRecords.slice(0, RECORDS_SHOWN).map((record) => {
             const { value, gain } = describeRecord(record);
@@ -212,7 +213,7 @@ export default function DashboardScreen() {
       {/* Last Session */}
       {lastSession && (
         <TouchableOpacity
-          className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5"
+          className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5"
           onPress={() =>
             router.push({ pathname: '/history-detail', params: { trainingLogId: lastSession.id.toString() } })
           }
@@ -236,7 +237,7 @@ export default function DashboardScreen() {
       )}
 
       {/* Weekly trend */}
-      <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
+      <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5">
         <View className="flex-row justify-between items-center mb-3">
           <Text className="text-muted text-[9px] tracking-[3px]">LAST 12 WEEKS</Text>
           {weeklyMetric === 'volume' && analytics.volumeChangePct != null && (
@@ -270,11 +271,12 @@ export default function DashboardScreen() {
         <Text className="text-muted text-[10px] mt-2">Touch and drag across the bars to inspect a week</Text>
       </View>
 
+      {lifetime.sessions > 0 && <ConsistencyCalendar logs={history} />}
       {lifetime.sessions > 0 && <MuscleVolumeCard logs={history} library={library} />}
 
       {/* Lifetime numbers */}
       {lifetime.sessions > 0 && (
-        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
+        <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-4">
             BY THE NUMBERS{lifetime.firstDate
               ? ` · SINCE ${new Date(lifetime.firstDate).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }).toUpperCase()}`
@@ -299,7 +301,7 @@ export default function DashboardScreen() {
 
       {/* Strength trends */}
       {analytics.trends.length > 0 && (
-        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
+        <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-1">STRENGTH TRENDS</Text>
           <Text className="text-muted text-[10px] mb-3">
             Top weight (reps or seconds for bodyweight and timed work) and its 90-day trend
@@ -341,7 +343,7 @@ export default function DashboardScreen() {
 
       {/* Weekday distribution */}
       {lifetime.sessions > 0 && (
-        <View className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5">
+        <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5">
           <Text className="text-muted text-[9px] tracking-[3px] mb-3">
             SESSIONS BY WEEKDAY{stats.mostActiveDay ? ` · MOST ACTIVE: ${weekdayName(stats.mostActiveDay).toUpperCase()}` : ''}
           </Text>
@@ -360,7 +362,7 @@ export default function DashboardScreen() {
 
       {/* Tools */}
       <TouchableOpacity
-        className="mx-4 mb-10 bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 flex-row items-center gap-3"
+        className="mx-4 mb-10 bg-surface rim border-edge rounded-md p-5 flex-row items-center gap-3"
         onPress={() => router.push('/one-rep-max' as any)}
         activeOpacity={0.85}
       >
@@ -404,7 +406,7 @@ interface StatTileProps {
 function StatTile({ label, value, textClass, barClass, values, delta }: StatTileProps) {
   const max = Math.max(...values, 1);
   return (
-    <View className="flex-1 bg-surface border-2 border-edge border-b-[6px] rounded-md px-4 py-3.5 gap-1">
+    <View className="flex-1 bg-surface rim border-edge rounded-md px-4 py-3.5 gap-1">
       <Text className="text-muted text-[9px] tracking-[2px]" numberOfLines={1}>{label}</Text>
       <Text className={`${textClass} text-[28px] font-mono-bold tracking-tighter`} numberOfLines={1} adjustsFontSizeToFit>
         {value}

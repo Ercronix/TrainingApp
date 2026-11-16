@@ -56,7 +56,7 @@ export function ToastHost() {
     >
       <Pressable
         onPress={hide}
-        className="w-full max-w-[400px] flex-row items-center gap-3 bg-surface border-2 border-edge border-b-[6px] rounded-md px-4 py-3"
+        className="w-full max-w-[400px] flex-row items-center gap-3 bg-surface-solid rim border-edge rounded-md px-4 py-3"
         style={{ shadowColor: '#131313', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 8 }}
         accessibilityLiveRegion="polite"
         accessibilityLabel={[toast.title, toast.message].filter(Boolean).join('. ')}

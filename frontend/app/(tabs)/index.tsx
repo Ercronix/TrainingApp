@@ -179,7 +179,7 @@ export default function HomeScreen() {
 
       {/* Resume the open session, else suggest the next workout */}
       {activeTraining ? (
-        <View className="bg-surface rounded-md p-5 mb-6 border-2 border-b-[6px] border-accent">
+        <View className="bg-surface rounded-md p-5 mb-6 rim border-accent">
           <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">IN PROGRESS</Text>
           <Text className="text-primary text-2xl font-bold tracking-tight mb-4">
             {activeTraining.workoutName || activeTraining.splitName}
@@ -194,7 +194,7 @@ export default function HomeScreen() {
           </Tactile>
         </View>
       ) : next ? (
-        <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-6 gap-4">
+        <View className="bg-surface rim border-edge rounded-md p-5 mb-6 gap-4">
           <View className="flex-row justify-between items-start gap-3">
             <View className="flex-1">
               <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">NEXT UP</Text>

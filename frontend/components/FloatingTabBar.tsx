@@ -6,6 +6,7 @@ import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs
 import { useColorScheme } from 'nativewind';
 import { useTheme } from '@/hooks/useTheme';
 import { useTabBarStore } from '@/store/tabBarStore';
+import { useThemeStore } from '@/store/themeStore';
 import { EASE_IN, EASE_OUT, spring } from '@/constants/motion';
 
 // 64 of content plus the 2px top and 6px bottom border
@@ -28,6 +29,7 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
   const c = useTheme();
   const isLight = useColorScheme().colorScheme === 'light';
   const hidden = useTabBarStore((s) => s.hidden);
+  const glassOpacity = useThemeStore((s) => s.glassOpacity);
   const [itemWidth, setItemWidth] = useState(0);
 
   // Slides the bar below the screen's bottom edge while a tab's list scrolls down. Coming back is
@@ -74,7 +76,8 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
     <Animated.View
       style={[
         styles.bar,
-        { bottom: insets.bottom + TAB_BAR_GAP, borderColor: c.edge, transform: [{ translateY }] },
+        { bottom: insets.bottom + TAB_BAR_GAP, borderColor: c.glass ? (isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)') : c.edge, transform: [{ translateY }] },
+        c.glass && styles.glassBar,
       ]}
     >
       <BlurView
@@ -83,7 +86,7 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
         experimentalBlurMethod="dimezisBlurView"
         style={StyleSheet.absoluteFill}
       >
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: c.surface, opacity: isLight ? 0.55 : 0.45 }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: c.surface, opacity: c.glass ? Math.min(1, glassOpacity + 0.15) : isLight ? 0.55 : 0.45 }]} />
       </BlurView>
 
       <View className="flex-1 flex-row" onLayout={(e) => setItemWidth(e.nativeEvent.layout.width / state.routes.length)}>
@@ -92,7 +95,8 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
             pointerEvents="none"
             style={[
               styles.pill,
-              { width: itemWidth - PILL_INSET * 2, backgroundColor: c.accentMuted, transform: [{ translateX: pillX }] },
+              { width: itemWidth - PILL_INSET * 2, backgroundColor: c.glass ? `${c.accent}29` : c.accentMuted, transform: [{ translateX: pillX }] },
+              c.glass && { borderWidth: 1, borderColor: `${c.accent}59` },
             ]}
           />
         )}
@@ -164,6 +168,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 6,
     backgroundColor: 'transparent',
     overflow: 'hidden',
+  },
+  // A hairline all around instead of the raised rim; the color comes from the theme
+  glassBar: {
+    borderWidth: 1,
+    borderBottomWidth: 1,
   },
   pill: {
     position: 'absolute',

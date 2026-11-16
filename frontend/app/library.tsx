@@ -24,7 +24,7 @@ export default function LibraryScreen() {
 
   const renderItem = ({ item }: { item: LibraryExercise }) => (
     <TouchableOpacity
-      className="bg-surface border-2 border-edge border-b-[6px] rounded-md pl-3 pr-5 py-3 mb-2 flex-row items-center gap-3"
+      className="bg-surface rim border-edge rounded-md pl-3 pr-5 py-3 mb-2 flex-row items-center gap-3"
       onPress={() =>
         router.push({
           pathname: '/exercise-detail' as any,
@@ -67,7 +67,7 @@ export default function LibraryScreen() {
 
       {untaggedCount > 0 && !isLoading && (
         <TouchableOpacity
-          className="mx-4 mb-3 bg-surface border-2 border-edge border-b-[6px] rounded-md px-5 py-4 flex-row items-center gap-3"
+          className="mx-4 mb-3 bg-surface rim border-edge rounded-md px-5 py-4 flex-row items-center gap-3"
           onPress={() => router.push('/assign-muscles' as any)}
           activeOpacity={0.85}
         >
@@ -85,7 +85,7 @@ export default function LibraryScreen() {
 
       {/* Search bar */}
       <View className="px-4 mb-3">
-        <View className="flex-row items-center bg-surface border-2 border-edge border-b-4 rounded-md px-4 py-3">
+        <View className="flex-row items-center bg-surface rim-sm border-edge rounded-md px-4 py-3">
           <Ionicons name="search" size={16} color={c.muted} />
           <TextInput
             className="flex-1 text-primary text-sm ml-3"

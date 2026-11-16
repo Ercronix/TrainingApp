@@ -71,9 +71,10 @@ export function ConfirmDialogHost() {
             maxWidth: 340,
             backgroundColor: c.surface,
             borderRadius: 24,
-            borderWidth: 2,
-            borderBottomWidth: 6,
-            borderColor: c.edge,
+            // Raised like the cards, or a hairline in a glass theme
+            borderWidth: c.glass ? 1 : 2,
+            borderBottomWidth: c.glass ? 1 : 6,
+            borderColor: c.glass ? (isLight ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.1)') : c.edge,
             padding: 24,
             transform: [{ scale }],
             opacity,

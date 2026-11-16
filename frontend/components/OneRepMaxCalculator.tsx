@@ -32,7 +32,7 @@ export function OneRepMaxCalculator({ initialWeight, initialReps }: Props) {
         <View className="flex-1">
           <Text className="text-muted text-[9px] tracking-[2px] mb-1">WEIGHT (KG)</Text>
           <TextInput
-            className="bg-base rounded px-3 py-3 text-primary text-lg font-mono-bold"
+            className="bg-inset rounded px-3 py-3 text-primary text-lg font-mono-bold"
             value={weight}
             onChangeText={setWeight}
             keyboardType="decimal-pad"
@@ -44,7 +44,7 @@ export function OneRepMaxCalculator({ initialWeight, initialReps }: Props) {
         <View className="flex-1">
           <Text className="text-muted text-[9px] tracking-[2px] mb-1">REPS</Text>
           <TextInput
-            className="bg-base rounded px-3 py-3 text-primary text-lg font-mono-bold"
+            className="bg-inset rounded px-3 py-3 text-primary text-lg font-mono-bold"
             value={reps}
             onChangeText={setReps}
             keyboardType="number-pad"
@@ -78,7 +78,7 @@ export function OneRepMaxCalculator({ initialWeight, initialReps }: Props) {
 
           {/* Formula comparison */}
           <Text className="text-muted text-[9px] tracking-[3px] mb-2">BY FORMULA</Text>
-          <View className="bg-base rounded-sm mb-4">
+          <View className="bg-inset rounded-sm mb-4">
             {breakdown.formulas.map((f) => {
               const share = (f.value - breakdown.low * 0.95) / (breakdown.high - breakdown.low * 0.95 || 1);
               return (
@@ -95,7 +95,7 @@ export function OneRepMaxCalculator({ initialWeight, initialReps }: Props) {
 
           {/* Rep maxes */}
           <Text className="text-muted text-[9px] tracking-[3px] mb-2">REP MAXES</Text>
-          <View className="bg-base rounded-sm">
+          <View className="bg-inset rounded-sm">
             <View className="flex-row px-3 py-2">
               <Text className="flex-1 text-muted text-[9px] tracking-[2px]">REPS</Text>
               <Text className="flex-1 text-muted text-[9px] tracking-[2px] text-right">% 1RM</Text>

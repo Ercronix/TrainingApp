@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { vars } from 'nativewind';
 import { blendHex, contrastTextColor } from '@/utils/color';
 
@@ -23,6 +24,8 @@ export interface ColorPalette {
 export interface Theme {
   id: string;
   name: string;
+  /** Translucent cards over an aurora backdrop instead of solid, raised ones. */
+  glass?: boolean;
   dark: ColorPalette;
   light: ColorPalette;
 }
@@ -314,6 +317,50 @@ export const THEMES: Theme[] = [
       border:       '#f4f0d9',
     },
   },
+  {
+    // Glass: translucent cards over an aurora, after a Hyprland desktop with a matugen palette.
+    // The colors here are the solid stand-ins that code blends with; the cards themselves get
+    // translucent versions in getThemeVars.
+    id: 'glass',
+    name: 'Glass',
+    glass: true,
+    dark: {
+      accent:       '#a5f7c9',
+      accentFg:     '#05170f',
+      accentText:   '#a5f7c9',
+      accentMuted:  '#1c3a2e',
+      primary:      '#eef5f0',
+      muted:        '#a3b8ae',
+      subtle:       '#5d7268',
+      dim:          '#17261f',
+      danger:       '#ff716c',
+      dangerMuted:  '#3a1c1a',
+      info:         '#9ff3f9',
+      base:         '#06110d',
+      surface:      '#0c1a15',
+      elevated:     '#1a2b24',
+      surfaceDone:  '#0f2a1e',
+      border:       '#0c1a15',
+    },
+    light: {
+      accent:       '#1f9d6b',
+      accentFg:     '#ffffff',
+      accentText:   '#0f6945',
+      accentMuted:  '#cfeadd',
+      primary:      '#0b1f17',
+      muted:        '#4d6359',
+      subtle:       '#9db3a9',
+      dim:          '#d3e2da',
+      danger:       '#c8322d',
+      dangerMuted:  '#f9dedc',
+      info:         '#00707a',
+      base:         '#d6e8df',
+      surface:      '#f4faf7',
+      elevated:     '#e0ede6',
+      surfaceDone:  '#d9f1e3',
+      border:       '#e0ede6',
+    },
+  },
 ];
 
 export const DEFAULT_THEME_ID = THEMES[0].id;
@@ -344,13 +391,16 @@ export interface Palette extends ColorPalette {
   edge: string;
   /** Outline and lip of done cards. */
   edgeDone: string;
+  /** Whether the theme draws translucent cards over the aurora (see `Theme.glass`). */
+  glass: boolean;
 }
 
 const BLACK = '#000000';
 
-function withEdges(c: ColorPalette): Palette {
+function withEdges(c: ColorPalette, glass: boolean): Palette {
   return {
     ...c,
+    glass,
     accentLip: blendHex(c.accent, BLACK, 0.62),
     dangerLip: blendHex(c.danger, BLACK, 0.62),
     // Toward the text color, so it reads as a raised rim in both dark and light mode
@@ -360,12 +410,69 @@ function withEdges(c: ColorPalette): Palette {
 }
 
 export function getPalette(themeId: string, mode: 'light' | 'dark', customAccent?: string | null): Palette {
-  return withEdges(applyCustomAccent(getTheme(themeId)[mode], customAccent));
+  const theme = getTheme(themeId);
+  return withEdges(applyCustomAccent(theme[mode], customAccent), !!theme.glass);
 }
 
-export function getThemeVars(themeId: string, mode: 'light' | 'dark', customAccent?: string | null) {
+export const DEFAULT_GLASS_OPACITY = 0.5;
+export const GLASS_OPACITY_MIN = 0.2;
+export const GLASS_OPACITY_MAX = 0.9;
+
+function rgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${Math.min(1, Math.max(0, alpha)).toFixed(2)})`;
+}
+
+// Border widths of cards: a rim with a thicker bottom lip, or a hairline on glass. The web needs
+// a unit, the native runtime a number.
+const px = (n: number) => (Platform.OS === 'web' ? `${n}px` : n);
+
+export function getThemeVars(
+  themeId: string,
+  mode: 'light' | 'dark',
+  customAccent?: string | null,
+  glassOpacity = DEFAULT_GLASS_OPACITY,
+) {
   const c = getPalette(themeId, mode, customAccent);
+  if (c.glass) {
+    // The screens are see-through down to the aurora (see AuroraBackdrop) and the cards are tinted
+    // panes on it. Tints of the text color stand in for the raised surfaces inside a card.
+    const ink = mode === 'dark' ? '#ffffff' : '#000000';
+    return vars({
+      '--color-accent':       c.accent,
+      '--color-accent-fg':    c.accentFg,
+      '--color-accent-text':  c.accentText,
+      '--color-accent-muted': rgba(c.accent, mode === 'dark' ? 0.16 : 0.22),
+      '--color-primary':      c.primary,
+      '--color-muted':        c.muted,
+      '--color-subtle':       c.subtle,
+      '--color-dim':          rgba(ink, 0.08),
+      '--color-danger':       c.danger,
+      '--color-danger-muted': rgba(c.danger, 0.16),
+      '--color-info':         c.info,
+      '--color-base':         'transparent',
+      '--color-surface':      rgba(c.surface, glassOpacity),
+      '--color-elevated':     rgba(ink, mode === 'dark' ? 0.08 : 0.06),
+      '--color-surface-done': rgba(c.surfaceDone, Math.min(1, glassOpacity + 0.1)),
+      '--color-border':       rgba(ink, 0.08),
+      '--color-accent-lip':   c.accentLip,
+      '--color-danger-lip':   rgba(c.danger, 0.5),
+      '--color-edge':         rgba(ink, mode === 'dark' ? 0.1 : 0.12),
+      '--color-edge-done':    rgba(c.accent, 0.35),
+      // Bars and toasts that float over scrolling content stay nearly opaque, so it doesn't show through
+      '--color-dock':         rgba(c.base, 0.94),
+      '--color-surface-solid': rgba(c.surface, 0.94),
+      // Fields and stat strips set into a card: a darker pane in dark mode, a frosted one in light
+      '--color-inset':        mode === 'dark' ? rgba('#000000', 0.22) : rgba('#ffffff', 0.45),
+      '--rim':                px(1),
+      '--lip':                px(1),
+      '--lip-sm':             px(1),
+    });
+  }
   return vars({
+    '--rim':                px(2),
+    '--lip':                px(6),
+    '--lip-sm':             px(4),
     '--color-accent':       c.accent,
     '--color-accent-fg':    c.accentFg,
     '--color-accent-text':  c.accentText,
@@ -386,5 +493,8 @@ export function getThemeVars(themeId: string, mode: 'light' | 'dark', customAcce
     '--color-danger-lip':   c.dangerLip,
     '--color-edge':         c.edge,
     '--color-edge-done':    c.edgeDone,
+    '--color-dock':         c.base,
+    '--color-surface-solid': c.surface,
+    '--color-inset':        c.base,
   });
 }

@@ -9,7 +9,7 @@ import { useStretchCheckIns } from '@/hooks/useStretchCheckIns';
 import { useStretchReminder } from '@/hooks/useStretchReminder';
 import { confirm } from '@/utils/confirm';
 import { formatAmount, formatClock, routineSeconds } from '@/utils/stretch';
-import SwipeableRow from '@/components/SwipeableRow';
+import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { StretchItem } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { Tactile } from '@/components/Tactile';
@@ -38,28 +38,9 @@ export default function StretchRoutineScreen() {
 
   const renderItem = ({ item, drag, isActive, getIndex }: RenderItemParams<StretchItem>) => (
     <ScaleDecorator>
-      <SwipeableRow
-        enabled={!reorderMode}
-        rightActions={[
-          {
-            icon: 'pencil-outline',
-            color: c.accent,
-            backgroundColor: c.accentMuted,
-            label: 'EDIT',
-            onPress: () => editItem(item),
-          },
-          {
-            icon: 'trash-outline',
-            color: c.danger,
-            backgroundColor: c.dangerMuted,
-            label: 'DELETE',
-            onPress: () => handleDelete(item),
-          },
-        ]}
-      >
+      <ActionCard className={`rounded-md rim mb-2 ${isActive ? 'bg-elevated border-accent' : 'bg-surface border-edge'}`}>
         <TouchableOpacity
-          // Rows only get the swipeable's gap while it is enabled
-          className={`rounded-md border-2 border-b-[6px] px-5 py-5 flex-row items-center gap-3 ${reorderMode ? 'mb-2' : ''} ${isActive ? 'bg-elevated border-accent' : 'bg-surface border-edge'}`}
+          className="pl-5 pr-3 py-5 flex-row items-center gap-3"
           onPress={() => {
             if (!reorderMode) editItem(item);
           }}
@@ -68,7 +49,7 @@ export default function StretchRoutineScreen() {
           disabled={isActive}
           activeOpacity={0.85}
         >
-          <Text className="text-dim text-[28px] font-mono-bold tracking-tighter min-w-[36px]">
+          <Text className="text-subtle text-[28px] font-mono-bold tracking-tighter min-w-[36px]">
             {String((getIndex() ?? 0) + 1).padStart(2, '0')}
           </Text>
           <View className="flex-1">
@@ -82,18 +63,29 @@ export default function StretchRoutineScreen() {
             <TouchableOpacity onLongPress={drag} delayLongPress={100} accessibilityLabel="Drag to reorder">
               <Ionicons name="reorder-three-outline" size={24} color={c.muted} />
             </TouchableOpacity>
-          ) : item.perSide ? (
-            <View className="bg-accent-muted rounded-sm h-[18px] pl-1.5 pr-1 justify-center">
-              <Text
-                className="text-accent-text text-[9px] leading-[12px] font-bold tracking-[2px]"
-                style={{ includeFontPadding: false, textAlignVertical: 'center' }}
-              >
-                L+R
-              </Text>
-            </View>
-          ) : null}
+          ) : (
+            <>
+              {item.perSide && (
+                <View className="bg-accent-muted rounded-sm h-[18px] pl-1.5 pr-1 justify-center">
+                  <Text
+                    className="text-accent-text text-[9px] leading-[12px] font-bold tracking-[2px]"
+                    style={{ includeFontPadding: false, textAlignVertical: 'center' }}
+                  >
+                    L+R
+                  </Text>
+                </View>
+              )}
+              <ActionMenu
+                accessibilityLabel={`Options for ${item.name}`}
+                actions={[
+                  { icon: 'pencil-outline', label: 'Edit', onPress: () => editItem(item) },
+                  { icon: 'trash-outline', label: 'Delete', destructive: true, onPress: () => handleDelete(item) },
+                ]}
+              />
+            </>
+          )}
         </TouchableOpacity>
-      </SwipeableRow>
+      </ActionCard>
     </ScaleDecorator>
   );
 

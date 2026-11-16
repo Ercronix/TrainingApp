@@ -70,14 +70,19 @@ export function ExerciseIllustration({
   height?: number;
   maxHeight?: number;
   animate?: boolean;
-  /** What the drawing sits on; 'transparent' leaves only the lines, for a drawing that doesn't animate. */
+  /**
+   * What the drawing sits on: the card by default, or nothing in a glass theme. On 'transparent'
+   * only the lines are drawn, and the two poses cross-fade instead of one covering the other.
+   */
   background?: string;
 }) {
   const c = useTheme();
   const reduceMotion = useReduceMotion();
   const looping = animate && reduceMotion === false;
-  const bg = background ?? c.surface;
-  const fill = bg === 'transparent' ? 'none' : bg;
+  // A glass card is see-through, so a solid one behind the drawing would stand out as a block
+  const bg = background ?? (c.glass ? 'transparent' : c.surface);
+  const transparent = bg === 'transparent';
+  const fill = transparent ? 'none' : bg;
   const start = useDrawing(catalogExerciseId, 0);
   const end = useDrawing(catalogExerciseId, 1, looping);
   const startXml = useMemo(() => start && recolor(start, fill, c.primary), [start, fill, c.primary]);
@@ -101,7 +106,11 @@ export function ExerciseIllustration({
   const boxHeight = height ?? Math.min(maxHeight, start ? width / aspectOf(start) : width * 0.75);
   return (
     <View style={{ width, height: boxHeight, backgroundColor: bg }} accessible={false}>
-      {startXml && <SvgXml xml={startXml} width={width} height={boxHeight} />}
+      {startXml && (
+        <Animated.View style={showEnd && transparent ? { opacity: Animated.subtract(1, fade) } : undefined}>
+          <SvgXml xml={startXml} width={width} height={boxHeight} />
+        </Animated.View>
+      )}
       {showEnd && (
         <Animated.View style={{ position: 'absolute', opacity: fade }} pointerEvents="none">
           <SvgXml xml={endXml} width={width} height={boxHeight} />

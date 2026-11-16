@@ -4,7 +4,7 @@ interface TabBarState {
     /** Whether the floating tab bar is slid out of view, as on scrolling down a tab's list. */
     hidden: boolean;
     setHidden: (hidden: boolean) => void;
-    /** Whether a row or chart is handling the current touch, so the tab pager must not swipe (web only). */
+    /** Whether a chart is handling the current touch, so the tab pager must not swipe (web only). */
     swipeLocked: boolean;
     setSwipeLocked: (swipeLocked: boolean) => void;
 }

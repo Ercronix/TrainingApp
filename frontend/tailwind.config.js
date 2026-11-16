@@ -1,3 +1,5 @@
+const plugin = require('tailwindcss/plugin');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -38,8 +40,23 @@ module.exports = {
         'danger-lip':   'var(--color-danger-lip)',
         edge:           'var(--color-edge)',
         'edge-done':    'var(--color-edge-done)',
+        // Opaque enough to cover content scrolling underneath, in a glass theme too
+        dock:           'var(--color-dock)',
+        'surface-solid': 'var(--color-surface-solid)',
+        // Fields and strips set into a card (the base color, except in a glass theme)
+        inset:          'var(--color-inset)',
       },
     },
   },
-  plugins: [],
+  plugins: [
+    // The border of a card: a rim with a thicker bottom lip, or a hairline in the glass theme.
+    // The widths come from the theme (see getThemeVars); pair it with a border color.
+    plugin(({ addUtilities }) => {
+      addUtilities({
+        '.rim': { borderWidth: 'var(--rim)', borderBottomWidth: 'var(--lip)' },
+        // The same with a smaller lip, for text fields and search bars
+        '.rim-sm': { borderWidth: 'var(--rim)', borderBottomWidth: 'var(--lip-sm)' },
+      });
+    }),
+  ],
 };

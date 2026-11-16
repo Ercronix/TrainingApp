@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, Platform } from 'react-native';
 import type { ParamListBase, RouteProp } from '@react-navigation/native';
 import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
@@ -21,32 +21,48 @@ interface TabSceneProps {
  * tab that wasn't preloaded) fades in without the shift.
  */
 export function TabScene({ route, navigation, children }: TabSceneProps) {
-  const opacity = useRef(new Animated.Value(1)).current;
+  // A tab that mounts focused fades in right away; start it hidden so it doesn't flash first
+  const opacity = useRef(new Animated.Value(navigation.isFocused() ? 0 : 1)).current;
   const shift = useRef(new Animated.Value(0)).current;
+  // Each entrance gets a number. While one runs the scene is bound to the animated values, and
+  // after it the scene renders plainly at full opacity. On Android a scene that mounted or was
+  // re-laid out by the pager mid-fade could otherwise keep the opacity of 0 it started from and
+  // stay blank, since nothing re-renders it once the native animation is over.
+  const [entrance, setEntrance] = useState<number | null>(() => (navigation.isFocused() ? 0 : null));
 
   useEffect(() => {
-    const enter = (fromX: number) => {
-      opacity.setValue(0);
-      shift.setValue(fromX);
-      const config = { toValue: 1, duration: ENTER_DURATION, easing: EASE_OUT, useNativeDriver: Platform.OS !== 'web' };
-      Animated.parallel([
-        Animated.timing(opacity, config),
-        Animated.timing(shift, { ...config, toValue: 0 }),
-      ]).start();
+    if (entrance == null) return;
+    const config = { toValue: 1, duration: ENTER_DURATION, easing: EASE_OUT, useNativeDriver: Platform.OS !== 'web' };
+    const animation = Animated.parallel([
+      Animated.timing(opacity, config),
+      Animated.timing(shift, { ...config, toValue: 0 }),
+    ]);
+    const settle = () => setEntrance((current) => (current === entrance ? null : current));
+    animation.start(settle);
+    // In case the end of the animation is never reported
+    const fallback = setTimeout(settle, ENTER_DURATION + 200);
+    return () => {
+      clearTimeout(fallback);
+      animation.stop();
     };
+  }, [entrance, opacity, shift]);
 
-    if (navigation.isFocused()) enter(0);
-
-    return navigation.addListener('tabPress', () => {
-      if (navigation.isFocused()) return;
-      const { index, routes } = navigation.getState();
-      const target = routes.findIndex((r) => r.key === route.key);
-      enter(Math.sign(target - index) * ENTER_SHIFT);
-    });
-  }, [navigation, route.key, opacity, shift]);
+  useEffect(() => navigation.addListener('tabPress', () => {
+    if (navigation.isFocused()) return;
+    const { index, routes } = navigation.getState();
+    const target = routes.findIndex((r) => r.key === route.key);
+    opacity.setValue(0);
+    shift.setValue(Math.sign(target - index) * ENTER_SHIFT);
+    setEntrance((n) => (n ?? 0) + 1);
+  }), [navigation, route.key, opacity, shift]);
 
   return (
-    <Animated.View style={{ flex: 1, opacity, transform: [{ translateX: shift }] }}>
+    // The same keys either way: Animated fails when a transform it drove disappears
+    <Animated.View
+      style={entrance == null
+        ? { flex: 1, opacity: 1, transform: [{ translateX: 0 }] }
+        : { flex: 1, opacity, transform: [{ translateX: shift }] }}
+    >
       {children}
     </Animated.View>
   );

@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useHistory } from '@/hooks/useHistory';
 import { isInProgress } from '@/hooks/useActiveTraining';
 import { confirm } from '@/utils/confirm';
-import SwipeableRow from '@/components/SwipeableRow';
+import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { TrainingLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
@@ -88,19 +88,9 @@ export default function HistoryScreen() {
     const completionRate = totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
 
     return (
-      <SwipeableRow
-        rightActions={[
-          {
-            icon: 'trash-outline',
-            color: c.danger,
-            backgroundColor: c.dangerMuted,
-            label: 'DELETE',
-            onPress: () => handleDelete(item.id, item.workoutName || item.splitName),
-          },
-        ]}
-      >
+      <ActionCard className="bg-surface rounded-md rim border-edge mb-2">
         <TouchableOpacity
-          className="bg-surface rounded-md border-2 border-edge border-b-[6px] p-5"
+          className="p-5"
           onPress={() =>
             // Sessions still in progress reopen in the training screen so they can be continued
             router.push({
@@ -123,11 +113,21 @@ export default function HistoryScreen() {
                 {item.splitName} · {formatDate(item.startedAt)}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={c.subtle} />
+            <ActionMenu
+              accessibilityLabel={`Options for ${item.workoutName || item.splitName}`}
+              actions={[
+                {
+                  icon: 'trash-outline',
+                  label: 'Delete',
+                  destructive: true,
+                  onPress: () => handleDelete(item.id, item.workoutName || item.splitName),
+                },
+              ]}
+            />
           </View>
 
           {/* Stats row */}
-          <View className="flex-row items-center bg-base rounded p-3 mb-3">
+          <View className="flex-row items-center bg-inset rounded p-3 mb-3">
             <View className="flex-1 items-center">
               <Text className="text-primary text-sm font-bold tracking-tight">{formatTime(item.startedAt)}</Text>
               <Text className="text-muted text-[8px] tracking-widest mt-0.5">TIME</Text>
@@ -169,7 +169,7 @@ export default function HistoryScreen() {
             <Text className="text-subtle text-xs italic mt-2">"{item.notes}"</Text>
           )}
         </TouchableOpacity>
-      </SwipeableRow>
+      </ActionCard>
     );
   };
 
@@ -199,7 +199,7 @@ export default function HistoryScreen() {
 
       {/* Search bar */}
       <View className="px-4 mb-3">
-        <View className="flex-row items-center bg-surface border-2 border-edge border-b-4 rounded-md px-4 py-3">
+        <View className="flex-row items-center bg-surface rim-sm border-edge rounded-md px-4 py-3">
           <Ionicons name="search" size={16} color={c.muted} />
           <TextInput
             className="flex-1 text-primary text-sm ml-3"

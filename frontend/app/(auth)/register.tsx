@@ -70,7 +70,7 @@ export default function RegisterScreen() {
 
                 <Text className="text-muted text-[9px] tracking-[3px] mb-2">USERNAME</Text>
                 <TextInput
-                    className={`bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
+                    className={`bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.username ? 'mb-2' : 'mb-4'}`}
                     placeholder="Enter username"
                     placeholderTextColor={c.elevated}
                     value={username}
@@ -90,7 +90,7 @@ export default function RegisterScreen() {
 
                 <Text className="text-muted text-[9px] tracking-[3px] mb-2">EMAIL</Text>
                 <TextInput
-                    className={`bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.email ? 'mb-2' : 'mb-4'}`}
+                    className={`bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.email ? 'mb-2' : 'mb-4'}`}
                     placeholder="Enter email"
                     placeholderTextColor={c.elevated}
                     value={email}
@@ -111,7 +111,7 @@ export default function RegisterScreen() {
 
                 <Text className="text-muted text-[9px] tracking-[3px] mb-2">PASSWORD</Text>
                 <TextInput
-                    className={`bg-surface border-2 border-edge border-b-4 rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
+                    className={`bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-xl font-bold tracking-tight ${errors.password ? 'mb-2' : 'mb-8'}`}
                     placeholder="Min 6 characters"
                     placeholderTextColor={c.elevated}
                     value={password}

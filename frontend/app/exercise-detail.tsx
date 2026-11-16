@@ -112,7 +112,7 @@ export default function ExerciseDetailScreen() {
         {editingName ? (
           <View className="flex-row items-center gap-2">
             <TextInput
-              className="flex-1 bg-surface border-2 border-edge border-b-4 rounded px-3 py-2 text-primary text-[22px] font-bold tracking-tight"
+              className="flex-1 bg-surface rim-sm border-edge rounded px-3 py-2 text-primary text-[22px] font-bold tracking-tight"
               value={name}
               onChangeText={setName}
               autoFocus
@@ -141,7 +141,7 @@ export default function ExerciseDetailScreen() {
 
         {/* Planned */}
         {!!(sets || reps || weight) && (
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+          <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
             <Text className="text-muted text-[9px] tracking-[3px] mb-3">PLANNED</Text>
             <View className="flex-row gap-6">
               {!!sets && !!reps && (
@@ -162,7 +162,7 @@ export default function ExerciseDetailScreen() {
 
         {/* Muscles */}
         {entry && (
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+          <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
             <View className="flex-row justify-between items-center mb-3">
               <Text className="text-muted text-[9px] tracking-[3px]">MUSCLES</Text>
               <TouchableOpacity onPress={() => (editingMuscles ? setEditingMuscles(false) : startEditingMuscles())}>
@@ -202,7 +202,7 @@ export default function ExerciseDetailScreen() {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                className="items-center justify-center bg-base rounded gap-2 py-4"
+                className="items-center justify-center bg-inset rounded gap-2 py-4"
                 onPress={startEditingMuscles}
               >
                 <BodyMap fills={{}} height={90} background={c.base} showLabels={false} />
@@ -214,7 +214,7 @@ export default function ExerciseDetailScreen() {
 
         {/* Equipment */}
         {entry && (
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+          <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
             <Text className="text-muted text-[9px] tracking-[3px] mb-3">EQUIPMENT</Text>
             <View className="flex-row flex-wrap gap-2">
               {EQUIPMENT_OPTIONS.map((option) => {
@@ -243,7 +243,7 @@ export default function ExerciseDetailScreen() {
         )}
 
         {/* Video */}
-        <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+        <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-muted text-[9px] tracking-[3px]">VIDEO</Text>
             <TouchableOpacity onPress={() => setEditingVideo(!editingVideo)}>
@@ -254,7 +254,7 @@ export default function ExerciseDetailScreen() {
           {editingVideo ? (
             <View>
               <TextInput
-                className="bg-base rounded px-3 py-3 text-primary text-sm mb-2"
+                className="bg-inset rounded px-3 py-3 text-primary text-sm mb-2"
                 placeholder="https://youtube.com/watch?v=..."
                 placeholderTextColor={c.elevated}
                 value={videoUrl}
@@ -280,7 +280,7 @@ export default function ExerciseDetailScreen() {
             </View>
           ) : (
             <TouchableOpacity
-              className="h-28 items-center justify-center bg-base rounded gap-2"
+              className="h-28 items-center justify-center bg-inset rounded gap-2"
               onPress={() => setEditingVideo(true)}
             >
               <Ionicons name="play-circle-outline" size={40} color={c.elevated} />
@@ -291,7 +291,7 @@ export default function ExerciseDetailScreen() {
 
         {/* Statistics */}
         {progressLoading ? (
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2 items-center py-6">
+          <View className="bg-surface rim border-edge rounded-md p-5 mb-2 items-center py-6">
             <Text className="text-muted text-[10px] tracking-[3px]">LOADING...</Text>
           </View>
         ) : (
@@ -299,7 +299,7 @@ export default function ExerciseDetailScreen() {
         )}
 
         {/* Description */}
-        <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+        <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
             <Text className="text-muted text-[9px] tracking-[3px]">NOTES</Text>
             <TouchableOpacity onPress={() => setEditingDescription(!editingDescription)}>
@@ -310,7 +310,7 @@ export default function ExerciseDetailScreen() {
           {editingDescription ? (
             <View>
               <TextInput
-                className="bg-base rounded px-3 py-3 text-primary text-sm mb-2"
+                className="bg-inset rounded px-3 py-3 text-primary text-sm mb-2"
                 placeholder="Cues, form tips..."
                 placeholderTextColor={c.elevated}
                 value={description}
@@ -337,7 +337,7 @@ export default function ExerciseDetailScreen() {
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
-              className="h-24 items-center justify-center bg-base rounded gap-2"
+              className="h-24 items-center justify-center bg-inset rounded gap-2"
               onPress={() => setEditingDescription(true)}
             >
               <Ionicons name="document-text-outline" size={32} color={c.elevated} />
@@ -347,7 +347,7 @@ export default function ExerciseDetailScreen() {
         </View>
 
         {!timed && !progressLoading && (
-          <View className="bg-surface border-2 border-edge border-b-[6px] rounded-md p-5 mb-2">
+          <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
             <Text className="text-muted text-[9px] tracking-[3px] mb-3">1RM CALCULATOR</Text>
             <OneRepMaxCalculator
               key={bestSet ? `${bestSet.weight}x${bestSet.reps}` : 'empty'}
@@ -361,7 +361,7 @@ export default function ExerciseDetailScreen() {
         {entry && drawingId != null && !pickingDrawing ? (
           <View
             key="drawing"
-            className="bg-surface border-2 border-edge border-b-[6px] rounded-md mb-2 overflow-hidden"
+            className="bg-surface rim border-edge rounded-md mb-2 overflow-hidden"
             onLayout={(e) => setDrawingWidth(e.nativeEvent.layout.width - 4)}
           >
             <View className="flex-row items-center gap-3 px-5 pt-5">
@@ -410,7 +410,7 @@ export default function ExerciseDetailScreen() {
 
         {isLibraryView && (
           <TouchableOpacity
-            className={`bg-surface border-2 border-edge border-b-[6px] rounded-md py-5 mt-2 flex-row items-center justify-center gap-2 ${deleteEntry.isPending ? 'opacity-50' : ''}`}
+            className={`bg-surface rim border-edge rounded-md py-5 mt-2 flex-row items-center justify-center gap-2 ${deleteEntry.isPending ? 'opacity-50' : ''}`}
             onPress={handleDelete}
             disabled={deleteEntry.isPending}
             activeOpacity={0.85}

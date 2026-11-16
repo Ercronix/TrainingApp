@@ -1,6 +1,7 @@
 import { Pressable, PressableProps, StyleProp, View, ViewStyle } from 'react-native';
 import type { ReactNode, Ref } from 'react';
 import { haptics } from '@/utils/haptics';
+import { useTheme } from '@/hooks/useTheme';
 
 type Variant = 'accent' | 'surface' | 'elevated' | 'danger';
 
@@ -31,11 +32,13 @@ interface Props extends Omit<PressableProps, 'children' | 'style'> {
 
 /**
  * A chunky button that stands on a lip and sinks into it while pressed. The total height stays
- * the same, so nothing around it moves.
+ * the same, so nothing around it moves. In a glass theme it is flat with a hairline border and
+ * shrinks slightly while pressed instead.
  */
 export function Tactile({
   children, variant = 'accent', className = '', containerClassName = '', depth = 4, disabled, style, ref, activeOpacity: _, haptic = true, onPress, ...rest
 }: Props) {
+  const { glass } = useTheme();
   return (
     <Pressable
       {...rest}
@@ -51,6 +54,16 @@ export function Tactile({
       {({ pressed }) => {
         const down = pressed && !disabled;
         const { className: face, rim } = VARIANTS[variant];
+        if (glass) {
+          return (
+            <View
+              className={`${face} ${className}`}
+              style={[style, { borderWidth: rim ? 1 : 0, borderBottomWidth: rim ? 1 : 0, opacity: down ? 0.8 : 1, transform: [{ scale: down ? 0.97 : 1 }] }]}
+            >
+              {children}
+            </View>
+          );
+        }
         return (
           <View
             className={`${face} ${className}`}
