@@ -69,6 +69,8 @@ public class SecurityConfig {
             .requestMatchers(HttpMethod.POST, "/api/stretch/reminder/done/*").permitAll()
             // API docs: the OpenAPI spec and Swagger UI (see springdoc.* in application.properties)
             .requestMatchers(HttpMethod.GET, "/api/docs", "/api/docs/**", "/api/swagger-ui/**").permitAll()
+            // Docker healthcheck (status only, no details; not proxied by Nginx). No other actuator endpoint is exposed
+            .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
             .anyRequest().authenticated()
         )
         // Missing/expired token -> 401 (default would be 403), so clients know to refresh

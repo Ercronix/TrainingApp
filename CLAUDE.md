@@ -27,7 +27,7 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 - `.github/workflows/android-build.yml` (manual `workflow_dispatch` with a profile input) runs `eas build --local` on the Actions runner and attaches the `.apk` to a GitHub release. Signing credentials come from EAS (`EXPO_TOKEN` secret). Build profiles live in `frontend/eas.json`.
 
 ### Deployment
-- Root `docker-compose.yml` + `.env` (see `.env.example`) runs Postgres, the backend with the `prod` profile, and an Expo web export served by Nginx on port 8082. Nginx proxies `/api` to the backend.
+- Root `docker-compose.yml` + `.env` (see `.env.example`) runs Postgres, the backend with the `prod` profile, and an Expo web export served by Nginx on port 8082. Nginx proxies `/api` to the backend. The backend has a Docker healthcheck on `/actuator/health/readiness` (Actuator exposes only health, without details, and it is not proxied), and the frontend waits for it via `condition: service_healthy`.
 
 ## Architecture
 
