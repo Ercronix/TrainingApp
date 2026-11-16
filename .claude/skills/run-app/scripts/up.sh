@@ -8,7 +8,7 @@ set -euo pipefail
 
 ROOT="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 LOGS="${RUN_APP_DIR:-/tmp/trainingapp-run}"
-WEB_PORT="${WEB_PORT:-8082}" # the local backend's CORS allows 8082; 8081 is taken on this machine
+WEB_PORT="${WEB_PORT:-8082}" # must be an origin in cors.allowed.origins (application-local.properties)
 mkdir -p "$LOGS"
 
 listening() { ss -ltn "sport = :$1" | grep -q LISTEN; }

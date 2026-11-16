@@ -30,8 +30,8 @@
 // Console errors and uncaught exceptions are printed at the end.
 
 import { spawn } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { accessSync, constants, mkdirSync, writeFileSync } from "node:fs";
+import { delimiter, join } from "node:path";
 
 const CHROME_PORT = 9333;
 const RUN_DIR = process.env.RUN_APP_DIR ?? "/tmp/trainingapp-run";
@@ -73,11 +73,35 @@ async function chromeVersion() {
   }
 }
 
+// $CHROME_BIN, else the first Chrome/Chromium found on PATH
+function chromeBinary() {
+  if (process.env.CHROME_BIN) {
+    try {
+      accessSync(process.env.CHROME_BIN, constants.X_OK);
+      return process.env.CHROME_BIN;
+    } catch {
+      fail(`CHROME_BIN=${process.env.CHROME_BIN} is not an executable`);
+    }
+  }
+  const names = ["google-chrome-stable", "google-chrome", "chromium", "chromium-browser"];
+  const dirs = (process.env.PATH ?? "").split(delimiter).filter(Boolean);
+  for (const name of names) {
+    for (const dir of dirs) {
+      const path = join(dir, name);
+      try {
+        accessSync(path, constants.X_OK);
+        return path;
+      } catch {}
+    }
+  }
+  fail(`no Chrome found (tried ${names.join(", ")}); set CHROME_BIN`);
+}
+
 async function ensureChrome() {
   let info = await chromeVersion();
   if (info) return info;
   spawn(
-    "google-chrome-stable",
+    chromeBinary(),
     [
       "--headless=new",
       `--remote-debugging-port=${CHROME_PORT}`,

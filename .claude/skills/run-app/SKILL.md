@@ -8,6 +8,15 @@ description: Start the TrainingApp locally (Postgres, Spring Boot backend, Expo 
 Scripts are in `.claude/skills/run-app/scripts/` (paths below are relative to that directory).
 Logs and screenshots go to `/tmp/trainingapp-run/` (override with `RUN_APP_DIR`).
 
+## 0. On a new machine
+
+Needs Docker, Node, Java 21 and Chrome or Chromium (found on PATH as `google-chrome-stable`,
+`google-chrome`, `chromium` or `chromium-browser`; otherwise set `CHROME_BIN`), plus `ss` (iproute2).
+Two gitignored files must exist: `backend/.env` (`POSTGRES_DB/USER/PASSWORD`) and
+`backend/training-backend/src/main/resources/application-local.properties` (`jwt.secret`, the
+datasource password, and `cors.allowed.origins` including `http://localhost:8082`). Run
+`npm ci` in `frontend/` once.
+
 ## 1. Start the stack
 
 ```bash
@@ -19,7 +28,8 @@ web 8082). It waits until the backend answers and the web bundle is built (about
 up to a few minutes on a cold Gradle/Metro cache). On failure it prints the log tail; full
 logs are `backend.log` and `web.log`.
 
-- Web must be on **8082**: the local backend's CORS only allows that origin (8081 is taken on this machine).
+- Web runs on **8082**, which must be in the backend's `cors.allowed.origins`. For another port set
+  `WEB_PORT` for both `up.sh` and `browser.mjs` and add that origin to the CORS list.
 - Metro watches files, so frontend edits hot reload. Backend changes need `./down.sh backend && ./up.sh backend`.
 - After `npx expo install <pkg>`, restart web (`./down.sh web && ./up.sh web`), or the bundle fails to resolve it.
 - In a git worktree, copy `backend/.env` and `backend/training-backend/src/main/resources/application-local.properties`
@@ -89,10 +99,10 @@ the calling shell when its command line contains that text and kills it (exit 14
 ## Android emulator (native-only bugs)
 
 Web can't show native-only problems (style props overriding className, Animated/transform
-issues, the native pager going blank). On this machine:
+issues, the native pager going blank). The SDK path and AVD name differ per machine
+(`emulator -list-avds`); one setup that works is SDK in `~/Android/Sdk`, AVD `pixel7_api35`:
 
-- SDK in `~/Android/Sdk` (not `/opt/android-sdk`), AVD `pixel7_api35`:
-  `emulator -avd pixel7_api35 -no-window -no-audio -no-snapshot -gpu swiftshader_indirect`
+- `emulator -avd <avd> -no-window -no-audio -no-snapshot -gpu swiftshader_indirect`
 - With `./up.sh` running: `adb reverse tcp:8082 tcp:8082 && adb reverse tcp:8080 tcp:8080`, then
   `adb shell am start -a android.intent.action.VIEW -d exp://127.0.0.1:8082` (Expo Go 54.0.8).
 - Native builds always call the production API: temporarily point `services/api.ts` at
@@ -101,7 +111,8 @@ issues, the native pager going blank). On this machine:
 - Wait about 25 s after a cold start before input. Expo Go sometimes crashes on launch; relaunch.
   Screenshot with `adb exec-out screencap -p > file.png` (call `adb` directly, not through a
   variable, so the allowlisted rule matches). Gesture-handler changes need a force-stop and relaunch.
-- Local user `emutest` / `emutest123` already has a split and sessions.
+- Users live in each machine's own dev DB. If `emutest` / `emutest123` doesn't exist there yet,
+  create it with `node seed.mjs --login emutest:emutest123` (it registers the user if needed).
 
 ## Backend tests
 

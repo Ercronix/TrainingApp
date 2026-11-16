@@ -6,6 +6,8 @@
 //
 //   node seed.mjs [--login new | <user>:<pass>] [--weeks 6] [--per-week 3]
 //
+// --login <user>:<pass> registers that user first if it doesn't exist yet.
+//
 // Sessions go through the API, then their dates are moved into the past with SQL in the
 // training-db container (the API always stamps "now"). Never point this at production.
 
@@ -44,7 +46,15 @@ if (login === "new") {
   ({ token } = await call("POST", "/auth/register", { username, email: `${username}@example.com`, password }));
 } else {
   [username, password] = [login.split(":")[0], login.split(":").slice(1).join(":")];
-  ({ token } = await call("POST", "/auth/login", { username, password }));
+  try {
+    ({ token } = await call("POST", "/auth/login", { username, password }));
+  } catch (e) {
+    // Unknown user (e.g. a fresh dev DB on another machine): register it. If the name is
+    // taken with a different password, register fails with a 409 and that error is shown.
+    if (!/-> 401 /.test(e.message)) throw e;
+    ({ token } = await call("POST", "/auth/register", { username, email: `${username}@example.com`, password }));
+    console.log(`registered ${username}`);
+  }
 }
 const { userId } = await call("GET", "/auth/me");
 
