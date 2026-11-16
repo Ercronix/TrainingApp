@@ -3,7 +3,7 @@ import { TrainingSplit } from '@/types';
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSplits } from '@/hooks/useSplits';
-import { ActionMenu } from '@/components/ActionMenu';
+import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { useTheme } from '@/hooks/useTheme';
 import { confirm } from '@/utils/confirm';
 import { Tactile } from '@/components/Tactile';
@@ -24,8 +24,9 @@ export default function SplitsScreen() {
   };
 
   const renderSplitItem = ({ item, index }: { item: TrainingSplit; index: number }) => (
-    <View
-      className={`bg-surface rounded-md rim mb-2 flex-row items-center pr-3 ${item.isActive ? 'border-accent' : 'border-edge'}`}
+    <ActionCard
+      className={`bg-surface rounded-md rim mb-2 ${item.isActive ? 'border-accent' : 'border-edge'}`}
+      contentClassName="flex-row items-center pr-3"
     >
       <TouchableOpacity
         className="flex-1 pl-5 pr-2 py-5 flex-row items-center"
@@ -67,7 +68,7 @@ export default function SplitsScreen() {
           { icon: 'trash-outline', label: 'Delete', destructive: true, onPress: () => handleDelete(item.id, item.name) },
         ]}
       />
-    </View>
+    </ActionCard>
   );
 
   if (isLoading) {

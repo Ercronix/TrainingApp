@@ -14,7 +14,7 @@ import { useKeepScreenOn } from '@/hooks/useKeepScreenOn';
 import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { Tactile } from '@/components/Tactile';
-import { ActionMenu } from '@/components/ActionMenu';
+import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
@@ -152,8 +152,9 @@ export default function TrainingScreen() {
     // Swap or remove it for this session only
     const editable = !syncing && !training?.isCompleted;
     return (
-      <View
-        className={`rounded-md mb-2 flex-row items-center overflow-hidden rim ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
+      <ActionCard
+        className={`rounded-md mb-2 rim ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
+        contentClassName="flex-row items-center"
       >
         {/* The whole row opens the log screen */}
         <TouchableOpacity
@@ -222,7 +223,7 @@ export default function TrainingScreen() {
             {item.completed && <Ionicons name="checkmark" size={16} color={c.accentFg} />}
           </View>
         </TouchableOpacity>
-      </View>
+      </ActionCard>
     );
   };
 

@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ActionMenu } from '@/components/ActionMenu';
+import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { confirm } from '@/utils/confirm';
 import { formatDaysAgo } from '@/utils/dates';
 import { Workout } from '@/types';
@@ -24,7 +24,7 @@ export function WorkoutRow({ workout, index, splitId, onDelete, lastDoneAt, isNe
   };
 
   return (
-    <View className="bg-surface rounded-md rim border-edge mb-2 flex-row items-center pr-3">
+    <ActionCard className="bg-surface rounded-md rim border-edge mb-2" contentClassName="flex-row items-center pr-3">
       <TouchableOpacity
         className="flex-1 pl-5 pr-2 py-5 flex-row items-center gap-3"
         onPress={() =>
@@ -68,6 +68,6 @@ export function WorkoutRow({ workout, index, splitId, onDelete, lastDoneAt, isNe
           { icon: 'trash-outline', label: 'Delete', destructive: true, onPress: handleDelete },
         ]}
       />
-    </View>
+    </ActionCard>
   );
 }
