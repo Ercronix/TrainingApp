@@ -50,6 +50,7 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 - `backend/training-backend/`: REST API, auth, business logic, persistence.
 - `backend/docker-compose.yml`: local PostgreSQL container setup.
 - `docker-compose.yml` (repo root): production deployment (PostgreSQL, backend, Expo web build behind Nginx).
+  The backend container has a Docker healthcheck on Spring Boot Actuator's readiness probe (`/actuator/health/readiness`), and the Nginx frontend only starts once it reports healthy, i.e. after Flyway has migrated. Health is the only Actuator endpoint, shows just the status and stays internal, since Nginx only proxies `/api`.
 - JWT-protected API routes (`/api/**`, except `/api/auth/**`).
 - Flyway migrations in `backend/training-backend/src/main/resources/db/migration` manage the schema.
 

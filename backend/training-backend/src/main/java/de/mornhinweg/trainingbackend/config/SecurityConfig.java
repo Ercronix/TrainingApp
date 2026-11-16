@@ -65,6 +65,8 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
             // Sent by the ntfy app, which has no login; the secret token in the path stands in for it
             .requestMatchers(HttpMethod.POST, "/api/stretch/reminder/done/*").permitAll()
+            // Docker healthcheck (status only, no details; not proxied by Nginx). No other actuator endpoint is exposed
+            .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
             .anyRequest().authenticated()
         )
         // Missing/expired token -> 401 (default would be 403), so clients know to refresh
