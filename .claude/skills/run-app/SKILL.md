@@ -10,12 +10,11 @@ Logs and screenshots go to `/tmp/trainingapp-run/` (override with `RUN_APP_DIR`)
 
 ## 0. On a new machine
 
-Needs Docker, Node, Java 21 and Chrome or Chromium (found on PATH as `google-chrome-stable`,
-`google-chrome`, `chromium` or `chromium-browser`; otherwise set `CHROME_BIN`), plus `ss` (iproute2).
-Two gitignored files must exist: `backend/.env` (`POSTGRES_DB/USER/PASSWORD`) and
-`backend/training-backend/src/main/resources/application-local.properties` (`jwt.secret`, the
-datasource password, and `cors.allowed.origins` including `http://localhost:8082`). Run
-`npm ci` in `frontend/` once.
+Follow "Run Locally" in the README first: prerequisites, the two gitignored config files (copied
+from `backend/.env.example` and `application-local.properties.example`, whose CORS list must include
+`http://localhost:8082`) and `npm ci` in `frontend/`. On top of that the skill needs Chrome or
+Chromium (found on PATH as `google-chrome-stable`, `google-chrome`, `chromium` or
+`chromium-browser`; otherwise set `CHROME_BIN`) and `ss` (iproute2).
 
 ## 1. Start the stack
 
