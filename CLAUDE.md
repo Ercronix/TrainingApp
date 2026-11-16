@@ -16,7 +16,10 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 - Local DB: `cd backend && docker compose up -d` (needs `backend/.env` with `POSTGRES_DB/USER/PASSWORD`).
 - Run: `./gradlew bootRun` (port 8080). The `local` profile is active by default and reads `application-local.properties`, which is gitignored and holds `jwt.secret`, the datasource password and CORS origins.
 - Tests: `./gradlew test`. Single test: `./gradlew test --tests 'de.mornhinweg.trainingbackend.controller.AuthControllerTest'` (append `.methodName` for one method).
-- Tests are `@SpringBootTest` and need a running Postgres with Flyway migrations. Without `application-local.properties`, provide `SPRING_DATASOURCE_PASSWORD`, `JWT_SECRET` and `CORS_ALLOWED_ORIGINS` as env vars (see `.github/workflows/ci.yml`).
+- Tests are `@SpringBootTest` against a throwaway Postgres started by Testcontainers (needs Docker; not the dev DB). Every `@SpringBootTest` class must `@Import(TestcontainersConfiguration.class)`. `src/test/resources/config/application.properties` supplies test defaults for `jwt.secret` and CORS, so tests also run without `application-local.properties` (CI, worktrees).
+
+### Running the app
+- The `run-app` skill (`.claude/skills/run-app/`) starts db/backend/web, seeds a user with history and drives the web build in headless Chrome (screenshots, taps, swipes, page text, console errors). Use it to check UI changes.
 
 ### Android builds
 - `.github/workflows/android-build.yml` (manual `workflow_dispatch` with a profile input) runs `eas build --local` on the Actions runner and attaches the `.apk` to a GitHub release. Signing credentials come from EAS (`EXPO_TOKEN` secret). Build profiles live in `frontend/eas.json`.
