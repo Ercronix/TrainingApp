@@ -51,51 +51,64 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 - `backend/docker-compose.yml`: local PostgreSQL container setup.
 - `docker-compose.yml` (repo root): production deployment (PostgreSQL, backend, Expo web build behind Nginx).
 - JWT-protected API routes (`/api/**`, except `/api/auth/**`).
-- Flyway migrations manage schema evolution (`V1` to `V13`).
+- Flyway migrations in `backend/training-backend/src/main/resources/db/migration` manage the schema.
 
 ## Run Locally
 
 ### Prerequisites
 
-- Node.js 18+ and npm
-- Java 21
-- Docker (recommended for local PostgreSQL)
+- Node.js 22 (what CI uses) and npm
+- Java 21 (Gradle itself comes with the wrapper)
+- Docker, for the local PostgreSQL and the backend tests
 
-### 1) Start PostgreSQL
+### 1) Create the local config (once per machine)
 
-Create `backend/.env`:
+Two files hold local secrets and are gitignored, so every machine needs its own copy. Copy the examples:
 
-```env
-POSTGRES_DB= ""
-POSTGRES_USER= ""
-POSTGRES_PASSWORD= ""
+```bash
+cp backend/.env.example backend/.env
+cp backend/training-backend/src/main/resources/application-local.properties.example \
+   backend/training-backend/src/main/resources/application-local.properties
 ```
 
-Then run:
+Then edit them:
+
+- Pick a database password and put it in both files (`POSTGRES_PASSWORD` and `spring.datasource.password`).
+- Set `jwt.secret` to a random string of at least 32 characters (`openssl rand -hex 32`).
+- `cors.allowed.origins` must list the URL the web app runs on. The example allows Expo's
+  `http://localhost:8081` and `http://localhost:8082`.
+
+### 2) Start PostgreSQL
 
 ```bash
 cd backend
 docker compose up -d
 ```
 
-### 2) Start backend
+The data lives in a Docker volume, so each machine has its own dev database and accounts.
+
+### 3) Start backend
 
 ```bash
 cd backend/training-backend
 ./gradlew bootRun
 ```
 
-Backend runs on `http://localhost:8080`.
+Backend runs on `http://localhost:8080`. Flyway creates the schema on first start.
 
-### 3) Start frontend
+### 4) Start frontend
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run start
 ```
 
-Open on web (`w`) or mobile via Expo QR code.
+Open on web (`w`) or mobile via Expo QR code. Native builds always call the production API (see Environment Notes).
+
+### With Claude Code
+
+The `run-app` skill (`.claude/skills/run-app/`) starts the database, backend and web build, can seed a user with weeks of training history (`node .claude/skills/run-app/scripts/seed.mjs`) and drives the web app in headless Chrome for screenshots. It needs Chrome or Chromium and the config from step 1.
 
 ## Build Android APK
 
@@ -140,11 +153,18 @@ Output APK: `frontend/android/app/build/outputs/apk/release/app-release.apk` (or
 ## Tests and CI
 
 ```bash
-(cd frontend && npx tsc --noEmit)                  # frontend typecheck
-(cd backend/training-backend && ./gradlew test)    # backend tests (need a running PostgreSQL)
+cd frontend
+npx tsc --noEmit     # typecheck
+npm run lint         # ESLint; warnings fail CI
+npm test             # Jest unit tests for utils/ (*.test.ts next to each module)
+
+cd backend/training-backend
+./gradlew test       # Spring Boot tests
 ```
 
-The CI workflow (`.github/workflows/ci.yml`) runs both on every push and pull request to `main`.
+The backend tests start their own throwaway PostgreSQL through Testcontainers, so they only need Docker running. They don't touch the dev database and don't need `application-local.properties`.
+
+The CI workflow (`.github/workflows/ci.yml`) runs all of these on every push and pull request to `main`. Dependabot (`.github/dependabot.yml`) opens weekly dependency update PRs; Expo-pinned packages are left out and upgraded together with `npx expo install --fix` on an SDK bump.
 
 ## API Overview
 

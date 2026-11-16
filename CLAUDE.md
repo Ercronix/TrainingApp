@@ -8,13 +8,15 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 
 ### Frontend (`frontend/`)
 - `npm ci` then `npm run start` (Expo dev server; `w` for web). `npm run web` for web only.
-- Checks CI runs (there is no test suite): `npx tsc --noEmit` and `npm run lint` (ESLint,
-  `eslint-config-expo` flat config). Lint runs with `--max-warnings 0`, so warnings fail CI.
+- Checks CI runs: `npx tsc --noEmit`, `npm run lint` (ESLint, `eslint-config-expo` flat config)
+  and `npm test` (Jest with the `jest-expo` preset). Lint runs with `--max-warnings 0`, so warnings fail CI.
+- Unit tests cover the pure logic in `utils/` and sit next to each module as `*.test.ts`; shared
+  data builders are in `test/factories.ts`. Single file: `npm test -- utils/muscles.test.ts`.
 - Imports use the `@/` alias for the `frontend/` root.
 
 ### Backend (`backend/training-backend/`, Java 21, Gradle wrapper)
-- Local DB: `cd backend && docker compose up -d` (needs `backend/.env` with `POSTGRES_DB/USER/PASSWORD`).
-- Run: `./gradlew bootRun` (port 8080). The `local` profile is active by default and reads `application-local.properties`, which is gitignored and holds `jwt.secret`, the datasource password and CORS origins.
+- Local DB: `cd backend && docker compose up -d` (needs `backend/.env`, copied from `backend/.env.example`).
+- Run: `./gradlew bootRun` (port 8080). The `local` profile is active by default and reads `application-local.properties`, which is gitignored and holds `jwt.secret`, the datasource password and CORS origins; copy it from `application-local.properties.example` next to it. The README's "Run Locally" is the setup for a new machine; keep it in sync when local config changes.
 - Tests: `./gradlew test`. Single test: `./gradlew test --tests 'de.mornhinweg.trainingbackend.controller.AuthControllerTest'` (append `.methodName` for one method).
 - Tests are `@SpringBootTest` against a throwaway Postgres started by Testcontainers (needs Docker; not the dev DB). Every `@SpringBootTest` class must `@Import(TestcontainersConfiguration.class)`. `src/test/resources/config/application.properties` supplies test defaults for `jwt.secret` and CORS, so tests also run without `application-local.properties` (CI, worktrees).
 
