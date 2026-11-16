@@ -23,6 +23,7 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npm run lint
+      - run: npm test -- --ci
 
   backend-test:
     name: Backend tests
@@ -36,6 +37,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+          cache: gradle
       # Tests start their own Postgres through Testcontainers (Docker is preinstalled
       # on ubuntu-latest) and use the test defaults in src/test/resources/config.
       - run: ./gradlew test --no-daemon

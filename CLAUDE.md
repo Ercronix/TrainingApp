@@ -8,8 +8,10 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 
 ### Frontend (`frontend/`)
 - `npm ci` then `npm run start` (Expo dev server; `w` for web). `npm run web` for web only.
-- Checks CI runs (there is no test suite): `npx tsc --noEmit` and `npm run lint` (ESLint,
-  `eslint-config-expo` flat config). Lint runs with `--max-warnings 0`, so warnings fail CI.
+- Checks CI runs: `npx tsc --noEmit`, `npm run lint` (ESLint, `eslint-config-expo` flat config)
+  and `npm test` (Jest with the `jest-expo` preset). Lint runs with `--max-warnings 0`, so warnings fail CI.
+- Unit tests cover the pure logic in `utils/` and sit next to each module as `*.test.ts`; shared
+  data builders are in `test/factories.ts`. Single file: `npm test -- utils/muscles.test.ts`.
 - Imports use the `@/` alias for the `frontend/` root.
 
 ### Backend (`backend/training-backend/`, Java 21, Gradle wrapper)
