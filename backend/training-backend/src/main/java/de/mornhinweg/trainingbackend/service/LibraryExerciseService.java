@@ -224,6 +224,7 @@ public class LibraryExerciseService {
             .sets(SetLogResponse.fromAll(log.getSetLogs()))
             .trainingLogId(log.getTrainingLog().getId())
             .workoutName(log.getExercise().getWorkout().getName())
+            .deload(Boolean.TRUE.equals(log.getTrainingLog().getDeload()))
             .build())
         .collect(Collectors.toList());
 

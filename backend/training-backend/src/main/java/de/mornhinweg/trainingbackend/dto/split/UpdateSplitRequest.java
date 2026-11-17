@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -16,4 +18,11 @@ public class UpdateSplitRequest {
   private String name;
 
   private Integer currentBlock;
+
+  // Mesocycle length in weeks (2-12, the last a deload), 0 to turn it off, or null to leave it
+  private Integer mesocycleWeeks;
+
+  // The client's local date the cycle's first week started on, or null to leave it (today when a
+  // mesocycle is turned on without one)
+  private LocalDate mesocycleStartDate;
 }

@@ -3,6 +3,7 @@ package de.mornhinweg.trainingbackend.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,14 @@ public class TrainingSplit {
   @Column(name = "current_block", nullable = false)
   @Builder.Default
   private Integer currentBlock = 1;
+
+  // Optional planned mesocycle (both null when off): its length in weeks, the last being a deload,
+  // and the client's local date its first week started on. See Mesocycle.
+  @Column(name = "mesocycle_weeks")
+  private Integer mesocycleWeeks;
+
+  @Column(name = "mesocycle_start_date")
+  private LocalDate mesocycleStartDate;
 
   @OneToMany(mappedBy = "split", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("orderIndex ASC")

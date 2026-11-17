@@ -40,6 +40,7 @@ public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> 
       WHERE el.exercise.libraryExercise.id = :libraryExerciseId
         AND el.completed = true
         AND tl.completedAt IS NOT NULL
+        AND tl.deload = false
         AND tl.id <> :excludeTrainingLogId
       ORDER BY tl.completedAt DESC
       LIMIT 1

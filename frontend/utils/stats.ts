@@ -91,6 +91,8 @@ export interface SessionPoint {
   workingSets: SetLog[];
   trainingLogId: number;
   workoutName: string;
+  /** A planned deload session: lighter on purpose, so it stays out of the trend (see trendPoints). */
+  deload: boolean;
 }
 
 export function toSessionPoints(entries: ExerciseProgressEntry[], timed = false): SessionPoint[] {
@@ -109,10 +111,20 @@ export function toSessionPoints(entries: ExerciseProgressEntry[], timed = false)
         workingSets: working,
         trainingLogId: e.trainingLogId,
         workoutName: e.workoutName,
+        deload: e.deload === true,
       };
     })
     .filter((p) => Number.isFinite(p.date))
     .sort((a, b) => a.date - b.date);
+}
+
+/**
+ * The sessions that describe progress: deload sessions are lighter on purpose, so they're left
+ * out, unless there is nothing else yet.
+ */
+export function trendPoints(points: SessionPoint[]): SessionPoint[] {
+  const regular = points.filter((p) => !p.deload);
+  return regular.length > 0 ? regular : points;
 }
 
 export function classifyExercise(points: SessionPoint[], timed: boolean): ExerciseKind {
@@ -224,8 +236,11 @@ export function analyzeProgression(series: { date: number; value: number }[], be
 
 export interface ExerciseStats {
   kind: ExerciseKind;
+  /** The sessions behind the trend, bests and records: deloads excluded (see trendPoints). */
   points: SessionPoint[];
+  /** Every session, deloads included. They count toward sessions, volume, sets and reps. */
   sessions: number;
+  deloadSessions: number;
   bestWeight: SessionPoint | null;
   bestE1rm: SessionPoint | null;
   bestVolume: SessionPoint | null;
@@ -261,9 +276,10 @@ function maxBy<T>(items: T[], fn: (t: T) => number): T | null {
 }
 
 export function computeExerciseStats(entries: ExerciseProgressEntry[], timed: boolean): ExerciseStats | null {
-  const points = toSessionPoints(entries, timed).filter((p) => p.reps > 0 || p.weight > 0);
-  if (points.length === 0) return null;
-  const kind = classifyExercise(points, timed);
+  const all = toSessionPoints(entries, timed).filter((p) => p.reps > 0 || p.weight > 0);
+  if (all.length === 0) return null;
+  const points = trendPoints(all);
+  const kind = classifyExercise(all, timed);
   const value = (p: SessionPoint) => primaryValue(p, kind);
 
   const first = value(points[0]);
@@ -281,12 +297,13 @@ export function computeExerciseStats(entries: ExerciseProgressEntry[], timed: bo
     }
   });
 
-  const spanWeeks = Math.max(1, (last.date - points[0].date) / WEEK_MS);
+  const spanWeeks = Math.max(1, (all[all.length - 1].date - all[0].date) / WEEK_MS);
 
   return {
     kind,
     points,
-    sessions: points.length,
+    sessions: all.length,
+    deloadSessions: all.filter((p) => p.deload).length,
     bestWeight: kind === 'weighted' ? maxBy(points, (p) => p.weight) : null,
     bestE1rm: kind === 'weighted' ? maxBy(points, (p) => p.e1rm) : null,
     bestVolume: kind === 'weighted' ? maxBy(points, (p) => p.volume) : null,
@@ -295,10 +312,10 @@ export function computeExerciseStats(entries: ExerciseProgressEntry[], timed: bo
     latest,
     change: latest - first,
     changePct: first > 0 ? ((latest - first) / first) * 100 : null,
-    totalVolume: points.reduce((s, p) => s + p.volume, 0),
-    totalSets: points.reduce((s, p) => s + p.sets, 0),
-    totalReps: points.reduce((s, p) => s + p.totalReps, 0),
-    sessionsPerWeek: points.length > 1 ? points.length / spanWeeks : 0,
+    totalVolume: all.reduce((s, p) => s + p.volume, 0),
+    totalSets: all.reduce((s, p) => s + p.sets, 0),
+    totalReps: all.reduce((s, p) => s + p.totalReps, 0),
+    sessionsPerWeek: all.length > 1 ? all.length / spanWeeks : 0,
     latestIntensity: best > 0 ? (latest / best) * 100 : null,
     sincePr: points.length > 1
       ? { sessions: points.length - 1 - prIndex, days: Math.floor((Date.now() - points[prIndex].date) / DAY_MS) }
@@ -415,6 +432,7 @@ export function computeTrainingAnalytics(logs: TrainingLog[], weekCount = 12, no
         sets,
         trainingLogId: log.id,
         workoutName: log.workoutName,
+        deload: log.deload === true,
       });
       byExercise.set(ex.libraryExerciseId, group);
     }

@@ -5,6 +5,7 @@ import { useTraining } from '@/hooks/useTraining';
 import { useHistory } from '@/hooks/useHistory';
 import { useExercises } from '@/hooks/useExercises';
 import { confirm } from '@/utils/confirm';
+import { DeloadBadge } from '@/components/DeloadBadge';
 import { ExerciseLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { formatSets, setsOf } from '@/utils/sets';
@@ -127,6 +128,11 @@ export default function HistoryDetailScreen() {
           <Text className="text-subtle text-xs">
             {formatDate(training.startedAt)} · {formatTime(training.startedAt)}
           </Text>
+        )}
+        {training?.deload && (
+          <View className="mt-2">
+            <DeloadBadge label="DELOAD WEEK" />
+          </View>
         )}
       </View>
 

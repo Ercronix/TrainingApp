@@ -31,6 +31,10 @@ export interface TrainingSplit {
     name: string;
     isActive: boolean;
     currentBlock: number;
+    /** Planned mesocycle (the last week a deload): both null when off, missing in older cached data. */
+    mesocycleWeeks?: number | null;
+    /** YYYY-MM-DD, the device's local date week 1 started on. */
+    mesocycleStartDate?: string | null;
     workoutCount: number;
     createdAt: string;
     updatedAt: string;
@@ -38,6 +42,15 @@ export interface TrainingSplit {
 
 export interface CreateSplitRequest {
     name: string;
+}
+
+export interface UpdateSplitRequest {
+    name: string;
+    currentBlock?: number;
+    /** 0 turns the mesocycle off; left out, it stays as it is. */
+    mesocycleWeeks?: number;
+    /** YYYY-MM-DD; left out, it stays as it is (today when a mesocycle is turned on). */
+    mesocycleStartDate?: string;
 }
 
 export interface TrainingLog {
@@ -52,6 +65,8 @@ export interface TrainingLog {
   lastActivityAt?: string;
   durationSeconds: number | null;
   notes: string | null;
+  /** Started in a deload week; the planned values come lowered from the server. Missing in older cached data. */
+  deload?: boolean;
   exercises: ExerciseLog[];
   isCompleted: boolean;
 }
@@ -213,6 +228,8 @@ export interface ExerciseProgressEntry {
   sets?: SetLog[];
   trainingLogId: number;
   workoutName: string;
+  /** From a deload session: left out of the progression trend. Missing in older cached data. */
+  deload?: boolean;
 }
 
 // Covers every workout that uses the same library exercise

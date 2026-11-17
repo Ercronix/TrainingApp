@@ -6,6 +6,7 @@ import { useHistory } from '@/hooks/useHistory';
 import { isInProgress } from '@/hooks/useActiveTraining';
 import { confirm } from '@/utils/confirm';
 import { ActionCard, ActionMenu } from '@/components/ActionMenu';
+import { DeloadBadge } from '@/components/DeloadBadge';
 import { TrainingLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
@@ -112,6 +113,7 @@ export default function HistoryScreen() {
               <Text className="text-muted text-[11px] tracking-wider">
                 {item.splitName} · {formatDate(item.startedAt)}
               </Text>
+              {item.deload && <View className="mt-1.5"><DeloadBadge /></View>}
             </View>
             <ActionMenu
               accessibilityLabel={`Options for ${item.workoutName || item.splitName}`}

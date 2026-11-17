@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest, StretchReminder, StretchReminderRequest } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, UpdateSplitRequest, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest, StretchReminder, StretchReminderRequest } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -183,8 +183,15 @@ export const splitsApi = {
     return response.data;
   },
 
-  update: async (id: number, data: { name: string; currentBlock?: number }): Promise<TrainingSplit> => {
+  /** `mesocycleWeeks` 0 turns the mesocycle off; fields left out stay unchanged. */
+  update: async (id: number, data: UpdateSplitRequest): Promise<TrainingSplit> => {
     const response = await api.put(`/splits/${id}`, data);
+    return response.data;
+  },
+
+  /** `startDate` (the device's local date) becomes the first day of week 1. */
+  restartMesocycle: async (id: number, startDate: string): Promise<TrainingSplit> => {
+    const response = await api.post(`/splits/${id}/mesocycle/restart`, { startDate });
     return response.data;
   },
 
@@ -296,8 +303,9 @@ export const catalogApi = {
 
 // Training Logs API
 export const trainingLogsApi = {
-  start: async (workoutId: number): Promise<TrainingLog> => {
-    const response = await api.post("/training-logs/start", { workoutId });
+  /** `localDate` (YYYY-MM-DD) decides whether the session falls in the split's deload week. */
+  start: async (workoutId: number, localDate: string): Promise<TrainingLog> => {
+    const response = await api.post("/training-logs/start", { workoutId, localDate });
     return response.data;
   },
 

@@ -19,6 +19,10 @@ import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
 import { haptics } from '@/utils/haptics';
+import { useSplits } from '@/hooks/useSplits';
+import { DeloadBadge, MesocycleWeekLabel } from '@/components/DeloadBadge';
+import { splitMesocycleWeek } from '@/utils/mesocycle';
+import { localDay } from '@/utils/stretch';
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--:--';
@@ -37,6 +41,11 @@ export default function TrainingScreen() {
   const [dockHeight, setDockHeight] = useState(0);
   const c = useTheme();
   const isOnline = useIsOnline();
+  const { splits } = useSplits();
+  // The week the session was started in (whether it's a deload is decided by the server)
+  const cycleWeek = training
+    ? splitMesocycleWeek(splits?.find((s) => s.id === training.splitId), localDay(new Date(training.startedAt)))
+    : null;
   // The phone stays ready between sets instead of locking
   useKeepScreenOn(!training?.isCompleted);
   const elapsedSeconds = useElapsedSeconds({
@@ -252,6 +261,14 @@ export default function TrainingScreen() {
         <Text className="text-accent-text text-[10px] tracking-[4px]" numberOfLines={1}>
           {[training?.workoutName, training?.splitName].filter(Boolean).join(' · ').toUpperCase()}
         </Text>
+        {training?.deload ? (
+          <View className="flex-row items-center gap-2">
+            <DeloadBadge label="DELOAD WEEK" />
+            <Text className="text-muted text-[11px] flex-shrink">Lighter targets: fewer sets at a lower weight</Text>
+          </View>
+        ) : cycleWeek && !cycleWeek.deload ? (
+          <MesocycleWeekLabel week={cycleWeek} />
+        ) : null}
         <Text className="text-primary text-[28px] font-bold tracking-tighter">
           {allDone ? 'All done' : `${completedCount} of ${totalCount} done`}
         </Text>

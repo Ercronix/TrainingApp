@@ -134,6 +134,12 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
             ))}
           </View>
         </View>
+        {stats.deloadSessions > 0 && stats.points.length < stats.sessions && (
+          <Text className="text-muted text-[10px] mt-2">
+            {stats.deloadSessions === 1 ? '1 deload session is' : `${stats.deloadSessions} deload sessions are`} left
+            out of the chart, records and trend. They still count toward the totals.
+          </Text>
+        )}
       </View>
 
       {/* Numbers */}
