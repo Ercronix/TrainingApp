@@ -9,6 +9,9 @@ import de.mornhinweg.trainingbackend.dto.stretch.UpdateStretchReminderRequest;
 import de.mornhinweg.trainingbackend.dto.stretch.UpdateStretchRoutineRequest;
 import de.mornhinweg.trainingbackend.service.StretchReminderService;
 import de.mornhinweg.trainingbackend.service.StretchService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 
+@Tag(name = "Stretch", description = "Daily stretching routine, check-in days and the ntfy reminder")
 @RestController
 @RequestMapping("/api/stretch")
 @RequiredArgsConstructor
@@ -70,11 +74,13 @@ public class StretchController {
   }
 
   /** Every day the user stretched, ascending. */
+  @Operation(summary = "Days the user stretched, ascending")
   @GetMapping("/check-ins")
   public ResponseEntity<List<LocalDate>> getCheckIns(Authentication authentication) {
     return ResponseEntity.ok(stretchService.getCheckIns(authentication));
   }
 
+  @Operation(summary = "Mark a day as stretched", description = "`day` is the client's local date (yyyy-MM-dd).")
   @PutMapping("/check-ins/{day}")
   public ResponseEntity<Void> checkIn(
       @PathVariable @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate day,
@@ -103,6 +109,7 @@ public class StretchController {
     return ResponseEntity.ok(reminderService.updateReminder(request, authentication));
   }
 
+  @Operation(summary = "Send a test reminder notification now")
   @PostMapping("/reminder/test")
   public ResponseEntity<Void> sendTestReminder(Authentication authentication) {
     reminderService.sendTest(authentication);
@@ -110,6 +117,9 @@ public class StretchController {
   }
 
   /** The notification's "Done" button. Public: the token in the path identifies the user. */
+  @Operation(summary = "Check in from the reminder's \"Done\" button",
+      description = "Public: the secret token in the path, sent in the notification, identifies the user.")
+  @SecurityRequirements
   @PostMapping("/reminder/done/{token}")
   public ResponseEntity<Void> checkInFromNotification(@PathVariable String token) {
     reminderService.checkInFromNotification(token);

@@ -44,6 +44,18 @@ services:
       NTFY_BASE_URL:         ${NTFY_BASE_URL:-}
       NTFY_TOKEN:            ${NTFY_TOKEN:-}
       APP_PUBLIC_URL:        ${APP_PUBLIC_URL:-}
+      # Proxies whose X-Forwarded-For the auth rate limits believe when finding the client IP:
+      # Nginx below and anything else on a Docker network or the host. The backend has no
+      # published port, so only those can reach it. See .env.example.
+      AUTH_RATELIMIT_TRUSTEDPROXIES: ${AUTH_RATE_LIMIT_TRUSTED_PROXIES:-127.0.0.0/8,::1,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7}
+    # Ready once Spring Boot (incl. Flyway migrations) has started. Uses busybox wget, since the
+    # alpine JRE image has no curl. The frontend waits for this before it starts.
+    healthcheck:
+      test:         ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/actuator/health/readiness"]
+      interval:     15s
+      timeout:      5s
+      retries:      3
+      start_period: 120s
 
   # ── Expo web frontend (served by Nginx) ─────────────────────────────────────
   frontend:
@@ -58,7 +70,8 @@ services:
     ports:
       - "8082:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   postgres_data:

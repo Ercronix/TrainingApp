@@ -50,7 +50,9 @@ It was built as a portfolio project to demonstrate end-to-end product developmen
 - `backend/training-backend/`: REST API, auth, business logic, persistence.
 - `backend/docker-compose.yml`: local PostgreSQL container setup.
 - `docker-compose.yml` (repo root): production deployment (PostgreSQL, backend, Expo web build behind Nginx).
+  The backend container has a Docker healthcheck on Spring Boot Actuator's readiness probe (`/actuator/health/readiness`), and the Nginx frontend only starts once it reports healthy, i.e. after Flyway has migrated. Health is the only Actuator endpoint, shows just the status and stays internal, since Nginx only proxies `/api`.
 - JWT-protected API routes (`/api/**`, except `/api/auth/**`).
+- Brute-force protection: login is rate limited per client IP and per username, registration and token refresh per IP (429 with `Retry-After`; limits under `auth.rate-limit.*` in `application.properties`). Behind Nginx the client IP is taken from `X-Forwarded-For` of trusted proxies only (`AUTH_RATE_LIMIT_TRUSTED_PROXIES`, see `.env.example`).
 - Flyway migrations in `backend/training-backend/src/main/resources/db/migration` manage the schema.
 
 ## Run Locally
@@ -166,13 +168,26 @@ The backend tests start their own throwaway PostgreSQL through Testcontainers, s
 
 The CI workflow (`.github/workflows/ci.yml`) runs all of these on every push and pull request to `main`. Dependabot (`.github/dependabot.yml`) opens weekly dependency update PRs; Expo-pinned packages are left out and upgraded together with `npx expo install --fix` on an SDK bump.
 
-## API Overview
+## API Docs
 
-- `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`
-- `GET /api/auth/me`
-- `GET/POST/PUT/DELETE /api/splits`, `GET /api/splits/active`, `PUT /api/splits/{id}/activate`
-- `GET/POST /api/workouts/split/{splitId}`, `GET/PUT/DELETE /api/workouts/{id}`
-- `GET/POST/PUT/PATCH/DELETE /api/workouts/{workoutId}/exercises`
-- `GET /api/exercises/{exerciseId}/progress`
-- `POST /api/training-logs/start`, `GET /api/training-logs`, `GET /api/training-logs/active`, `GET/DELETE /api/training-logs/{id}`, `PUT /api/training-logs/{id}/complete`
-- `POST /api/training-logs/{trainingLogId}/exercise-logs`, `PUT /api/training-logs/exercise-logs/{exerciseLogId}`
+The backend generates an OpenAPI 3.1 spec with springdoc and serves Swagger UI next to it:
+
+- Local: Swagger UI at http://localhost:8080/api/docs, spec at http://localhost:8080/api/docs/openapi.json
+- Production: the same `/api/docs` and `/api/docs/openapi.json` paths on the app's host, since Nginx proxies `/api` to the backend
+
+To try endpoints in Swagger UI, call `POST /api/auth/login` (or `/register`), copy `token` from the response and paste it into "Authorize". Every endpoint needs it except the token endpoints under `/api/auth` and the stretch reminder's "Done" link.
+
+The docs are on in every profile. Switch them off with `springdoc.api-docs.enabled=false` and `springdoc.swagger-ui.enabled=false` (or the `SPRINGDOC_API_DOCS_ENABLED` / `SPRINGDOC_SWAGGER_UI_ENABLED` environment variables).
+
+Endpoints are grouped by domain:
+
+- **Auth** (`/api/auth`): register, log in, refresh and revoke tokens, the current user
+- **Account** (`/api/account`): change username, email or password, delete the account
+- **Splits** (`/api/splits`): training splits, the active one and switching it
+- **Workouts** (`/api/workouts`): the training days of a split
+- **Workout exercises** (`/api/workouts/{workoutId}/exercises`, `/api/exercises/{id}/progress`): a workout's planned exercises, their order and progress
+- **Library** (`/api/library-exercises`): the user's exercise library and progress per entry
+- **Exercise catalog** (`/api/exercise-catalog`): the global catalog and its SVG illustrations
+- **Training logs** (`/api/training-logs`): sessions, their exercise logs and the history
+- **Stats** (`/api/stats`): dashboard statistics
+- **Stretch** (`/api/stretch`): the stretching routine, check-ins and the daily reminder

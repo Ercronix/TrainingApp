@@ -4,6 +4,7 @@ import de.mornhinweg.trainingbackend.dto.split.CreateSplitRequest;
 import de.mornhinweg.trainingbackend.dto.split.SplitResponse;
 import de.mornhinweg.trainingbackend.dto.split.UpdateSplitRequest;
 import de.mornhinweg.trainingbackend.service.TrainingSplitService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Splits", description = "Training splits; one per user is active and tracks the current block")
 @RestController
 @RequestMapping("/api/splits")
 @RequiredArgsConstructor

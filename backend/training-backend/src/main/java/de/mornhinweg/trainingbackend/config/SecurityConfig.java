@@ -1,5 +1,6 @@
 package de.mornhinweg.trainingbackend.config;
 
+import de.mornhinweg.trainingbackend.security.AuthRateLimitFilter;
 import de.mornhinweg.trainingbackend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,6 +36,7 @@ import java.util.List;
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final AuthRateLimitFilter authRateLimitFilter;
   private final UserDetailsService userDetailsService;
 
   @Value("${cors.allowed.origins}")
@@ -65,6 +67,10 @@ public class SecurityConfig {
             .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/refresh", "/api/auth/logout").permitAll()
             // Sent by the ntfy app, which has no login; the secret token in the path stands in for it
             .requestMatchers(HttpMethod.POST, "/api/stretch/reminder/done/*").permitAll()
+            // API docs: the OpenAPI spec and Swagger UI (see springdoc.* in application.properties)
+            .requestMatchers(HttpMethod.GET, "/api/docs", "/api/docs/**", "/api/swagger-ui/**").permitAll()
+            // Docker healthcheck (status only, no details; not proxied by Nginx). No other actuator endpoint is exposed
+            .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/liveness", "/actuator/health/readiness").permitAll()
             .anyRequest().authenticated()
         )
         // Missing/expired token -> 401 (default would be 403), so clients know to refresh
@@ -75,6 +81,8 @@ public class SecurityConfig {
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         )
         .authenticationProvider(authenticationProvider())
+        // Rate limits on the public auth endpoints, ahead of the JWT filter (same slot, added first)
+        .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();

@@ -5,6 +5,8 @@ import de.mornhinweg.trainingbackend.dto.library.CreateLibraryExerciseRequest;
 import de.mornhinweg.trainingbackend.dto.library.LibraryExerciseResponse;
 import de.mornhinweg.trainingbackend.dto.library.UpdateLibraryExerciseRequest;
 import de.mornhinweg.trainingbackend.service.LibraryExerciseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Library", description = "The user's exercise library (name, notes, video, muscles), shared across workouts")
 @RestController
 @RequestMapping("/api/library-exercises")
 @RequiredArgsConstructor
@@ -50,6 +53,7 @@ public class LibraryExerciseController {
     return ResponseEntity.noContent().build();
   }
 
+  @Operation(summary = "Progress history of a library entry across all workouts")
   @GetMapping("/{id}/progress")
   public ResponseEntity<ExerciseProgressResponse> getProgress(
       @PathVariable Long id,

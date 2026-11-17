@@ -1,6 +1,7 @@
 package de.mornhinweg.trainingbackend.exception;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -48,6 +49,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleBadCredentials(BadCredentialsException ex) {
         return errorResponse(HttpStatus.UNAUTHORIZED, "Invalid username or password");
+    }
+
+    // Also thrown by AuthRateLimitFilter, which hands it to this handler
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<Map<String, Object>> handleTooManyRequests(TooManyRequestsException ex) {
+        ResponseEntity<Map<String, Object>> response = errorResponse(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+        return ResponseEntity.status(response.getStatusCode())
+            .header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()))
+            .body(response.getBody());
     }
 
     private ResponseEntity<Map<String, Object>> errorResponse(HttpStatus status, String message) {
