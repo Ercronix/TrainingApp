@@ -1,10 +1,15 @@
 // Builders for the API types the pure utils consume, with only the fields a test cares about set.
 import { ExerciseLog, ExerciseProgressEntry, LibraryExercise, MuscleTarget, SetLog, TrainingLog } from '@/types';
+import type { SetRow } from '@/store/setDraftStore';
 
 export const set = (reps: number, weight: number | null = null, warmup = false): SetLog =>
   ({ reps, weight, rpe: null, warmup });
 
 export const warmup = (reps: number, weight: number | null = null): SetLog => set(reps, weight, true);
+
+/** A row of the log exercise screen, as typed: not done and empty unless overridden. */
+export const setRow = (overrides: Partial<SetRow> = {}): SetRow =>
+  ({ weight: '', reps: '', rpe: '', warmup: false, done: false, ...overrides });
 
 let nextId = 1;
 
