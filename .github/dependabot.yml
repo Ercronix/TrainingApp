@@ -17,7 +17,9 @@ updates:
         update-types: [minor, patch]
     ignore:
       # Expo pins these to the SDK version; upgrade them together with
-      # `npx expo install --fix` on an SDK bump, not one by one.
+      # `npx expo install --fix` on an SDK bump, not one by one. That includes
+      # eslint-config-expo (its major tracks the SDK) and react-test-renderer
+      # (must match the react version the SDK pins).
       - dependency-name: "expo"
       - dependency-name: "expo-*"
       - dependency-name: "@expo/*"
@@ -30,6 +32,12 @@ updates:
       - dependency-name: "@react-native-async-storage/*"
       - dependency-name: "babel-preset-expo"
       - dependency-name: "jest-expo"
+      - dependency-name: "eslint-config-expo"
+      - dependency-name: "react-test-renderer"
+      # eslint-config-expo's plugins (eslint-plugin-react) don't support
+      # ESLint 10 yet; take the major together with an SDK that does.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
