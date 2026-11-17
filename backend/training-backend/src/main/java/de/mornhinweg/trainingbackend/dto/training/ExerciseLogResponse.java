@@ -34,4 +34,8 @@ public class ExerciseLogResponse {
   // Best working set weight and estimated 1RM of sessions completed before this one (null if none)
   private BigDecimal bestWeight;
   private Double bestOneRepMax;
+
+  // The workout exercise's superset group, so a session can run supersets from cached data.
+  // Adjacent logs with the same group form a superset or circuit; null when not grouped.
+  private Integer supersetGroup;
 }

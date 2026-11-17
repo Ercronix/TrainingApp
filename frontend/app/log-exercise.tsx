@@ -9,6 +9,7 @@ import { useLibrary } from '@/hooks/useLibrary';
 import { useRestoredDraft, usePersistDraft } from '@/hooks/useSetDraft';
 import { useTimedSet } from '@/hooks/useTimedSet';
 import { useAutoSaveSets } from '@/hooks/useAutoSaveSets';
+import { useSuperset } from '@/hooks/useSuperset';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 import { RestCountdown } from '@/components/RestTimer';
 import { ExerciseIllustration, useIllustrationCatalogId } from '@/components/ExerciseIllustration';
@@ -16,6 +17,7 @@ import { Tactile } from '@/components/Tactile';
 import { TargetLine } from '@/components/logExercise/TargetLine';
 import { CompactSetRow, SetColumnHeader } from '@/components/logExercise/CompactSetRow';
 import { ExpandedSetRow } from '@/components/logExercise/ExpandedSetRow';
+import { SupersetBar } from '@/components/logExercise/SupersetBar';
 import { useRestTimerStore } from '@/store/restTimerStore';
 import { SetRow } from '@/store/setDraftStore';
 import { useStepSize } from '@/store/stepSizeStore';
@@ -26,12 +28,15 @@ import {
   doneSetsOf, gainOf, isInvalidRow, loggedPatch, nextRow, prefillRows, previousLabel, rowDefaultsOf, setLabels,
   steppedReps, steppedWeight, targetOf,
 } from '@/utils/logExercise';
+import { formatSupersetPlace, stepAfterSet, supersetProgress } from '@/utils/supersets';
 import { toast } from '@/utils/confirm';
 import { haptics } from '@/utils/haptics';
 import { TrainingLog } from '@/types';
 
 /** Starts (or restarts) the rest between sets; the timer lives outside the screen. */
 const startRest = () => useRestTimerStore.getState().restart();
+/** Within a superset's round there's no rest, so a rest still showing (or running) is cleared. */
+const skipRest = () => useRestTimerStore.getState().reset();
 
 export default function LogExerciseModal() {
   const { exerciseLogId, trainingLogId, exerciseName } = useLocalSearchParams<{
@@ -65,6 +70,15 @@ export default function LogExerciseModal() {
 
   usePersistDraft(exerciseLogId, rows, timing);
 
+  // In a superset: the members' progress, and the member to go to after the set just logged
+  const superset = useSuperset(trainingLogId, exerciseLogId);
+  const currentId = Number(exerciseLogId);
+  const progressWith = (withRows: SetRow[]) =>
+    superset ? supersetProgress(superset.members, currentId, withRows, superset.drafts) : null;
+  const groupProgress = progressWith(rows);
+  const [upNextId, setUpNextId] = useState<number | null>(null);
+  const upNext = superset?.members.find((m) => m.id === upNextId);
+
   const { doneRows, sets: doneSets } = doneSetsOf(rows);
   const { saveNextChangeNow, saveCompleted } = useAutoSaveSets(exerciseLogId, trainingLogId, log, doneSets);
 
@@ -73,6 +87,17 @@ export default function LogExerciseModal() {
   const finish = () => {
     if (allDone && doneSets != null) saveCompleted(doneSets);
     router.back();
+  };
+
+  /** Switches to another exercise of the superset; this one is left as by closing it. */
+  const goTo = (id: number) => {
+    const member = superset?.members.find((m) => m.id === id);
+    if (!member) return;
+    if (allDone && doneSets != null) saveCompleted(doneSets);
+    router.replace({
+      pathname: '/log-exercise' as any,
+      params: { exerciseLogId: String(id), exerciseName: member.exerciseName, trainingLogId },
+    });
   };
 
   const updateRow = (index: number, patch: Partial<SetRow>) =>
@@ -93,14 +118,20 @@ export default function LogExerciseModal() {
     stopTiming();
     setRows((prev) => prev.filter((_, i) => i !== index));
     setFocused((f) => (f >= index && f > 0 ? f - 1 : f));
+    setUpNextId(null);
   };
 
   /**
    * Every set logged (by a tap, or by stopping its stopwatch) ends up here: a record is
    * celebrated, the rest starts and editing moves on to the next set.
+   *
+   * In a superset, a working set is followed by the next exercise's set of the round without
+   * a rest: the main button turns into "Next: <exercise>" (see `stepAfterSet`). Only the last
+   * set of a round starts the rest, and the button then leads back to the round's first exercise.
    */
   const onSetLogged = (index: number, logged: SetRow) => {
-    const gain = gainOf(rows.map((r, i) => (i === index ? logged : r)), index, log, previous);
+    const newRows = rows.map((r, i) => (i === index ? logged : r));
+    const gain = gainOf(newRows, index, log, previous);
     if (gain?.record) {
       haptics.record();
       toast('New record!', gain.record, 'trophy');
@@ -108,7 +139,15 @@ export default function LogExerciseModal() {
       haptics.check();
     }
     setLastLogged(index);
-    startRest();
+    const members = logged.warmup ? null : progressWith(newRows);
+    const step = members ? stepAfterSet(members, currentId) : null;
+    if (step?.kind === 'next') {
+      skipRest();
+      setUpNextId(step.exerciseLogId);
+    } else {
+      startRest();
+      setUpNextId(step?.kind === 'rest' && step.exerciseLogId !== currentId ? step.exerciseLogId : null);
+    }
     if (index + 1 < rows.length) setFocused(index + 1);
   };
 
@@ -118,6 +157,7 @@ export default function LogExerciseModal() {
     if (row.done) {
       haptics.uncheck();
       updateRow(index, { done: false });
+      setUpNextId(null);
       return;
     }
     // One tap logs the set as shown; empty values take the defaults
@@ -173,6 +213,15 @@ export default function LogExerciseModal() {
       </View>
 
       <View className="flex-1 px-4 pb-10">
+        {superset && groupProgress && (
+          <SupersetBar
+            place={formatSupersetPlace(superset.position, groupProgress)}
+            members={superset.members.map((m, i) => ({ ...groupProgress[i], name: m.exerciseName }))}
+            currentId={currentId}
+            onSelect={goTo}
+          />
+        )}
+
         <View className="flex-row items-center gap-3 mb-4 px-1">
           <Text className="flex-1 text-primary text-[32px] font-bold tracking-tighter leading-9">
             {log?.exerciseName ?? exerciseName}
@@ -251,17 +300,32 @@ export default function LogExerciseModal() {
 
         <View className="flex-1" />
 
-        {/* Sets are saved as they're logged, so this only closes the screen (and completes the exercise once all are logged) */}
-        <Tactile
-          variant={allDone ? 'accent' : 'surface'}
-          className="rounded-md py-5 flex-row items-center justify-center gap-2"
-          onPress={finish}
-        >
-          <Ionicons name="checkmark-done" size={18} color={allDone ? c.accentFg : c.accent} />
-          <Text className={`text-sm font-bold tracking-[2px] ${allDone ? 'text-accent-fg' : 'text-primary'}`}>
-            DONE{doneRows.length > 0 ? ` · ${doneRows.length} ${doneRows.length === 1 ? 'SET' : 'SETS'} LOGGED` : ''}
-          </Text>
-        </Tactile>
+        {upNext ? (
+          // In a superset, straight on to the next exercise's set (the X still closes the screen)
+          <Tactile
+            variant="accent"
+            className="rounded-md py-5 flex-row items-center justify-center gap-2"
+            onPress={() => goTo(upNext.id)}
+            accessibilityLabel={`Next: ${upNext.exerciseName}`}
+          >
+            <Text className="text-accent-fg text-sm font-bold tracking-[2px] flex-shrink" numberOfLines={1}>
+              NEXT: {upNext.exerciseName.toUpperCase()}
+            </Text>
+            <Ionicons name="arrow-forward" size={18} color={c.accentFg} />
+          </Tactile>
+        ) : (
+          // Sets are saved as they're logged, so this only closes the screen (and completes the exercise once all are logged)
+          <Tactile
+            variant={allDone ? 'accent' : 'surface'}
+            className="rounded-md py-5 flex-row items-center justify-center gap-2"
+            onPress={finish}
+          >
+            <Ionicons name="checkmark-done" size={18} color={allDone ? c.accentFg : c.accent} />
+            <Text className={`text-sm font-bold tracking-[2px] ${allDone ? 'text-accent-fg' : 'text-primary'}`}>
+              DONE{doneRows.length > 0 ? ` · ${doneRows.length} ${doneRows.length === 1 ? 'SET' : 'SETS'} LOGGED` : ''}
+            </Text>
+          </Tactile>
+        )}
       </View>
       </KeyboardAvoidingWrapper>
     </View>

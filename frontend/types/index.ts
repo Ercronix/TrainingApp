@@ -113,6 +113,9 @@ export interface ExerciseLog {
   // none). Optional: sessions cached before records were added don't have them.
   bestWeight?: number | null;
   bestOneRepMax?: number | null;
+  // Adjacent logs with the same group form a superset or circuit; null (or missing in data cached
+  // before supersets) when not grouped
+  supersetGroup?: number | null;
 }
 
 // One performed set. `reps` holds seconds for exercises timed in seconds.
@@ -142,6 +145,8 @@ export interface Exercise {
   plannedWeight?: number | null;
   orderIndex: number;
   lastUsedWeight?: number | null;
+  // Adjacent exercises with the same group form a superset or circuit; null when not grouped
+  supersetGroup?: number | null;
 }
 
 export interface UpdateExerciseLogRequest {

@@ -260,6 +260,17 @@ export const exercisesApi = {
     await api.delete(`/workouts/${workoutId}/exercises/${exerciseId}`);
   },
 
+  // Both return the workout's exercises, as the groups may be renumbered
+  supersetWithNext: async (workoutId: number, exerciseId: number): Promise<Exercise[]> => {
+    const response = await api.post(`/workouts/${workoutId}/exercises/${exerciseId}/superset`);
+    return response.data;
+  },
+
+  removeFromSuperset: async (workoutId: number, exerciseId: number): Promise<Exercise[]> => {
+    const response = await api.delete(`/workouts/${workoutId}/exercises/${exerciseId}/superset`);
+    return response.data;
+  },
+
   getProgress: async (exerciseId: number): Promise<ExerciseProgress> => {
     const response = await api.get(`/exercises/${exerciseId}/progress`);
     return response.data;

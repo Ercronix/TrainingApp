@@ -63,6 +63,22 @@ export function useExercises(workoutId: string) {
     },
   });
 
+  // Supersets: the server answers with the workout's exercises, regrouped
+  const supersetOptions = {
+    onSuccess: (exercises: Exercise[]) => queryClient.setQueryData(queryKey, exercises),
+    onError: (error: unknown) => {
+      alert('Error', getErrorMessage(error));
+    },
+  };
+  const supersetWithNext = useMutation({
+    mutationFn: (exerciseId: number) => exercisesApi.supersetWithNext(Number(workoutId), exerciseId),
+    ...supersetOptions,
+  });
+  const removeFromSuperset = useMutation({
+    mutationFn: (exerciseId: number) => exercisesApi.removeFromSuperset(Number(workoutId), exerciseId),
+    ...supersetOptions,
+  });
+
   return {
     exercises: query.data ?? [],
     isLoading: query.isLoading,
@@ -71,5 +87,7 @@ export function useExercises(workoutId: string) {
     createExercise,
     deleteExercise,
     reorderExercises,
+    supersetWithNext,
+    removeFromSuperset,
   };
 }

@@ -408,6 +408,7 @@ public class TrainingLogService {
         .previousSetLogs(previous != null ? SetLogResponse.fromAll(previous.getSetLogs()) : null)
         .bestWeight(bests != null ? bests.getBestWeight() : null)
         .bestOneRepMax(bests != null ? bests.getBestOneRepMax() : null)
+        .supersetGroup(exercise.getSupersetGroup())
         .build();
   }
 }
