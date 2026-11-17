@@ -13,7 +13,6 @@ import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.repository.StretchCheckInRepository;
 import de.mornhinweg.trainingbackend.repository.StretchItemRepository;
 import de.mornhinweg.trainingbackend.repository.StretchRoutineRepository;
-import de.mornhinweg.trainingbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -35,25 +34,25 @@ public class StretchService {
   static final String DEFAULT_ROUTINE_NAME = "Daily stretch";
 
   private final StretchRoutineRepository routineRepository;
+  private final CurrentUserService currentUser;
   private final StretchItemRepository itemRepository;
   private final StretchCheckInRepository checkInRepository;
-  private final UserRepository userRepository;
 
   @Transactional
   public StretchRoutineResponse getRoutine(Authentication authentication) {
-    return toResponse(getOrCreateRoutine(getCurrentUser(authentication)));
+    return toResponse(getOrCreateRoutine(currentUser.get(authentication)));
   }
 
   @Transactional
   public StretchRoutineResponse updateRoutine(UpdateStretchRoutineRequest request, Authentication authentication) {
-    StretchRoutine routine = getOrCreateRoutine(getCurrentUser(authentication));
+    StretchRoutine routine = getOrCreateRoutine(currentUser.get(authentication));
     routine.setName(request.getName().trim());
     return toResponse(routineRepository.save(routine));
   }
 
   @Transactional
   public StretchItemResponse addItem(StretchItemRequest request, Authentication authentication) {
-    StretchRoutine routine = getOrCreateRoutine(getCurrentUser(authentication));
+    StretchRoutine routine = getOrCreateRoutine(currentUser.get(authentication));
     if (request.getName() == null || request.getName().isBlank()) {
       throw new BadRequestException("Stretch name is required");
     }
@@ -76,7 +75,7 @@ public class StretchService {
 
   @Transactional
   public StretchItemResponse updateItem(Long id, StretchItemRequest request, Authentication authentication) {
-    StretchItem item = getOwnedItem(id, getCurrentUser(authentication));
+    StretchItem item = getOwnedItem(id, currentUser.get(authentication));
     if (request.getName() != null) {
       if (request.getName().isBlank()) throw new BadRequestException("Stretch name is required");
       item.setName(request.getName().trim());
@@ -91,7 +90,7 @@ public class StretchService {
 
   @Transactional
   public void deleteItem(Long id, Authentication authentication) {
-    StretchItem item = getOwnedItem(id, getCurrentUser(authentication));
+    StretchItem item = getOwnedItem(id, currentUser.get(authentication));
     item.getRoutine().getItems().remove(item);
     itemRepository.delete(item);
   }
@@ -99,7 +98,7 @@ public class StretchService {
   @Transactional
   public void reorderItems(ReorderStretchItemsRequest request, Authentication authentication) {
     if (request.getItems() == null) throw new BadRequestException("Items are required");
-    StretchRoutine routine = getOrCreateRoutine(getCurrentUser(authentication));
+    StretchRoutine routine = getOrCreateRoutine(currentUser.get(authentication));
     Map<Long, Integer> order = request.getItems().stream()
         .filter(i -> i.getId() != null && i.getOrderIndex() != null)
         .collect(Collectors.toMap(ReorderStretchItemsRequest.ItemOrder::getId,
@@ -113,7 +112,7 @@ public class StretchService {
   }
 
   public List<LocalDate> getCheckIns(Authentication authentication) {
-    return checkInRepository.findDaysByUserId(getCurrentUser(authentication).getId());
+    return checkInRepository.findDaysByUserId(currentUser.get(authentication).getId());
   }
 
   @Transactional
@@ -122,12 +121,12 @@ public class StretchService {
     if (day.isAfter(LocalDate.now().plusDays(1))) {
       throw new BadRequestException("Can't check in a day in the future");
     }
-    checkInRepository.insertIgnoringDuplicate(getCurrentUser(authentication).getId(), day);
+    checkInRepository.insertIgnoringDuplicate(currentUser.get(authentication).getId(), day);
   }
 
   @Transactional
   public void undoCheckIn(LocalDate day, Authentication authentication) {
-    checkInRepository.deleteByUserIdAndDay(getCurrentUser(authentication).getId(), day);
+    checkInRepository.deleteByUserIdAndDay(currentUser.get(authentication).getId(), day);
   }
 
   private StretchRoutine getOrCreateRoutine(User user) {
@@ -139,12 +138,6 @@ public class StretchService {
   private StretchItem getOwnedItem(Long id, User user) {
     return itemRepository.findByIdAndRoutineUserId(id, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Stretch not found"));
-  }
-
-  private User getCurrentUser(Authentication authentication) {
-    String username = authentication.getName();
-    return userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   private static String blankToNull(String s) {

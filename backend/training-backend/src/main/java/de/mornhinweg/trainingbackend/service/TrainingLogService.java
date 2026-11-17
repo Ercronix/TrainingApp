@@ -23,15 +23,15 @@ import java.util.stream.Collectors;
 public class TrainingLogService {
 
   private final TrainingLogRepository trainingLogRepository;
+  private final CurrentUserService currentUser;
   private final ExerciseLogRepository exerciseLogRepository;
   private final WorkoutRepository workoutRepository;
   private final ExerciseRepository exerciseRepository;
-  private final UserRepository userRepository;
   private final LibraryExerciseService libraryExerciseService;
 
   @Transactional
   public TrainingLogResponse startTraining(StartTrainingRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     // Fetch the specific workout day the user wants to train
     Workout workout = workoutRepository.findById(request.getWorkoutId())
@@ -77,7 +77,7 @@ public class TrainingLogService {
 
   @Transactional
   public ExerciseLogResponse updateExerciseLog(Long exerciseLogId, UpdateExerciseLogRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     ExerciseLog exerciseLog = exerciseLogRepository.findById(exerciseLogId)
         .orElseThrow(() -> new ResourceNotFoundException("Exercise log not found"));
@@ -115,7 +115,7 @@ public class TrainingLogService {
 
   @Transactional
   public ExerciseLogResponse addExerciseLog(Long trainingLogId, AddExerciseLogRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
@@ -169,7 +169,7 @@ public class TrainingLogService {
    */
   @Transactional
   public ExerciseLogResponse replaceExerciseLog(Long exerciseLogId, ReplaceExerciseLogRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     ExerciseLog exerciseLog = getRunningExerciseLog(exerciseLogId, user);
     Exercise replaced = exerciseLog.getExercise();
     Workout workout = exerciseLog.getTrainingLog().getWorkout();
@@ -204,7 +204,7 @@ public class TrainingLogService {
   /** Removes an exercise from a running session. The workout's plan stays unchanged. */
   @Transactional
   public void deleteExerciseLog(Long exerciseLogId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     ExerciseLog exerciseLog = getRunningExerciseLog(exerciseLogId, user);
     Exercise exercise = exerciseLog.getExercise();
     touch(exerciseLog.getTrainingLog());
@@ -239,7 +239,7 @@ public class TrainingLogService {
 
   @Transactional
   public TrainingLogResponse completeTraining(Long trainingLogId, CompleteTrainingRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
@@ -279,33 +279,27 @@ public class TrainingLogService {
   }
 
   public List<TrainingLogResponse> getAllTrainings(Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     return trainingLogRepository.findByUserIdOrderByStartedAtDesc(user.getId())
         .stream().map(log -> toResponse(log, false)).collect(Collectors.toList());
   }
 
   public List<TrainingLogResponse> getActiveTrainings(Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     return trainingLogRepository.findByUserIdAndCompletedAtIsNullOrderByStartedAtDesc(user.getId())
         .stream().map(log -> toResponse(log, true)).collect(Collectors.toList());
   }
 
   public TrainingLogResponse getTraining(Long trainingLogId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
     return toResponse(trainingLog, true);
   }
 
-  private User getCurrentUser(Authentication authentication) {
-    String username = authentication.getName();
-    return userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-  }
-
   @Transactional
   public void deleteTraining(Long trainingLogId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
     trainingLogRepository.delete(trainingLog);

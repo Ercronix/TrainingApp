@@ -7,7 +7,6 @@ import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.model.TrainingSplit;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.repository.TrainingSplitRepository;
-import de.mornhinweg.trainingbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -21,10 +20,10 @@ import java.util.stream.Collectors;
 public class TrainingSplitService {
 
   private final TrainingSplitRepository trainingSplitRepository;
-  private final UserRepository userRepository;
+  private final CurrentUserService currentUser;
 
   public List<SplitResponse> getAllSplits(Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     return trainingSplitRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
         .stream()
@@ -34,7 +33,7 @@ public class TrainingSplitService {
 
   @Transactional
   public SplitResponse createSplit(CreateSplitRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     TrainingSplit split = TrainingSplit.builder()
         .user(user)
@@ -48,7 +47,7 @@ public class TrainingSplitService {
 
   @Transactional
   public SplitResponse updateSplit(Long splitId, UpdateSplitRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
@@ -66,7 +65,7 @@ public class TrainingSplitService {
 
   @Transactional
   public void deleteSplit(Long splitId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
@@ -76,7 +75,7 @@ public class TrainingSplitService {
 
   @Transactional
   public SplitResponse activateSplit(Long splitId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     List<TrainingSplit> allSplits = trainingSplitRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
     allSplits.forEach(s -> s.setIsActive(false));
@@ -92,18 +91,12 @@ public class TrainingSplitService {
   }
 
   public SplitResponse getActiveSplit(Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
 
     TrainingSplit activeSplit = trainingSplitRepository.findByUserIdAndIsActiveTrue(user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("No active split found"));
 
     return toResponse(activeSplit);
-  }
-
-  private User getCurrentUser(Authentication authentication) {
-    String username = authentication.getName();
-    return userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   private SplitResponse toResponse(TrainingSplit split) {
