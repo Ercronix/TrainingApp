@@ -12,7 +12,6 @@ import de.mornhinweg.trainingbackend.notification.NtfyClient;
 import de.mornhinweg.trainingbackend.repository.StretchCheckInRepository;
 import de.mornhinweg.trainingbackend.repository.StretchReminderRepository;
 import de.mornhinweg.trainingbackend.repository.StretchRoutineRepository;
-import de.mornhinweg.trainingbackend.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -49,31 +48,31 @@ public class StretchReminderService {
   private static final SecureRandom RANDOM = new SecureRandom();
 
   private final StretchReminderRepository reminderRepository;
+  private final CurrentUserService currentUser;
   private final StretchRoutineRepository routineRepository;
   private final StretchCheckInRepository checkInRepository;
-  private final UserRepository userRepository;
   private final NtfyClient ntfy;
   private final String publicUrl;
 
   public StretchReminderService(
       StretchReminderRepository reminderRepository,
+      CurrentUserService currentUser,
       StretchRoutineRepository routineRepository,
       StretchCheckInRepository checkInRepository,
-      UserRepository userRepository,
       NtfyClient ntfy,
       // Where phones reach this server, for the "Done" button; without it there is no button
       @Value("${app.public-url:}") String publicUrl) {
     this.reminderRepository = reminderRepository;
+    this.currentUser = currentUser;
     this.routineRepository = routineRepository;
     this.checkInRepository = checkInRepository;
-    this.userRepository = userRepository;
     this.ntfy = ntfy;
     this.publicUrl = publicUrl.replaceAll("/+$", "");
   }
 
   @Transactional
   public StretchReminderResponse getReminder(Authentication authentication) {
-    return toResponse(getOrCreateReminder(getCurrentUser(authentication)));
+    return toResponse(getOrCreateReminder(currentUser.get(authentication)));
   }
 
   @Transactional
@@ -83,7 +82,7 @@ public class StretchReminderService {
     }
     ZoneId zone = parseZone(request.getTimeZone());
     LocalTime time = LocalTime.parse(request.getTime(), TIME_FORMAT);
-    StretchReminder reminder = getOrCreateReminder(getCurrentUser(authentication));
+    StretchReminder reminder = getOrCreateReminder(currentUser.get(authentication));
     reminder.setEnabled(request.getEnabled());
     reminder.setRemindAt(time);
     reminder.setTimeZone(zone.getId());
@@ -101,7 +100,7 @@ public class StretchReminderService {
     if (!ntfy.isConfigured()) {
       throw new BadRequestException("Reminders aren't set up on this server");
     }
-    StretchReminder reminder = getOrCreateReminder(getCurrentUser(authentication));
+    StretchReminder reminder = getOrCreateReminder(currentUser.get(authentication));
     ntfy.publish(message(reminder));
   }
 
@@ -203,8 +202,4 @@ public class StretchReminderService {
     return Base64.getUrlEncoder().withoutPadding().encodeToString(buffer);
   }
 
-  private User getCurrentUser(Authentication authentication) {
-    return userRepository.findByUsername(authentication.getName())
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-  }
 }

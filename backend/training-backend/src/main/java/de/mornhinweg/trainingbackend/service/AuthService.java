@@ -8,7 +8,6 @@ import de.mornhinweg.trainingbackend.dto.account.DeleteAccountRequest;
 import de.mornhinweg.trainingbackend.dto.account.UpdateAccountRequest;
 import de.mornhinweg.trainingbackend.exception.BadRequestException;
 import de.mornhinweg.trainingbackend.exception.ConflictException;
-import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.repository.TrainingSplitRepository;
 import de.mornhinweg.trainingbackend.repository.UserRepository;
@@ -28,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
   private final UserRepository userRepository;
+  private final CurrentUserService currentUser;
   private final TrainingSplitRepository trainingSplitRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtUtil jwtUtil;
@@ -64,8 +64,7 @@ public class AuthService {
         )
     );
 
-    User user = userRepository.findByUsername(authentication.getName())
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+    User user = currentUser.get(authentication);
 
     authRateLimits.loginSucceeded(request.getUsername());
     return issueTokens(user);
@@ -80,16 +79,14 @@ public class AuthService {
     refreshTokenService.revoke(refreshToken);
   }
 
-  public AuthResponse getMe(String username) {
-    User user = userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    return userInfo(user);
+  public AuthResponse getMe(Authentication authentication) {
+    return userInfo(currentUser.get(authentication));
   }
 
   /** Changes username and/or email. Access tokens identify the user by id, so they stay valid. */
   @Transactional
   public AuthResponse updateAccount(UpdateAccountRequest request, Authentication authentication) {
-    User user = currentUser(authentication);
+    User user = currentUser.get(authentication);
     verifyPassword(request.getCurrentPassword(), user);
 
     if (!user.getUsername().equals(request.getUsername())
@@ -109,7 +106,7 @@ public class AuthService {
   /** Signs out every other device and returns a fresh session for this one. */
   @Transactional
   public AuthResponse changePassword(ChangePasswordRequest request, Authentication authentication) {
-    User user = currentUser(authentication);
+    User user = currentUser.get(authentication);
     verifyPassword(request.getCurrentPassword(), user);
 
     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -121,16 +118,11 @@ public class AuthService {
   /** Permanently deletes the user and, through the schema's cascades, everything they own. */
   @Transactional
   public void deleteAccount(DeleteAccountRequest request, Authentication authentication) {
-    User user = currentUser(authentication);
+    User user = currentUser.get(authentication);
     verifyPassword(request.getPassword(), user);
     // Splits first, see UserRepository.deleteUserById
     trainingSplitRepository.deleteAllByUserId(user.getId());
     userRepository.deleteUserById(user.getId());
-  }
-
-  private User currentUser(Authentication authentication) {
-    return userRepository.findByUsername(authentication.getName())
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   // A 400 rather than 401: the client treats 401 as an expired access token and refreshes

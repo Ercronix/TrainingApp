@@ -12,8 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Auth", description = "Register, log in, refresh and revoke tokens, and the current user")
@@ -54,7 +53,7 @@ public class AuthController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<AuthResponse> me(@AuthenticationPrincipal UserDetails userDetails) {
-    return ResponseEntity.ok(authService.getMe(userDetails.getUsername()));
+  public ResponseEntity<AuthResponse> me(Authentication authentication) {
+    return ResponseEntity.ok(authService.getMe(authentication));
   }
 }

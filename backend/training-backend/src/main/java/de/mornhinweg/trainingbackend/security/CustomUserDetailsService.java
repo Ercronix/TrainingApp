@@ -9,8 +9,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
@@ -31,11 +29,6 @@ public class CustomUserDetailsService implements UserDetailsService {
   }
 
   private static UserDetails toUserDetails(User user) {
-    // Spring Security UserDetails erstellen
-    return new org.springframework.security.core.userdetails.User(
-        user.getUsername(),
-        user.getPassword(),
-        new ArrayList<>()  // Authorities/Roles
-    );
+    return new AuthenticatedUser(user);
   }
 }

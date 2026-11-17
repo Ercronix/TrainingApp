@@ -8,7 +8,6 @@ import de.mornhinweg.trainingbackend.model.LibraryExercise;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.model.Workout;
 import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
-import de.mornhinweg.trainingbackend.repository.UserRepository;
 import de.mornhinweg.trainingbackend.repository.WorkoutRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -24,12 +23,12 @@ import java.util.stream.Collectors;
 public class ExerciseService {
 
   private final ExerciseRepository exerciseRepository;
+  private final CurrentUserService currentUser;
   private final WorkoutRepository workoutRepository;
-  private final UserRepository userRepository;
   private final LibraryExerciseService libraryExerciseService;
 
   public List<ExerciseResponse> getExercisesByWorkout(Long workoutId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Workout workout = getOwnedWorkout(workoutId, user);
     // Temporary exercises are created for one-off logging during a training session and should not
     // show up on the workout template.
@@ -39,7 +38,7 @@ public class ExerciseService {
 
   @Transactional
   public ExerciseResponse createExercise(Long workoutId, CreateExerciseRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Workout workout = getOwnedWorkout(workoutId, user);
     int nextOrderIndex = exerciseRepository
         .findByWorkoutIdAndTemporaryFalseOrderByOrderIndexAsc(workout.getId())
@@ -64,7 +63,7 @@ public class ExerciseService {
 
   @Transactional
   public ExerciseResponse updateExercise(Long exerciseId, UpdateExerciseRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Exercise exercise = getOwnedExercise(exerciseId, user);
     if (request.getLibraryExerciseId() != null) {
       exercise.setLibraryExercise(libraryExerciseService.resolve(user, request.getLibraryExerciseId(), null));
@@ -88,7 +87,7 @@ public class ExerciseService {
 
   @Transactional
   public void reorderExercises(Long workoutId, ReorderExercisesRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     getOwnedWorkout(workoutId, user);
 
     Map<Long, Integer> orderMap = request.getExercises().stream()
@@ -110,7 +109,7 @@ public class ExerciseService {
 
   @Transactional
   public void deleteExercise(Long exerciseId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Exercise exercise = getOwnedExercise(exerciseId, user);
     exerciseRepository.delete(exercise);
   }
@@ -133,14 +132,8 @@ public class ExerciseService {
     return exercise;
   }
 
-  private User getCurrentUser(Authentication authentication) {
-    String username = authentication.getName();
-    return userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-  }
-
   public ExerciseProgressResponse getProgress(Long exerciseId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Exercise exercise = getOwnedExercise(exerciseId, user);
     return libraryExerciseService.buildProgress(exercise.getLibraryExercise(), exercise.getId());
   }

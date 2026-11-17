@@ -18,7 +18,6 @@ import de.mornhinweg.trainingbackend.repository.CatalogExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseLogRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.LibraryExerciseRepository;
-import de.mornhinweg.trainingbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -38,13 +37,13 @@ import java.util.stream.Collectors;
 public class LibraryExerciseService {
 
   private final LibraryExerciseRepository libraryExerciseRepository;
+  private final CurrentUserService currentUser;
   private final ExerciseRepository exerciseRepository;
   private final ExerciseLogRepository exerciseLogRepository;
-  private final UserRepository userRepository;
   private final CatalogExerciseRepository catalogExerciseRepository;
 
   public List<LibraryExerciseResponse> getLibrary(Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Map<Long, Object[]> usage = exerciseRepository.findUsageByUserId(user.getId()).stream()
         .collect(Collectors.toMap(row -> (Long) row[0], row -> row));
     return libraryExerciseRepository.findByUserIdOrderByName(user.getId()).stream()
@@ -54,7 +53,7 @@ public class LibraryExerciseService {
 
   @Transactional
   public LibraryExerciseResponse createLibraryExercise(CreateLibraryExerciseRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     String name = request.getName().trim();
     if (libraryExerciseRepository.findByUserIdAndNameIgnoreCase(user.getId(), name).isPresent()) {
       throw new ConflictException("An exercise named \"" + name + "\" is already in your library");
@@ -75,7 +74,7 @@ public class LibraryExerciseService {
 
   @Transactional
   public LibraryExerciseResponse updateLibraryExercise(Long id, UpdateLibraryExerciseRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     LibraryExercise entry = getOwnedEntry(id, user);
     if (request.getName() != null) rename(entry, request.getName());
     applyDetails(entry, request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
@@ -89,7 +88,7 @@ public class LibraryExerciseService {
 
   @Transactional
   public void deleteLibraryExercise(Long id, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     LibraryExercise entry = getOwnedEntry(id, user);
     if (exerciseRepository.countByLibraryExerciseId(entry.getId()) > 0) {
       throw new ConflictException("\"" + entry.getName() + "\" is still used by a workout or training history");
@@ -98,7 +97,7 @@ public class LibraryExerciseService {
   }
 
   public ExerciseProgressResponse getProgress(Long id, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     return buildProgress(getOwnedEntry(id, user), null);
   }
 
@@ -239,12 +238,6 @@ public class LibraryExerciseService {
   private LibraryExercise getOwnedEntry(Long id, User user) {
     return libraryExerciseRepository.findByIdAndUserId(id, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Library exercise not found"));
-  }
-
-  private User getCurrentUser(Authentication authentication) {
-    String username = authentication.getName();
-    return userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   /** {@code usage} is a row of {@link ExerciseRepository#findUsageByUserId}, or null when unused. */
