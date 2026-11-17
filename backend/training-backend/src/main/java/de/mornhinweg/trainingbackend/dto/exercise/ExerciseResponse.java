@@ -22,4 +22,6 @@ public class ExerciseResponse {
   private Integer orderIndex;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
+  // Exercises with the same group (adjacent in order) form a superset or circuit; null when not grouped
+  private Integer supersetGroup;
 }

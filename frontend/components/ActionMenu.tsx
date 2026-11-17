@@ -9,7 +9,12 @@ export interface MenuAction {
   label: string;
   onPress: () => void;
   destructive?: boolean;
+  /** For screen readers when the label is a short form, e.g. "Superset with next" for "Superset". */
+  accessibilityLabel?: string;
 }
+
+// From this many actions on, each shows its label under the icon in smaller type, so they fit
+const COMPACT_FROM = 3;
 
 interface MenuState {
   open: MenuAction[] | null;
@@ -53,6 +58,7 @@ export function ActionCard({ className, contentClassName, children, ...rest }: C
                 key={action.label}
                 className="flex-1"
                 accessibilityRole="menuitem"
+                accessibilityLabel={action.accessibilityLabel}
                 onPress={() => {
                   setOpen(null);
                   action.onPress();
@@ -60,12 +66,16 @@ export function ActionCard({ className, contentClassName, children, ...rest }: C
               >
                 {({ pressed }) => (
                   <View
-                    className={`h-11 flex-row items-center justify-center gap-2 rounded ${action.destructive ? 'bg-danger-muted' : 'bg-elevated'}`}
+                    className={`h-11 items-center justify-center rounded ${open.length >= COMPACT_FROM ? 'gap-0.5' : 'flex-row gap-2'} ${action.destructive ? 'bg-danger-muted' : 'bg-elevated'}`}
                     style={{ opacity: pressed ? 0.7 : 1 }}
                   >
-                    <Ionicons name={action.icon} size={18} color={action.destructive ? c.danger : c.primary} />
+                    <Ionicons name={action.icon} size={open.length >= COMPACT_FROM ? 16 : 18} color={action.destructive ? c.danger : c.primary} />
                     <Text
-                      style={{ color: action.destructive ? c.danger : c.primary, fontSize: 15, fontWeight: '600' }}
+                      style={{
+                        color: action.destructive ? c.danger : c.primary,
+                        fontSize: open.length >= COMPACT_FROM ? 11 : 15,
+                        fontWeight: '600',
+                      }}
                       numberOfLines={1}
                     >
                       {action.label}

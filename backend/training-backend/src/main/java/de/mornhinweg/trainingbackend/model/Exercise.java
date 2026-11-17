@@ -50,6 +50,10 @@ public class Exercise {
   @Builder.Default
   private Boolean temporary = false;
 
+  // Exercises of the workout with the same group form a superset or circuit; null when not grouped
+  @Column(name = "superset_group")
+  private Integer supersetGroup;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
 
