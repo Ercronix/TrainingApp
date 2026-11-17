@@ -5,6 +5,7 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons } from '@expo/vector-icons';
 import { useExerciseDetail } from '@/hooks/useExerciseDetail';
 import { useExerciseProgress } from '@/hooks/useExerciseProgress';
+import { useBodyWeightEntries } from '@/hooks/useBodyWeight';
 import { ExerciseAnalytics } from '@/components/ExerciseAnalytics';
 import { OneRepMaxCalculator } from '@/components/OneRepMaxCalculator';
 import { useTheme } from '@/hooks/useTheme';
@@ -47,6 +48,7 @@ export default function ExerciseDetailScreen() {
   const [editingVideo, setEditingVideo] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const { progress, isLoading: progressLoading } = useExerciseProgress(exerciseId, libraryExerciseId);
+  const { entries: bodyWeights } = useBodyWeightEntries();
   const c = useTheme();
   const libraryId = progress?.libraryExerciseId ?? (libraryExerciseId ? Number(libraryExerciseId) : null);
   const entry = library.find((l) => l.id === libraryId);
@@ -295,7 +297,7 @@ export default function ExerciseDetailScreen() {
             <Text className="text-muted text-[10px] tracking-[3px]">LOADING...</Text>
           </View>
         ) : (
-          <ExerciseAnalytics entries={progress?.entries ?? []} timed={timed} />
+          <ExerciseAnalytics entries={progress?.entries ?? []} timed={timed} bodyWeights={bodyWeights} />
         )}
 
         {/* Description */}

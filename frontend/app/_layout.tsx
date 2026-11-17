@@ -120,6 +120,7 @@ function AppLayout() {
               <Stack.Screen name="one-rep-max"     options={{ headerShown: false }} />
               <Stack.Screen name="stretch"         options={{ headerShown: false }} />
               <Stack.Screen name="stretch-session" options={{ headerShown: false }} />
+              <Stack.Screen name="body-weight"     options={{ headerShown: false }} />
             </Stack>
             <ActiveTrainingBanner />
             <TrainingAutoEnd />

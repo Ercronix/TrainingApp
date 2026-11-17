@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.UUID;
 
@@ -154,6 +155,8 @@ class AccountControllerTest {
     long logId = ((Number) JsonPath.read(session, "$.exercises[0].id")).longValue();
     perform(put("/api/training-logs/exercise-logs/" + logId), s.token(), "{\"sets\":[{\"reps\":8,\"weight\":60}]}")
         .andExpect(status().isOk());
+    perform(put("/api/body-weight/" + LocalDate.now()), s.token(), "{\"weight\":80}")
+        .andExpect(status().isOk());
 
     perform(delete("/api/account"), s.token(), deleteBody(PASSWORD)).andExpect(status().isNoContent());
 
@@ -166,6 +169,7 @@ class AccountControllerTest {
     assertThat(count("SELECT count(*) FROM workouts WHERE id = ?", workoutId)).isZero();
     assertThat(count("SELECT count(*) FROM training_logs WHERE id = ?", sessionId)).isZero();
     assertThat(count("SELECT count(*) FROM set_logs WHERE exercise_log_id = ?", logId)).isZero();
+    assertThat(count("SELECT count(*) FROM body_weight_entries WHERE user_id = ?", s.userId())).isZero();
   }
 
   @Test

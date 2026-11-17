@@ -14,4 +14,5 @@ export const QUERY_KEYS = {
   stretchRoutine: ['stretchRoutine'] as const,
   stretchCheckIns: ['stretchCheckIns'] as const,
   stretchReminder: ['stretchReminder'] as const,
+  bodyWeight: ['bodyWeight'] as const,
 };

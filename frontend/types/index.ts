@@ -320,3 +320,18 @@ export interface StretchReminderRequest {
   time: string;
   timeZone: string;
 }
+
+/** The body weight logged for a day (the device's local date), at most one per day. */
+export interface BodyWeightEntry {
+  // Missing on an entry logged offline that hasn't reached the server yet
+  id?: number;
+  date: string; // YYYY-MM-DD
+  weight: number; // kg
+  note: string | null;
+}
+
+// Replaces the day's entry; a missing or empty note clears it
+export interface BodyWeightRequest {
+  weight: number;
+  note?: string;
+}
