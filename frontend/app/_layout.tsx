@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { getPalette, getThemeVars, GLASS_OPACITY_MAX, GLASS_OPACITY_MIN } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { useHapticsStore } from '@/store/hapticsStore';
+import { useSoundStore } from '@/store/soundStore';
 import { storage } from '@/services/storage';
 import { AuroraBackdrop } from '@/components/AuroraBackdrop';
 import { ConfirmDialogHost } from '@/components/ConfirmDialogHost';
@@ -54,6 +55,9 @@ function AppLayout() {
     });
     storage.getItem('haptics').then((saved) => {
       if (saved === 'off') useHapticsStore.getState().setEnabled(false);
+    });
+    storage.getItem('rest-sound').then((saved) => {
+      if (saved === 'off') useSoundStore.getState().setEnabled(false);
     });
     // Load saved preferences once on mount. nativewind's setColorScheme is a new function on
     // every render, so listing it would re-run this effect each render.

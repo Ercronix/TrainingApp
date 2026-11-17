@@ -14,6 +14,7 @@ import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { GLASS_OPACITY_MAX, GLASS_OPACITY_MIN, THEMES } from '@/constants/theme';
 import { useThemeStore } from '@/store/themeStore';
 import { useHapticsStore } from '@/store/hapticsStore';
+import { useSoundStore } from '@/store/soundStore';
 import { haptics } from '@/utils/haptics';
 import { isValidHex } from '@/utils/color';
 
@@ -44,6 +45,8 @@ export default function ProfileScreen() {
   const [exporting, setExporting] = useState(false);
   const hapticsEnabled = useHapticsStore((s) => s.enabled);
   const setHapticsEnabled = useHapticsStore((s) => s.setEnabled);
+  const soundEnabled = useSoundStore((s) => s.enabled);
+  const setSoundEnabled = useSoundStore((s) => s.setEnabled);
 
   const toggleTheme = async () => {
     const next = isDark ? 'light' : 'dark';
@@ -56,6 +59,12 @@ export default function ProfileScreen() {
     // Let turning them on be felt
     if (enabled) haptics.check();
     await storage.setItem('haptics', enabled ? 'on' : 'off');
+  };
+
+  // Applies from the next rest on, which schedules its sound when it starts
+  const toggleSound = async (enabled: boolean) => {
+    setSoundEnabled(enabled);
+    await storage.setItem('rest-sound', enabled ? 'on' : 'off');
   };
 
   const glassOpacity = useThemeStore((s) => s.glassOpacity);
@@ -181,6 +190,19 @@ export default function ProfileScreen() {
             </View>
           </>
         )}
+        <View className="h-px bg-elevated" />
+        <View className="flex-row items-center justify-between py-4">
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="volume-high-outline" size={16} color={c.muted} />
+            <Text className="text-muted text-[10px] tracking-[2px]">REST TIMER SOUND</Text>
+          </View>
+          <Switch
+            value={soundEnabled}
+            onValueChange={toggleSound}
+            trackColor={{ false: c.elevated, true: c.accent }}
+            thumbColor={soundEnabled ? c.accentFg : c.muted}
+          />
+        </View>
       </View>
 
       {/* Theme picker */}
