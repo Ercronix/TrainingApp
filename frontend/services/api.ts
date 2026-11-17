@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, UpdateSplitRequest, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest, StretchReminder, StretchReminderRequest, BodyWeightEntry, BodyWeightRequest } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, UpdateSplitRequest, Workout, Exercise, TrainingLog, TrainingReview, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest, StretchReminder, StretchReminderRequest, BodyWeightEntry, BodyWeightRequest } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -368,6 +368,12 @@ export const trainingLogsApi = {
   // completedSecondsAgo backdates the finish of a session completed while offline
   complete: async (id: number, notes?: string, completedSecondsAgo?: number): Promise<TrainingLog> => {
     const response = await api.put(`/training-logs/${id}/complete`, { notes, completedSecondsAgo });
+    return response.data;
+  },
+
+  // Replaces the session's ratings and note (null clears one); sending it again changes nothing
+  updateReview: async (id: number, review: TrainingReview): Promise<TrainingLog> => {
+    const response = await api.put(`/training-logs/${id}/review`, review);
     return response.data;
   },
 

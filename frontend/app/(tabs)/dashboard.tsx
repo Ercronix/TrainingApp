@@ -12,6 +12,7 @@ import { formatWeight } from '@/utils/bodyWeight';
 import { BarChart } from '@/components/charts/BarChart';
 import { MuscleVolumeCard } from '@/components/MuscleVolumeCard';
 import { ConsistencyCalendar } from '@/components/ConsistencyCalendar';
+import { RatingInsightCard } from '@/components/RatingInsightCard';
 import { formatKg } from '@/utils/strength';
 import {
   ExerciseTrend, PeriodTotals, RecentRecord, StatsRange, formatDuration, formatNumber, formatSigned, summarizePeriods,
@@ -277,6 +278,7 @@ export default function DashboardScreen() {
 
       {lifetime.sessions > 0 && <ConsistencyCalendar logs={history} />}
       {lifetime.sessions > 0 && <MuscleVolumeCard logs={history} library={library} />}
+      <RatingInsightCard logs={history} />
 
       {/* Lifetime numbers */}
       {lifetime.sessions > 0 && (

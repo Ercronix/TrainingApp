@@ -11,6 +11,7 @@ import { TrainingLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { Tactile } from '@/components/Tactile';
+import { RatingBadges } from '@/components/SessionReview';
 
 function formatDuration(seconds: number | null): string {
   if (!seconds) return '—';
@@ -71,7 +72,8 @@ export default function HistoryScreen() {
         const matchesExercise = item.exercises?.some(
           (e) => e.exerciseName?.toLowerCase().includes(query)
         );
-        return matchesWorkout || matchesSplit || matchesExercise;
+        const matchesNotes = item.notes?.toLowerCase().includes(query);
+        return matchesWorkout || matchesSplit || matchesExercise || matchesNotes;
       });
     }
 
@@ -167,8 +169,9 @@ export default function HistoryScreen() {
             )}
           </View>
 
+          <RatingBadges training={item} className="mt-3" />
           {item.notes && (
-            <Text className="text-subtle text-xs italic mt-2">"{item.notes}"</Text>
+            <Text className="text-subtle text-xs italic mt-2" numberOfLines={2}>"{item.notes}"</Text>
           )}
         </TouchableOpacity>
       </ActionCard>

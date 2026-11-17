@@ -11,6 +11,8 @@ import { useTheme } from '@/hooks/useTheme';
 import { formatDuration } from '@/hooks/useDashboard';
 import { Tactile } from '@/components/Tactile';
 import { BodyMap, targetFills } from '@/components/BodyMap';
+import { SessionReview } from '@/components/SessionReview';
+import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
 import { useLibrary } from '@/hooks/useLibrary';
 import { combineMuscles, muscleNames } from '@/utils/muscles';
 import { EASE_OUT, spring } from '@/constants/motion';
@@ -174,137 +176,149 @@ export default function SessionSummaryScreen() {
   );
 
   return (
-    <View className="flex-1 bg-base">
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 56, paddingBottom: dockHeight + 16 }}>
-        {/* Header */}
-        <View className="items-center mb-6">
-          <Medal record={records.length > 0} reduceMotion={reduceMotion} />
-          <Appear order={0} reduceMotion={reduceMotion}>
-            <View className="items-center mt-3">
-              <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">SESSION COMPLETE</Text>
-              <Text className="text-primary text-[32px] font-bold tracking-tighter text-center">
-                {records.length === 0 ? 'Nice work' : records.length === 1 ? 'New record!' : `${records.length} new records!`}
-              </Text>
-              <Text className="text-muted text-sm text-center" numberOfLines={1}>
-                {[training.workoutName, training.splitName].filter(Boolean).join(' · ')}
-              </Text>
-            </View>
-          </Appear>
-        </View>
-
-        {/* Stats row */}
-        <Appear order={1} reduceMotion={reduceMotion}>
-          <View className="flex-row mb-3 bg-surface rim border-edge rounded-md py-4">
-            <Stat
-              value={elapsedSeconds == null ? '—' : elapsedSeconds < 60 ? `${elapsedSeconds}s` : formatDuration(elapsedSeconds)}
-              label="DURATION"
-            />
-            <View className="w-px bg-elevated my-1" />
-            <Stat value={String(totals.sets)} label="SETS" />
-            <View className="w-px bg-elevated my-1" />
-            <Stat value={formatNumber(Math.round(totals.volume))} label="KG LIFTED" />
-            <View className="w-px bg-elevated my-1" />
-            <Stat value={`${completedCount}/${exercises.length}`} label="EXERCISES" />
-          </View>
-        </Appear>
-
-        {!isOnline && (
-          <Appear order={2} reduceMotion={reduceMotion}>
-            <View className="flex-row items-center gap-2 mb-3 bg-surface rounded-sm px-3 py-2 self-center">
-              <Ionicons name="cloud-offline-outline" size={14} color={c.muted} />
-              <Text className="text-muted text-[10px] tracking-[2px]">SAVED · SYNCS WHEN BACK ONLINE</Text>
-            </View>
-          </Appear>
-        )}
-
-        {/* Records */}
-        {records.length > 0 && (
-          <Appear order={2} reduceMotion={reduceMotion}>
-            <View className="mb-3 bg-surface rim border-accent rounded-md p-4 gap-3">
-              <Text className="text-accent-text text-[9px] tracking-[3px]">PERSONAL RECORDS</Text>
-              {records.map((r) => (
-                <View key={r.id} className="flex-row items-start gap-3">
-                  <View className="w-7 h-7 rounded-full bg-accent justify-center items-center">
-                    <Ionicons name="trophy" size={13} color={c.accentFg} />
-                  </View>
-                  <View className="flex-1">
-                    <Text className="text-primary text-sm font-bold tracking-tight">{r.name}</Text>
-                    <Text className="text-muted text-xs mt-0.5">{r.record}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </Appear>
-        )}
-
-        {/* Muscles trained */}
-        {trained.length > 0 && (
-          <Appear order={2} reduceMotion={reduceMotion}>
-            <View className="mb-3 bg-surface rim border-edge rounded-md p-4">
-              <Text className="text-muted text-[9px] tracking-[3px] mb-3">MUSCLES TRAINED</Text>
-              <BodyMap
-                fills={targetFills(trained, c)}
-                height={170}
-                animateIn
-                delay={450}
-                accessibilityLabel={`Muscles trained: ${muscleNames(trained.map((m) => m.muscle))}`}
-              />
-            </View>
-          </Appear>
-        )}
-
-        {/* Exercises */}
-        <Appear order={3} reduceMotion={reduceMotion}>
-          <Text className="text-muted text-[9px] tracking-[3px] mt-2 mb-3">EXERCISES</Text>
-        </Appear>
-        {exercises.map((e, i) => {
-          const delta = e.completed ? topSetDelta(e) : null;
-          return (
-            <Appear key={e.id} order={4 + i} reduceMotion={reduceMotion}>
-              <View className={`flex-row items-center gap-3 mb-2 rounded-md px-4 py-3 rim ${e.completed ? 'bg-surface-done border-edge-done' : 'bg-surface border-edge'}`}>
-                <View className="flex-1 gap-0.5">
-                  <View className="flex-row items-center gap-2">
-                    <Text className="text-primary text-sm font-bold tracking-tight flex-shrink" numberOfLines={1}>{e.exerciseName}</Text>
-                    {recordIds.has(e.id) && (
-                      <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
-                        <Ionicons name="trophy" size={10} color={c.accentFg} />
-                        <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text className={`text-xs font-mono ${e.completed ? 'text-accent-text' : 'text-muted'}`} numberOfLines={1}>
-                    {e.completed ? formatSets(setsOf(e), e.repUnit) || 'Done' : 'Skipped'}
-                  </Text>
-                </View>
-                {delta != null && (
-                  <View
-                    className="items-end"
-                    accessible
-                    accessibilityLabel={`Top set ${describeDelta(delta)} against last time`}
-                  >
-                    <Text className={`text-xs font-mono-bold ${delta.value > 0 ? 'text-accent-text' : 'text-muted'}`}>
-                      {describeDelta(delta)}
-                    </Text>
-                    <Text className="text-muted text-[8px] tracking-[1.5px]">TOP SET</Text>
-                  </View>
-                )}
+    <KeyboardAvoidingWrapper scroll={false}>
+      <View className="flex-1 bg-base">
+        <ScrollView
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 56, paddingBottom: dockHeight + 16 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <View className="items-center mb-6">
+            <Medal record={records.length > 0} reduceMotion={reduceMotion} />
+            <Appear order={0} reduceMotion={reduceMotion}>
+              <View className="items-center mt-3">
+                <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">SESSION COMPLETE</Text>
+                <Text className="text-primary text-[32px] font-bold tracking-tighter text-center">
+                  {records.length === 0 ? 'Nice work' : records.length === 1 ? 'New record!' : `${records.length} new records!`}
+                </Text>
+                <Text className="text-muted text-sm text-center" numberOfLines={1}>
+                  {[training.workoutName, training.splitName].filter(Boolean).join(' · ')}
+                </Text>
               </View>
             </Appear>
-          );
-        })}
-      </ScrollView>
+          </View>
 
-      {/* Bottom dock */}
-      <View
-        className="absolute bottom-0 left-0 right-0 bg-dock px-4 pt-3"
-        style={{ paddingBottom: 32 + insets.bottom }}
-        onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
-      >
-        <Tactile className="rounded-md py-4 flex-row items-center justify-center gap-2" onPress={() => router.replace('/(tabs)')}>
-          <Ionicons name="checkmark" size={18} color={c.accentFg} />
-          <Text className="text-accent-fg text-sm font-bold tracking-[2px]">DONE</Text>
-        </Tactile>
+          {/* Stats row */}
+          <Appear order={1} reduceMotion={reduceMotion}>
+            <View className="flex-row mb-3 bg-surface rim border-edge rounded-md py-4">
+              <Stat
+                value={elapsedSeconds == null ? '—' : elapsedSeconds < 60 ? `${elapsedSeconds}s` : formatDuration(elapsedSeconds)}
+                label="DURATION"
+              />
+              <View className="w-px bg-elevated my-1" />
+              <Stat value={String(totals.sets)} label="SETS" />
+              <View className="w-px bg-elevated my-1" />
+              <Stat value={formatNumber(Math.round(totals.volume))} label="KG LIFTED" />
+              <View className="w-px bg-elevated my-1" />
+              <Stat value={`${completedCount}/${exercises.length}`} label="EXERCISES" />
+            </View>
+          </Appear>
+
+          {!isOnline && (
+            <Appear order={2} reduceMotion={reduceMotion}>
+              <View className="flex-row items-center gap-2 mb-3 bg-surface rounded-sm px-3 py-2 self-center">
+                <Ionicons name="cloud-offline-outline" size={14} color={c.muted} />
+                <Text className="text-muted text-[10px] tracking-[2px]">SAVED · SYNCS WHEN BACK ONLINE</Text>
+              </View>
+            </Appear>
+          )}
+
+          {/* Ratings and note: optional, saved as they're given (also offline) */}
+          <Appear order={2} reduceMotion={reduceMotion}>
+            <View className="mb-3">
+              <SessionReview training={training} />
+            </View>
+          </Appear>
+
+          {/* Records */}
+          {records.length > 0 && (
+            <Appear order={2} reduceMotion={reduceMotion}>
+              <View className="mb-3 bg-surface rim border-accent rounded-md p-4 gap-3">
+                <Text className="text-accent-text text-[9px] tracking-[3px]">PERSONAL RECORDS</Text>
+                {records.map((r) => (
+                  <View key={r.id} className="flex-row items-start gap-3">
+                    <View className="w-7 h-7 rounded-full bg-accent justify-center items-center">
+                      <Ionicons name="trophy" size={13} color={c.accentFg} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-primary text-sm font-bold tracking-tight">{r.name}</Text>
+                      <Text className="text-muted text-xs mt-0.5">{r.record}</Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </Appear>
+          )}
+
+          {/* Muscles trained */}
+          {trained.length > 0 && (
+            <Appear order={2} reduceMotion={reduceMotion}>
+              <View className="mb-3 bg-surface rim border-edge rounded-md p-4">
+                <Text className="text-muted text-[9px] tracking-[3px] mb-3">MUSCLES TRAINED</Text>
+                <BodyMap
+                  fills={targetFills(trained, c)}
+                  height={170}
+                  animateIn
+                  delay={450}
+                  accessibilityLabel={`Muscles trained: ${muscleNames(trained.map((m) => m.muscle))}`}
+                />
+              </View>
+            </Appear>
+          )}
+
+          {/* Exercises */}
+          <Appear order={3} reduceMotion={reduceMotion}>
+            <Text className="text-muted text-[9px] tracking-[3px] mt-2 mb-3">EXERCISES</Text>
+          </Appear>
+          {exercises.map((e, i) => {
+            const delta = e.completed ? topSetDelta(e) : null;
+            return (
+              <Appear key={e.id} order={4 + i} reduceMotion={reduceMotion}>
+                <View className={`flex-row items-center gap-3 mb-2 rounded-md px-4 py-3 rim ${e.completed ? 'bg-surface-done border-edge-done' : 'bg-surface border-edge'}`}>
+                  <View className="flex-1 gap-0.5">
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-primary text-sm font-bold tracking-tight flex-shrink" numberOfLines={1}>{e.exerciseName}</Text>
+                      {recordIds.has(e.id) && (
+                        <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
+                          <Ionicons name="trophy" size={10} color={c.accentFg} />
+                          <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text className={`text-xs font-mono ${e.completed ? 'text-accent-text' : 'text-muted'}`} numberOfLines={1}>
+                      {e.completed ? formatSets(setsOf(e), e.repUnit) || 'Done' : 'Skipped'}
+                    </Text>
+                  </View>
+                  {delta != null && (
+                    <View
+                      className="items-end"
+                      accessible
+                      accessibilityLabel={`Top set ${describeDelta(delta)} against last time`}
+                    >
+                      <Text className={`text-xs font-mono-bold ${delta.value > 0 ? 'text-accent-text' : 'text-muted'}`}>
+                        {describeDelta(delta)}
+                      </Text>
+                      <Text className="text-muted text-[8px] tracking-[1.5px]">TOP SET</Text>
+                    </View>
+                  )}
+                </View>
+              </Appear>
+            );
+          })}
+        </ScrollView>
+
+        {/* Bottom dock */}
+        <View
+          className="absolute bottom-0 left-0 right-0 bg-dock px-4 pt-3"
+          style={{ paddingBottom: 32 + insets.bottom }}
+          onLayout={(e) => setDockHeight(e.nativeEvent.layout.height)}
+        >
+          <Tactile className="rounded-md py-4 flex-row items-center justify-center gap-2" onPress={() => router.replace('/(tabs)')}>
+            <Ionicons name="checkmark" size={18} color={c.accentFg} />
+            <Text className="text-accent-fg text-sm font-bold tracking-[2px]">DONE</Text>
+          </Tactile>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingWrapper>
   );
 }

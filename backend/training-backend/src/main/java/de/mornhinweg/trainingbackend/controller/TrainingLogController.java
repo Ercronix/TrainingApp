@@ -72,6 +72,15 @@ public class TrainingLogController {
     return ResponseEntity.ok(trainingLogService.completeTraining(id, request, authentication));
   }
 
+  @Operation(summary = "Set a session's 1-5 ratings (feel, energy, sleep) and note, replacing them; null clears one")
+  @PutMapping("/{id}/review")
+  public ResponseEntity<TrainingLogResponse> updateReview(
+      @PathVariable Long id,
+      @Valid @RequestBody UpdateTrainingReviewRequest request,
+      Authentication authentication) {
+    return ResponseEntity.ok(trainingLogService.updateReview(id, request, authentication));
+  }
+
   @DeleteMapping("/{id}")
   public ResponseEntity<Void> deleteTraining(
       @PathVariable Long id,

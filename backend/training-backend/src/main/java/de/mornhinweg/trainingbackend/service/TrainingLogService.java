@@ -288,6 +288,25 @@ public class TrainingLogService {
     return toResponse(trainingLog, true);
   }
 
+  /**
+   * Sets the session's ratings and note, finished or not. Replaces all of them, so a repeated call
+   * (an offline change replayed after a lost response) changes nothing.
+   */
+  @Transactional
+  public TrainingLogResponse updateReview(Long trainingLogId, UpdateTrainingReviewRequest request, Authentication authentication) {
+    User user = currentUser.get(authentication);
+    TrainingLog trainingLog = trainingLogRepository.findByIdAndUserId(trainingLogId, user.getId())
+        .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
+
+    trainingLog.setRating(request.getRating());
+    trainingLog.setEnergy(request.getEnergy());
+    trainingLog.setSleep(request.getSleep());
+    String notes = request.getNotes() != null ? request.getNotes().strip() : "";
+    trainingLog.setNotes(notes.isEmpty() ? null : notes);
+
+    return toResponse(trainingLogRepository.save(trainingLog), true);
+  }
+
   public List<TrainingLogResponse> getAllTrainings(Authentication authentication) {
     User user = currentUser.get(authentication);
     return trainingLogRepository.findByUserIdOrderByStartedAtDesc(user.getId())
@@ -328,6 +347,9 @@ public class TrainingLogService {
         .durationSeconds(trainingLog.getDurationSeconds())
         .notes(trainingLog.getNotes())
         .deload(Boolean.TRUE.equals(trainingLog.getDeload()))
+        .rating(trainingLog.getRating())
+        .energy(trainingLog.getEnergy())
+        .sleep(trainingLog.getSleep())
         .exercises(trainingLog.getExerciseLogs().stream()
             .map(el -> toExerciseLogResponse(el, includePrevious))
             .collect(Collectors.toList()))
