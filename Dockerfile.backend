@@ -9,8 +9,9 @@ COPY backend/training-backend/settings.gradle settings.gradle
 COPY backend/training-backend/build.gradle build.gradle
 RUN chmod +x gradlew
 
-# Pre-fetch dependencies (re-run only when build.gradle changes)
-RUN ./gradlew dependencies --no-daemon 2>/dev/null || true
+# Download Gradle and the dependencies (cached until build.gradle changes). No `|| true` here:
+# a network or DNS problem should fail on this step with its real error, not one step later.
+RUN ./gradlew --version --no-daemon && ./gradlew dependencies --no-daemon --quiet > /dev/null
 
 # Copy source and build the fat JAR, skip tests
 COPY backend/training-backend/src src
