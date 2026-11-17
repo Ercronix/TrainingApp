@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, UpdateSplitRequest, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest, StretchReminder, StretchReminderRequest } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, UpdateSplitRequest, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest, StretchReminder, StretchReminderRequest, BodyWeightEntry, BodyWeightRequest } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -458,5 +458,24 @@ export const stretchApi = {
 
   sendTestReminder: async (): Promise<void> => {
     await api.post("/stretch/reminder/test");
+  },
+};
+
+export const bodyWeightApi = {
+  // Ascending by date; from/to (YYYY-MM-DD, inclusive) optionally limit the range
+  getAll: async (range?: { from?: string; to?: string }): Promise<BodyWeightEntry[]> => {
+    const response = await api.get("/body-weight", { params: range });
+    return response.data;
+  },
+
+  // date is the device's local date (YYYY-MM-DD); replaces that day's entry
+  upsert: async (date: string, data: BodyWeightRequest): Promise<BodyWeightEntry> => {
+    const response = await api.put(`/body-weight/${date}`, data);
+    return response.data;
+  },
+
+  // Succeeds also when the day has no entry
+  delete: async (date: string): Promise<void> => {
+    await api.delete(`/body-weight/${date}`);
   },
 };

@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { Platform } from 'react-native';
 import { isAxiosError } from 'axios';
-import { stretchApi, trainingLogsApi } from './api';
+import { bodyWeightApi, stretchApi, trainingLogsApi } from './api';
 import { UpdateExerciseLogRequest } from '@/types';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import type { AddExerciseLogDto } from '@/hooks/useAddExerciseLog';
@@ -23,6 +23,8 @@ export const MUTATION_KEYS = {
   completeTraining: ['completeTraining'] as const,
   stretchCheckIn: ['stretchCheckIn'] as const,
   stretchUndoCheckIn: ['stretchUndoCheckIn'] as const,
+  bodyWeightUpsert: ['bodyWeightUpsert'] as const,
+  bodyWeightDelete: ['bodyWeightDelete'] as const,
 };
 
 /**
@@ -58,6 +60,20 @@ export const STRETCH_SCOPE = { id: 'stretch-check-ins' };
 export interface StretchCheckInVariables {
   // The device's local date, YYYY-MM-DD
   day: string;
+}
+
+// Logging and deleting run one at a time, in order, so a day logged and then removed offline replays the same way
+export const BODY_WEIGHT_SCOPE = { id: 'body-weight' };
+
+export interface BodyWeightUpsertVariables {
+  // The device's local date, YYYY-MM-DD
+  date: string;
+  weight: number;
+  note?: string;
+}
+
+export interface BodyWeightDeleteVariables {
+  date: string;
 }
 
 export interface CompleteTrainingVariables {
@@ -143,6 +159,21 @@ queryClient.setMutationDefaults(MUTATION_KEYS.stretchUndoCheckIn, {
   mutationFn: ({ day }: StretchCheckInVariables) => stretchApi.undoCheckIn(day),
   onSettled: () => {
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stretchCheckIns });
+  },
+});
+
+// Both are idempotent on the server (an upsert by date, a delete that ignores a missing day)
+queryClient.setMutationDefaults(MUTATION_KEYS.bodyWeightUpsert, {
+  mutationFn: ({ date, weight, note }: BodyWeightUpsertVariables) => bodyWeightApi.upsert(date, { weight, note }),
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bodyWeight });
+  },
+});
+
+queryClient.setMutationDefaults(MUTATION_KEYS.bodyWeightDelete, {
+  mutationFn: ({ date }: BodyWeightDeleteVariables) => bodyWeightApi.delete(date),
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bodyWeight });
   },
 });
 
