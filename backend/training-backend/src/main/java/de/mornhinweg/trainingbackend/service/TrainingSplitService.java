@@ -1,8 +1,10 @@
 package de.mornhinweg.trainingbackend.service;
 
 import de.mornhinweg.trainingbackend.dto.split.CreateSplitRequest;
+import de.mornhinweg.trainingbackend.dto.split.RestartMesocycleRequest;
 import de.mornhinweg.trainingbackend.dto.split.SplitResponse;
 import de.mornhinweg.trainingbackend.dto.split.UpdateSplitRequest;
+import de.mornhinweg.trainingbackend.exception.BadRequestException;
 import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.model.TrainingSplit;
 import de.mornhinweg.trainingbackend.model.User;
@@ -12,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,12 +58,54 @@ public class TrainingSplitService {
     split.setName(request.getName());
     if (request.getCurrentBlock() != null) {
       if (request.getCurrentBlock() < 1 || request.getCurrentBlock() > 3)
-        throw new RuntimeException("Block must be 1, 2, or 3");
+        throw new BadRequestException("Block must be 1, 2, or 3");
       split.setCurrentBlock(request.getCurrentBlock());
     }
+    applyMesocycle(split, request.getMesocycleWeeks(), request.getMesocycleStartDate());
 
     TrainingSplit updatedSplit = trainingSplitRepository.save(split);
     return toResponse(updatedSplit);
+  }
+
+  /** Starts the split's mesocycle over: the given day (the client's today) begins week 1. */
+  @Transactional
+  public SplitResponse restartMesocycle(Long splitId, RestartMesocycleRequest request, Authentication authentication) {
+    User user = currentUser.get(authentication);
+
+    TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
+        .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
+    if (split.getMesocycleWeeks() == null) {
+      throw new BadRequestException("This split has no mesocycle");
+    }
+    LocalDate start = request != null ? request.getStartDate() : null;
+    split.setMesocycleStartDate(start != null ? start : LocalDate.now());
+
+    return toResponse(trainingSplitRepository.save(split));
+  }
+
+  // Null leaves a field as it is, so clients that don't know about mesocycles can't turn one off
+  private void applyMesocycle(TrainingSplit split, Integer weeks, LocalDate startDate) {
+    if (weeks != null) {
+      if (weeks == 0) {
+        split.setMesocycleWeeks(null);
+        split.setMesocycleStartDate(null);
+        return;
+      }
+      if (weeks < Mesocycle.MIN_WEEKS || weeks > Mesocycle.MAX_WEEKS) {
+        throw new BadRequestException(
+            "A mesocycle must be " + Mesocycle.MIN_WEEKS + " to " + Mesocycle.MAX_WEEKS + " weeks long");
+      }
+      split.setMesocycleWeeks(weeks);
+      if (split.getMesocycleStartDate() == null && startDate == null) {
+        split.setMesocycleStartDate(LocalDate.now());
+      }
+    }
+    if (startDate != null) {
+      if (split.getMesocycleWeeks() == null) {
+        throw new BadRequestException("Set a mesocycle length first");
+      }
+      split.setMesocycleStartDate(startDate);
+    }
   }
 
   @Transactional
@@ -105,6 +150,8 @@ public class TrainingSplitService {
         .name(split.getName())
         .isActive(split.getIsActive())
         .currentBlock(split.getCurrentBlock())
+        .mesocycleWeeks(split.getMesocycleWeeks())
+        .mesocycleStartDate(split.getMesocycleStartDate())
         .workoutCount(split.getWorkouts().size())
         .createdAt(split.getCreatedAt())
         .updatedAt(split.getUpdatedAt())

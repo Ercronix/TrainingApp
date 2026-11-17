@@ -26,5 +26,7 @@ public class ExerciseProgressResponse {
     private Long trainingLogId;
     // Progress covers every workout that uses the library entry
     private String workoutName;
+    // From a deload session, which the client leaves out of the progression trend
+    private Boolean deload;
   }
 }

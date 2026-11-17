@@ -17,6 +17,7 @@ import {
   summarizePeriods,
   toSessionPoints,
   totalsOf,
+  trendPoints,
   weightForReps,
 } from '@/utils/stats';
 import { estimateOneRepMax } from '@/utils/strength';
@@ -117,6 +118,17 @@ describe('toSessionPoints', () => {
   it('has no 1RM or tonnage for timed exercises', () => {
     const [p] = toSessionPoints([progressEntry(local(2026, 11, 3), [set(60, 10), set(45, 10)])], true);
     expect(p).toMatchObject({ weight: 10, reps: 60, e1rm: 0, volume: 0, totalReps: 105 });
+  });
+
+  it('marks deload sessions, and older data without the flag as regular', () => {
+    const points = toSessionPoints([
+      progressEntry(local(2026, 11, 3), [set(5, 100)]),
+      progressEntry(local(2026, 11, 10), [set(5, 90)], { deload: true }),
+    ]);
+    expect(points.map((p) => p.deload)).toEqual([false, true]);
+    expect(trendPoints(points).map((p) => p.weight)).toEqual([100]);
+    // Nothing but deloads: they're all there is to show
+    expect(trendPoints(points.slice(1))).toHaveLength(1);
   });
 
   it('gives zeros for a session with only warm-ups, and drops unparseable dates', () => {
@@ -312,6 +324,45 @@ describe('computeExerciseStats', () => {
     expect(stats.change).toBe(0);
   });
 
+  it('leaves deload sessions out of the trend but counts their volume and consistency', () => {
+    const entries = [
+      progressEntry(local(2026, 10, 14), [set(5, 100), set(5, 100)]),
+      progressEntry(local(2026, 10, 21), [set(5, 102.5), set(5, 102.5)]),
+      progressEntry(local(2026, 10, 28), [set(5, 105), set(5, 105)]),
+      progressEntry(local(2026, 11, 4), [set(5, 90)], { deload: true }),
+      progressEntry(local(2026, 11, 11), [set(5, 110), set(5, 110)]),
+    ];
+    const stats = computeExerciseStats(entries, false)!;
+    expect(stats.points.map((p) => p.weight)).toEqual([100, 102.5, 105, 110]);
+    expect(stats.sessions).toBe(5);
+    expect(stats.deloadSessions).toBe(1);
+    expect(stats.totalVolume).toBe(1000 + 1025 + 1050 + 450 + 1100);
+    expect(stats.totalSets).toBe(9);
+    // Loose precision: a DST change in the span shifts the dates by an hour in some zones
+    expect(stats.sessionsPerWeek).toBeCloseTo(5 / 4, 2);
+    // A steady 2.5 kg a week: the deload's dip doesn't bend the line
+    expect(stats.progression!.perWeek).toBeCloseTo(2.5, 1);
+    expect(stats.progression!.r2).toBeCloseTo(1, 3);
+    expect(stats.progression!.sessions).toBe(4);
+    expect(stats.sincePr).toEqual({ sessions: 0, days: 7 });
+  });
+
+  it('keeps the latest value from a regular session when a deload was last', () => {
+    const stats = computeExerciseStats([
+      progressEntry(local(2026, 11, 4), [set(5, 100)]),
+      progressEntry(local(2026, 11, 11), [set(5, 90)], { deload: true }),
+    ], false)!;
+    expect(stats.latest).toBe(100);
+    expect(stats.latestIntensity).toBe(100);
+    expect(stats.sessions).toBe(2);
+  });
+
+  it('falls back to deload sessions when there is nothing else', () => {
+    const stats = computeExerciseStats([progressEntry(local(2026, 11, 11), [set(5, 90)], { deload: true })], false)!;
+    expect(stats.points).toHaveLength(1);
+    expect(stats.best).toBe(90);
+  });
+
   it('is null without a session that has reps or weight', () => {
     expect(computeExerciseStats([], false)).toBeNull();
     expect(computeExerciseStats([progressEntry(NOW, [warmup(10, 40)]), progressEntry(NOW, [])], false)).toBeNull();
@@ -452,6 +503,18 @@ describe('computeTrainingAnalytics', () => {
     expect(a.trends[0]).toMatchObject({ name: 'Bench', best: 90, latest: 90, sessions: 3 });
     expect(a.trends[0].progression).not.toBeNull();
     expect(a.trends[1].progression).toBeNull();
+  });
+
+  it('counts deload sessions toward volume and sessions but not records or trends', () => {
+    const withDeload = computeTrainingAnalytics([
+      trainingLog(local(2026, 11, 4), [bench(100)]),
+      trainingLog(local(2026, 11, 11), [bench(90)], { deload: true }),
+      trainingLog(local(2026, 11, 17), [bench(95)]),
+    ], 12, NOW.getTime());
+    expect(withDeload.lifetime).toMatchObject({ sessions: 3, volume: 15 * (100 + 90 + 95), sets: 9 });
+    expect(withDeload.weeks[10]).toMatchObject({ sessions: 1, volume: 15 * 90 });
+    expect(withDeload.trends[0]).toMatchObject({ sessions: 3, latest: 95, best: 100 });
+    expect(withDeload.prsLast30Days).toBe(0);
   });
 
   it('handles an empty history', () => {

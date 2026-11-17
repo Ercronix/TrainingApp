@@ -48,6 +48,12 @@ public class TrainingLog {
   @Column(columnDefinition = "TEXT")
   private String notes;
 
+  // Started in a mesocycle's deload week: its targets are lowered (see Deload) and it stays out
+  // of the progression trend and the "previous session" values
+  @Column(nullable = false)
+  @Builder.Default
+  private Boolean deload = false;
+
   @OneToMany(mappedBy = "trainingLog", cascade = CascadeType.ALL, orphanRemoval = true)
   @OrderBy("id ASC")
   @Builder.Default

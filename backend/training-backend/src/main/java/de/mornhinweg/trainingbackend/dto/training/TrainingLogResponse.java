@@ -24,6 +24,8 @@ public class TrainingLogResponse {
   private LocalDateTime lastActivityAt;
   private Integer durationSeconds;
   private String notes;
+  // Started in a deload week: the exercises' planned values are already lowered
+  private Boolean deload;
 
   private List<ExerciseLogResponse> exercises;
 

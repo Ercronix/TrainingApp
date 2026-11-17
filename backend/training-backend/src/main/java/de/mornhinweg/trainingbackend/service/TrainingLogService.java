@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -43,12 +44,15 @@ public class TrainingLogService {
     }
 
     TrainingSplit split = workout.getSplit();
+    LocalDate today = request.getLocalDate() != null ? request.getLocalDate() : LocalDate.now();
+    boolean deload = Mesocycle.isDeload(split.getMesocycleWeeks(), split.getMesocycleStartDate(), today);
 
     TrainingLog trainingLog = TrainingLog.builder()
         .user(user)
         .split(split)
         .workout(workout)  // Added workout reference
         .startedAt(LocalDateTime.now())
+        .deload(deload)
         .build();
 
     trainingLog = trainingLogRepository.save(trainingLog);
@@ -63,14 +67,12 @@ public class TrainingLogService {
           .exercise(exercise)
           .setsCompleted(0)
           .repsCompleted(0)
-          .weightUsed(exercise.getLastUsedWeight())
+          .weightUsed(startingWeight(exercise, trainingLog))
           .completed(false)
           .build();
-      exerciseLogRepository.save(exerciseLog);
+      // Also into the session's list, so the response carries the exercises
+      trainingLog.getExerciseLogs().add(exerciseLogRepository.save(exerciseLog));
     }
-
-    trainingLog = trainingLogRepository.findById(trainingLog.getId())
-        .orElseThrow(() -> new ResourceNotFoundException("Training log not found"));
 
     return toResponse(trainingLog, true);
   }
@@ -155,12 +157,18 @@ public class TrainingLogService {
         .exercise(exercise)
         .setsCompleted(0)
         .repsCompleted(0)
-        .weightUsed(exercise.getLastUsedWeight())
+        .weightUsed(startingWeight(exercise, trainingLog))
         .completed(false)
         .build();
     exerciseLog = exerciseLogRepository.save(exerciseLog);
 
     return toExerciseLogResponse(exerciseLog, true);
+  }
+
+  // The weight a new exercise log starts from: the last one used, lowered in a deload
+  private BigDecimal startingWeight(Exercise exercise, TrainingLog trainingLog) {
+    BigDecimal last = exercise.getLastUsedWeight();
+    return Boolean.TRUE.equals(trainingLog.getDeload()) ? Deload.weight(last) : last;
   }
 
   /**
@@ -266,10 +274,12 @@ public class TrainingLogService {
 
     trainingLog = trainingLogRepository.save(trainingLog);
 
+    // A deload's lighter weights aren't where the next regular session starts from
+    boolean deload = Boolean.TRUE.equals(trainingLog.getDeload());
     for (ExerciseLog exerciseLog : trainingLog.getExerciseLogs()) {
       if (exerciseLog.getCompleted() && exerciseLog.getWeightUsed() != null) {
         Exercise exercise = exerciseLog.getExercise();
-        exercise.setLastUsedWeight(exerciseLog.getWeightUsed());
+        if (!deload) exercise.setLastUsedWeight(exerciseLog.getWeightUsed());
         exercise.setLastTrainedAt(trainingLog.getCompletedAt());
         exerciseRepository.save(exercise);
       }
@@ -317,6 +327,7 @@ public class TrainingLogService {
         .lastActivityAt(trainingLog.getLastActivityAt())
         .durationSeconds(trainingLog.getDurationSeconds())
         .notes(trainingLog.getNotes())
+        .deload(Boolean.TRUE.equals(trainingLog.getDeload()))
         .exercises(trainingLog.getExerciseLogs().stream()
             .map(el -> toExerciseLogResponse(el, includePrevious))
             .collect(Collectors.toList()))
@@ -327,10 +338,26 @@ public class TrainingLogService {
   private ExerciseLogResponse toExerciseLogResponse(ExerciseLog exerciseLog, boolean includePrevious) {
     Exercise exercise = exerciseLog.getExercise();
     LibraryExercise libraryExercise = exercise.getLibraryExercise();
-    // Previous values come from any workout that uses the same library exercise
-    ExerciseLog previous = includePrevious
+    boolean deload = Boolean.TRUE.equals(exerciseLog.getTrainingLog().getDeload());
+    boolean planIncomplete = exercise.getSets() == null || exercise.getReps() == null || exercise.getPlannedWeight() == null;
+    // Previous values come from any workout that uses the same library exercise (deloads excluded).
+    // A deload also needs them to fill in what the plan leaves open.
+    ExerciseLog previous = includePrevious || (deload && planIncomplete)
         ? exerciseLogRepository.findPreviousCompleted(libraryExercise.getId(), exerciseLog.getTrainingLog().getId()).orElse(null)
         : null;
+    Integer plannedSets = exercise.getSets();
+    Integer plannedReps = exercise.getReps();
+    BigDecimal plannedWeight = exercise.getPlannedWeight();
+    if (deload) {
+      // Lowered from the plan, or from the last regular session where the plan has no value.
+      // The previous session is then left out, so clients prefill the deload targets instead.
+      if (plannedSets == null && previous != null && previous.getSetsCompleted() > 0) plannedSets = previous.getSetsCompleted();
+      if (plannedReps == null && previous != null && previous.getRepsCompleted() > 0) plannedReps = previous.getRepsCompleted();
+      if (plannedWeight == null && previous != null) plannedWeight = previous.getWeightUsed();
+      plannedSets = Deload.sets(plannedSets);
+      plannedWeight = Deload.weight(plannedWeight);
+      previous = null;
+    }
     // Records to beat: from sessions completed before this one started
     ExerciseLogRepository.Bests bests = includePrevious
         ? exerciseLogRepository.findBestsCompletedBefore(libraryExercise.getId(), exerciseLog.getTrainingLog().getStartedAt())
@@ -342,9 +369,9 @@ public class TrainingLogService {
         .exerciseName(libraryExercise.getName())
         .workoutId(exercise.getWorkout().getId())
         .workoutName(exercise.getWorkout().getName())
-        .plannedSets(exercise.getSets())
-        .plannedReps(exercise.getReps())
-        .plannedWeight(exercise.getPlannedWeight())
+        .plannedSets(plannedSets)
+        .plannedReps(plannedReps)
+        .plannedWeight(plannedWeight)
         .setsCompleted(exerciseLog.getSetsCompleted())
         .repsCompleted(exerciseLog.getRepsCompleted())
         .weightUsed(exerciseLog.getWeightUsed())
