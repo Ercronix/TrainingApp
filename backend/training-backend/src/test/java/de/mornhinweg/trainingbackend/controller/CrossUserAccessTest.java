@@ -199,6 +199,8 @@ class CrossUserAccessTest {
     perform(b, get("/api/training-logs/" + runningSessionA), null).andExpect(status().isNotFound());
     perform(b, put("/api/training-logs/" + runningSessionA + "/complete"), "{\"notes\":\"Taken\"}")
         .andExpect(status().isNotFound());
+    perform(b, put("/api/training-logs/" + completedSessionA + "/review"), "{\"rating\":1,\"notes\":\"Taken\"}")
+        .andExpect(status().isNotFound());
     perform(b, post("/api/training-logs/" + runningSessionA + "/exercise-logs"), "{\"name\":\"Planted\",\"addToWorkout\":true}")
         .andExpect(status().isNotFound());
     perform(b, put("/api/training-logs/exercise-logs/" + runningLogA), "{\"completed\":true,\"notes\":\"Taken\",\"sets\":[]}")
@@ -221,7 +223,8 @@ class CrossUserAccessTest {
         .andExpect(jsonPath("$.exercises[0].sets[0].weight").value(90.0));
     perform(a, get("/api/training-logs/" + completedSessionA), null)
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.notes").value("A's notes"));
+        .andExpect(jsonPath("$.notes").value("A's notes"))
+        .andExpect(jsonPath("$.rating").value(nullValue()));
     perform(a, get("/api/workouts/" + workoutA + "/exercises"), null)
         .andExpect(jsonPath("$", hasSize(2)));
   }

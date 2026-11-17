@@ -67,8 +67,20 @@ export interface TrainingLog {
   notes: string | null;
   /** Started in a deload week; the planned values come lowered from the server. Missing in older cached data. */
   deload?: boolean;
+  /** The user's 1–5 ratings: how it felt, their energy, and their sleep the night before. Missing from data cached by older versions. */
+  rating?: number | null;
+  energy?: number | null;
+  sleep?: number | null;
   exercises: ExerciseLog[];
   isCompleted: boolean;
+}
+
+/** A session's ratings (1–5, null when not given) and note; saving one replaces all four. */
+export interface TrainingReview {
+  rating: number | null;
+  energy: number | null;
+  sleep: number | null;
+  notes: string | null;
 }
 
 export interface ExerciseLog {

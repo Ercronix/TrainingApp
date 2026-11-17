@@ -229,6 +229,57 @@ class TrainingLogControllerTest {
         .andExpect(jsonPath("$.lastActivityAt").value(lastActivityAt));
   }
 
+  @Test
+  void ratingsAndNoteCanBeSetAndChangedAfterCompletion() throws Exception {
+    String token = register();
+    long splitId = id(perform(token, post("/api/splits"), "{\"name\":\"Split\"}"));
+    long workoutId = id(perform(token, post("/api/workouts/split/" + splitId), "{\"name\":\"Push\"}"));
+    long sessionId = id(perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutId + "}"));
+    perform(token, put("/api/training-logs/" + sessionId + "/complete"), "{}").andExpect(status().isOk());
+
+    perform(token, get("/api/training-logs/" + sessionId), null)
+        .andExpect(jsonPath("$.rating").value(nullValue()))
+        .andExpect(jsonPath("$.energy").value(nullValue()))
+        .andExpect(jsonPath("$.sleep").value(nullValue()));
+
+    perform(token, put("/api/training-logs/" + sessionId + "/review"),
+        "{\"rating\":4,\"energy\":2,\"sleep\":5,\"notes\":\"  Shoulder felt tight  \"}")
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.rating").value(4))
+        .andExpect(jsonPath("$.energy").value(2))
+        .andExpect(jsonPath("$.sleep").value(5))
+        .andExpect(jsonPath("$.notes").value("Shoulder felt tight"))
+        .andExpect(jsonPath("$.isCompleted").value(true));
+
+    // A review replaces all values: left out or null clears one, a blank note clears the note
+    perform(token, put("/api/training-logs/" + sessionId + "/review"), "{\"rating\":5,\"notes\":\"   \"}")
+        .andExpect(status().isOk());
+    perform(token, get("/api/training-logs"), null)
+        .andExpect(jsonPath("$[0].id").value(sessionId))
+        .andExpect(jsonPath("$[0].rating").value(5))
+        .andExpect(jsonPath("$[0].energy").value(nullValue()))
+        .andExpect(jsonPath("$[0].sleep").value(nullValue()))
+        .andExpect(jsonPath("$[0].notes").value(nullValue()));
+  }
+
+  @Test
+  void ratingsOutsideOneToFiveAreRejected() throws Exception {
+    String token = register();
+    long splitId = id(perform(token, post("/api/splits"), "{\"name\":\"Split\"}"));
+    long workoutId = id(perform(token, post("/api/workouts/split/" + splitId), "{\"name\":\"Push\"}"));
+    long sessionId = id(perform(token, post("/api/training-logs/start"), "{\"workoutId\":" + workoutId + "}"));
+    String review = "/api/training-logs/" + sessionId + "/review";
+
+    perform(token, put(review), "{\"rating\":3}").andExpect(status().isOk());
+    perform(token, put(review), "{\"rating\":0}").andExpect(status().isBadRequest());
+    perform(token, put(review), "{\"energy\":6}").andExpect(status().isBadRequest());
+    perform(token, put(review), "{\"sleep\":-1}").andExpect(status().isBadRequest());
+    perform(token, put(review), "{\"notes\":\"" + "x".repeat(2001) + "\"}").andExpect(status().isBadRequest());
+
+    perform(token, get("/api/training-logs/" + sessionId), null)
+        .andExpect(jsonPath("$.rating").value(3));
+  }
+
   private String register() throws Exception {
     String name = "test_" + UUID.randomUUID().toString().substring(0, 8);
     String body = """

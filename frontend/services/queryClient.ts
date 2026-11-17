@@ -5,7 +5,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { Platform } from 'react-native';
 import { isAxiosError } from 'axios';
 import { bodyWeightApi, stretchApi, trainingLogsApi } from './api';
-import { UpdateExerciseLogRequest } from '@/types';
+import { TrainingReview, UpdateExerciseLogRequest } from '@/types';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import type { AddExerciseLogDto } from '@/hooks/useAddExerciseLog';
 import type { ReplaceExerciseLogDto } from '@/hooks/useReplaceExerciseLog';
@@ -21,6 +21,7 @@ export const MUTATION_KEYS = {
   replaceExerciseLog: ['replaceExerciseLog'] as const,
   deleteExerciseLog: ['deleteExerciseLog'] as const,
   completeTraining: ['completeTraining'] as const,
+  updateTrainingReview: ['updateTrainingReview'] as const,
   stretchCheckIn: ['stretchCheckIn'] as const,
   stretchUndoCheckIn: ['stretchUndoCheckIn'] as const,
   bodyWeightUpsert: ['bodyWeightUpsert'] as const,
@@ -80,6 +81,12 @@ export interface CompleteTrainingVariables {
   trainingLogId: number;
   // When the user finished (Date.now()), which can be well before the request is sent
   completedAtMs: number;
+}
+
+export interface UpdateTrainingReviewVariables {
+  trainingLogId: number;
+  // The whole review: each save replaces all of it, so replaying saves in order ends with the last
+  review: TrainingReview;
 }
 
 export const queryClient = new QueryClient({
@@ -144,6 +151,23 @@ queryClient.setMutationDefaults(MUTATION_KEYS.completeTraining, {
     void queryClient.invalidateQueries({ queryKey: ['history'] });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeTraining });
+  },
+});
+
+// Runs in the session's scope, so a review given right after finishing offline is sent after the
+// completion. The request replaces the whole review, so a replay after a lost response is harmless.
+queryClient.setMutationDefaults(MUTATION_KEYS.updateTrainingReview, {
+  mutationFn: async ({ trainingLogId, review }: UpdateTrainingReviewVariables) => {
+    try {
+      await trainingLogsApi.updateReview(trainingLogId, review);
+    } catch (error) {
+      // The session was deleted meanwhile, so there's nothing left to rate
+      if (!isAxiosError(error) || error.response?.status !== 404) throw error;
+    }
+  },
+  onSettled: (_data, _error, { trainingLogId }: UpdateTrainingReviewVariables) => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.training(trainingLogId.toString()) });
+    void queryClient.invalidateQueries({ queryKey: ['history'] });
   },
 });
 

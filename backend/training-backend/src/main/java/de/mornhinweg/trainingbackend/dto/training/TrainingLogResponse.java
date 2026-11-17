@@ -26,6 +26,10 @@ public class TrainingLogResponse {
   private String notes;
   // Started in a deload week: the exercises' planned values are already lowered
   private Boolean deload;
+  // 1-5, or null when not rated
+  private Integer rating;
+  private Integer energy;
+  private Integer sleep;
 
   private List<ExerciseLogResponse> exercises;
 
