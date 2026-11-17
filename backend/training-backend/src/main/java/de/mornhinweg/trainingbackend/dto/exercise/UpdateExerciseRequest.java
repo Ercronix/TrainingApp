@@ -1,5 +1,6 @@
 package de.mornhinweg.trainingbackend.dto.exercise;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import java.math.BigDecimal;
@@ -15,6 +16,8 @@ public class UpdateExerciseRequest {
   private String videoId;
   private Integer sets;
   private Integer reps;
+  // The top of the rep range; null leaves it unchanged, 0 makes the rep count fixed again
+  @Min(0) private Integer repsMax;
   private String repUnit;
   private BigDecimal plannedWeight;
   private Integer orderIndex;

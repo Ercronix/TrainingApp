@@ -7,6 +7,7 @@ import de.mornhinweg.trainingbackend.exception.UnauthorizedException;
 import de.mornhinweg.trainingbackend.model.*;
 import de.mornhinweg.trainingbackend.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Limit;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class TrainingLogService {
+
+  // The latest completed session of an exercise and the one before it
+  private static final Limit RECENT_SESSIONS = Limit.of(2);
 
   private final TrainingLogRepository trainingLogRepository;
   private final CurrentUserService currentUser;
@@ -145,6 +149,7 @@ public class TrainingLogService {
         .libraryExercise(libraryExercise)
         .sets(request.getSets())
         .reps(request.getReps())
+        .repsMax(RepRanges.topOf(request.getReps(), request.getRepsMax()))
         .plannedWeight(request.getPlannedWeight())
         .orderIndex(nextOrderIndex)
         .temporary(temporary)
@@ -192,6 +197,7 @@ public class TrainingLogService {
         .libraryExercise(libraryExercise)
         .sets(request.getSets())
         .reps(request.getReps())
+        .repsMax(RepRanges.topOf(request.getReps(), request.getRepsMax()))
         .plannedWeight(request.getPlannedWeight())
         .orderIndex(exerciseRepository.findByWorkoutIdOrderByOrderIndexAsc(workout.getId()).size())
         .temporary(true)
@@ -362,23 +368,28 @@ public class TrainingLogService {
     LibraryExercise libraryExercise = exercise.getLibraryExercise();
     boolean deload = Boolean.TRUE.equals(exerciseLog.getTrainingLog().getDeload());
     boolean planIncomplete = exercise.getSets() == null || exercise.getReps() == null || exercise.getPlannedWeight() == null;
-    // Previous values come from any workout that uses the same library exercise (deloads excluded).
+    // Previous values come from any workout that uses the same library exercise (deloads excluded):
+    // the latest completed session, and the one before it (for the client's suggested next target).
     // A deload also needs them to fill in what the plan leaves open.
-    ExerciseLog previous = includePrevious || (deload && planIncomplete)
-        ? exerciseLogRepository.findPreviousCompleted(libraryExercise.getId(), exerciseLog.getTrainingLog().getId()).orElse(null)
-        : null;
+    List<ExerciseLog> recent = includePrevious || (deload && planIncomplete)
+        ? exerciseLogRepository.findRecentCompleted(libraryExercise.getId(), exerciseLog.getTrainingLog().getId(), RECENT_SESSIONS)
+        : List.of();
+    ExerciseLog previous = !recent.isEmpty() ? recent.get(0) : null;
+    ExerciseLog earlier = recent.size() > 1 ? recent.get(1) : null;
     Integer plannedSets = exercise.getSets();
     Integer plannedReps = exercise.getReps();
     BigDecimal plannedWeight = exercise.getPlannedWeight();
     if (deload) {
       // Lowered from the plan, or from the last regular session where the plan has no value.
-      // The previous session is then left out, so clients prefill the deload targets instead.
+      // The previous sessions are then left out, so clients prefill the deload targets instead
+      // (and suggest no progression).
       if (plannedSets == null && previous != null && previous.getSetsCompleted() > 0) plannedSets = previous.getSetsCompleted();
       if (plannedReps == null && previous != null && previous.getRepsCompleted() > 0) plannedReps = previous.getRepsCompleted();
       if (plannedWeight == null && previous != null) plannedWeight = previous.getWeightUsed();
       plannedSets = Deload.sets(plannedSets);
       plannedWeight = Deload.weight(plannedWeight);
       previous = null;
+      earlier = null;
     }
     // Records to beat: from sessions completed before this one started
     ExerciseLogRepository.Bests bests = includePrevious
@@ -393,6 +404,7 @@ public class TrainingLogService {
         .workoutName(exercise.getWorkout().getName())
         .plannedSets(plannedSets)
         .plannedReps(plannedReps)
+        .plannedRepsMax(exercise.getRepsMax())
         .plannedWeight(plannedWeight)
         .setsCompleted(exerciseLog.getSetsCompleted())
         .repsCompleted(exerciseLog.getRepsCompleted())
@@ -402,10 +414,12 @@ public class TrainingLogService {
         .notes(exerciseLog.getNotes())
         .repUnit(libraryExercise.getRepUnit())
         .equipment(libraryExercise.getEquipment())
+        .weightIncrement(libraryExercise.getWeightIncrement())
         .previousSets(previous != null ? previous.getSetsCompleted() : null)
         .previousReps(previous != null ? previous.getRepsCompleted() : null)
         .previousWeight(previous != null ? previous.getWeightUsed() : null)
         .previousSetLogs(previous != null ? SetLogResponse.fromAll(previous.getSetLogs()) : null)
+        .earlierSetLogs(earlier != null ? SetLogResponse.fromAll(earlier.getSetLogs()) : null)
         .bestWeight(bests != null ? bests.getBestWeight() : null)
         .bestOneRepMax(bests != null ? bests.getBestOneRepMax() : null)
         .supersetGroup(exercise.getSupersetGroup())

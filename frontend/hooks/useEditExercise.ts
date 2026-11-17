@@ -4,11 +4,14 @@ import { exercisesApi } from '@/services/api';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
+import { repRangeError, repsMaxOf } from '@/utils/plan';
 
 export interface EditExerciseForm {
   name: string;
   sets: string;
   reps: string;
+  // The top of a rep range; empty for a fixed rep count
+  repsMax: string;
   plannedWeight: string;
 }
 
@@ -22,6 +25,8 @@ export function useEditExercise(workoutId: string, exerciseId: string) {
         name: form.name.trim(),
         sets: form.sets ? parseInt(form.sets) : null,
         reps: form.reps ? parseInt(form.reps) : null,
+        // 0 clears a range that was emptied
+        repsMax: repsMaxOf(form.repsMax, 0),
         repUnit,
         plannedWeight: form.plannedWeight ? parseFloat(form.plannedWeight) : null,
       }),
@@ -39,6 +44,11 @@ export function useEditExercise(workoutId: string, exerciseId: string) {
   const save = (form: EditExerciseForm, repUnit?: string) => {
     if (!form.name.trim()) {
       alert('Error', 'Please enter an exercise name');
+      return;
+    }
+    const rangeError = repRangeError(form.reps, form.repsMax);
+    if (rangeError) {
+      alert('Error', rangeError);
       return;
     }
     mutation.mutate({ form, repUnit });

@@ -184,6 +184,7 @@ class MesocycleControllerTest {
         // So that clients prefill the deload targets rather than the last session
         .andExpect(jsonPath("$.exercises[1].previousSets").value(nullValue()))
         .andExpect(jsonPath("$.exercises[1].previousSetLogs").value(nullValue()))
+        .andExpect(jsonPath("$.exercises[1].earlierSetLogs").value(nullValue()))
         .andReturn().getResponse().getContentAsString();
     long deloadId = ((Number) JsonPath.read(deload, "$.id")).longValue();
 

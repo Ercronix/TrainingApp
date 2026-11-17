@@ -7,16 +7,16 @@ import { useTheme } from '@/hooks/useTheme';
 
 import { Tactile } from '@/components/Tactile';
 export default function EditExerciseModal() {
-  const { workoutId, exerciseId, currentName, currentSets, currentReps, currentWeight, currentRepUnit } =
+  const { workoutId, exerciseId, currentName, currentSets, currentReps, currentRepsMax, currentWeight, currentRepUnit } =
     useLocalSearchParams<{
       workoutId: string; exerciseId: string; currentName: string;
-      currentSets: string; currentReps: string; currentWeight: string; currentRepUnit: string;
+      currentSets: string; currentReps: string; currentRepsMax?: string; currentWeight: string; currentRepUnit: string;
     }>();
 
   const router = useRouter();
   const [form, setForm] = useState({
     name: currentName || '', sets: currentSets || '',
-    reps: currentReps || '', plannedWeight: currentWeight || '',
+    reps: currentReps || '', repsMax: currentRepsMax || '', plannedWeight: currentWeight || '',
   });
   const initialRepUnit = currentRepUnit === 'seconds' ? 'seconds' : 'reps';
   const [repUnit, setRepUnit] = useState<'reps' | 'seconds'>(initialRepUnit);
@@ -75,6 +75,21 @@ export default function EditExerciseModal() {
               placeholderTextColor={c.elevated}
               keyboardAppearance={c.keyboardAppearance}
               editable={!isPending}
+            />
+          </View>
+          {/* Optional top of a rep range; emptied, the rep count is fixed again */}
+          <View className="flex-1">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-2">UP TO</Text>
+            <TextInput
+              className="bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
+              value={form.repsMax}
+              onChangeText={updateField('repsMax')}
+              keyboardType="numeric"
+              placeholder={repUnit === 'seconds' ? '45' : '12'}
+              placeholderTextColor={c.elevated}
+              keyboardAppearance={c.keyboardAppearance}
+              editable={!isPending}
+              accessibilityLabel={`Up to ${repUnit === 'seconds' ? 'seconds' : 'reps'}, optional, for a range`}
             />
           </View>
         </View>

@@ -7,6 +7,9 @@ export const set = (reps: number, weight: number | null = null, warmup = false):
 
 export const warmup = (reps: number, weight: number | null = null): SetLog => set(reps, weight, true);
 
+/** A working set logged with an RPE. */
+export const rpeSet = (reps: number, weight: number | null, rpe: number): SetLog => ({ reps, weight, rpe, warmup: false });
+
 /** A row of the log exercise screen, as typed: not done and empty unless overridden. */
 export const setRow = (overrides: Partial<SetRow> = {}): SetRow =>
   ({ weight: '', reps: '', rpe: '', warmup: false, done: false, ...overrides });

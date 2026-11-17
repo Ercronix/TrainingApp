@@ -30,8 +30,13 @@ public class Exercise {
   @Column
   private Integer sets;
 
+  // The bottom of the planned rep range, or the fixed rep count when repsMax is null
   @Column
   private Integer reps;
+
+  // The top of the planned rep range; null for a fixed rep count. Never below reps.
+  @Column(name = "reps_max")
+  private Integer repsMax;
 
   @Column(name = "planned_weight", precision = 5, scale = 2)
   private BigDecimal plannedWeight;

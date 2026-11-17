@@ -1,7 +1,7 @@
 import {
   doneSetsOf, elapsedSeconds, formatNumber, formatTarget, gainOf, isInvalidRow, keyOf, loggedPatch, nextRow, payloadFromKey,
   parseNumber, payloadOf, prefillRows, previousLabel, reachedTarget, restorableDraft, rowDefaultsOf, savedKeyOf, setLabels,
-  steppedReps, steppedWeight, targetOf, timedTargetSeconds, toRow, toSet,
+  steppedReps, steppedWeight, suggestionOf, targetOf, timedTargetSeconds, toRow, toSet,
 } from '@/utils/logExercise';
 import { exerciseLog, set, setRow, warmup } from '@/test/factories';
 
@@ -35,6 +35,58 @@ describe('prefillRows', () => {
     expect(prefillRows(exerciseLog({ plannedSets: 2, plannedReps: 8, plannedWeight: 62.5 })))
       .toEqual([setRow({ weight: '62.5', reps: '8' }), setRow({ weight: '62.5', reps: '8' })]);
     expect(prefillRows(exerciseLog({ plannedReps: 30 }))).toEqual([setRow({ reps: '30' })]);
+  });
+
+  describe('with a suggestion', () => {
+    const suggestion = { weight: 62.5, reps: 8, reason: 'Hit 12 reps on all sets last time → +2.5 kg' };
+
+    it('gives last session\'s working sets the suggested values, keeping its warm-ups', () => {
+      const log = exerciseLog({ previousSetLogs: [warmup(10, 20), set(12, 60), set(12, 60)], plannedReps: 8, plannedRepsMax: 12 });
+      expect(prefillRows(log, suggestion)).toEqual([
+        setRow({ weight: '20', reps: '10', warmup: true }),
+        setRow({ weight: '62.5', reps: '8' }),
+        setRow({ weight: '62.5', reps: '8' }),
+      ]);
+    });
+
+    it('leaves the weight empty for a suggestion without weight', () => {
+      const log = exerciseLog({ previousSetLogs: [set(10)], plannedReps: 8, plannedRepsMax: 12 });
+      expect(prefillRows(log, { weight: null, reps: 11, reason: '' })).toEqual([setRow({ reps: '11' })]);
+    });
+
+    it('never replaces sets already logged this session', () => {
+      const log = exerciseLog({ sets: [set(9, 60)], previousSetLogs: [set(12, 60), set(12, 60)], plannedSets: 2 });
+      expect(prefillRows(log, suggestion)).toEqual([done('60', '9')]);
+    });
+
+    it('works with the real suggestion of a log', () => {
+      const log = exerciseLog({
+        plannedSets: 3, plannedReps: 8, plannedRepsMax: 12, plannedWeight: 60,
+        previousSetLogs: [set(12, 60), set(11, 60), set(10, 60)],
+      });
+      expect(prefillRows(log, suggestionOf(log))).toEqual([
+        setRow({ weight: '60', reps: '11' }), setRow({ weight: '60', reps: '11' }), setRow({ weight: '60', reps: '11' }),
+      ]);
+    });
+  });
+});
+
+describe('rowDefaultsOf', () => {
+  it('is the plan without a suggestion', () => {
+    expect(rowDefaultsOf(exerciseLog({ plannedReps: 8, plannedRepsMax: 12, plannedWeight: 60 }))).toEqual({ weight: 60, reps: 8 });
+    expect(rowDefaultsOf(undefined)).toEqual({ weight: null, reps: null });
+  });
+
+  it('is the suggestion when there is one', () => {
+    const log = exerciseLog({ plannedReps: 8, plannedWeight: 60 });
+    expect(rowDefaultsOf(log, { weight: 62.5, reps: 8, reason: '' })).toEqual({ weight: 62.5, reps: 8 });
+    expect(rowDefaultsOf(log, { weight: null, reps: 35, reason: '' })).toEqual({ weight: null, reps: 35 });
+  });
+
+  it('drives a one-tap log and a timed set\'s target', () => {
+    const defaults = rowDefaultsOf(exerciseLog({ plannedReps: 30, repUnit: 'seconds' }), { weight: null, reps: 35, reason: '' });
+    expect(loggedPatch(setRow(), defaults)).toEqual({ done: true, reps: '35', weight: '' });
+    expect(timedTargetSeconds([setRow()], 0, defaults)).toBe(35);
   });
 });
 
@@ -185,13 +237,52 @@ describe('targetOf and formatTarget', () => {
   it('needs planned sets and reps', () => {
     expect(targetOf(exerciseLog({ plannedSets: 3 }))).toBeNull();
     expect(targetOf(undefined)).toBeNull();
-    expect(targetOf(exerciseLog({ plannedSets: 3, plannedReps: 8, plannedWeight: 60 }))).toEqual({ sets: 3, reps: 8, weight: 60 });
+    expect(targetOf(exerciseLog({ plannedSets: 3, plannedReps: 8, plannedWeight: 60 })))
+      .toEqual({ sets: 3, reps: 8, repsMax: null, weight: 60 });
+  });
+
+  it('carries the top of a rep range', () => {
+    expect(targetOf(exerciseLog({ plannedSets: 3, plannedReps: 8, plannedRepsMax: 12, plannedWeight: 60 })))
+      .toEqual({ sets: 3, reps: 8, repsMax: 12, weight: 60 });
   });
 
   it('formats the line, leaving out a missing or zero weight', () => {
-    expect(formatTarget({ sets: 3, reps: 8, weight: 62.5 }, 'reps')).toBe('TARGET: 3 × 8 reps @ 62.5 kg');
-    expect(formatTarget({ sets: 3, reps: 30, weight: 0 }, 'sec')).toBe('TARGET: 3 × 30 sec');
-    expect(formatTarget({ sets: 3, reps: 30, weight: null }, 'sec')).toBe('TARGET: 3 × 30 sec');
+    expect(formatTarget({ sets: 3, reps: 8, repsMax: null, weight: 62.5 }, 'reps')).toBe('PLAN: 3 × 8 reps @ 62.5 kg');
+    expect(formatTarget({ sets: 3, reps: 30, repsMax: null, weight: 0 }, 'sec')).toBe('PLAN: 3 × 30 sec');
+    expect(formatTarget({ sets: 3, reps: 30, repsMax: null, weight: null }, 'sec')).toBe('PLAN: 3 × 30 sec');
+  });
+
+  it('formats a rep range', () => {
+    expect(formatTarget({ sets: 3, reps: 8, repsMax: 12, weight: 60 }, 'reps')).toBe('PLAN: 3 × 8–12 reps @ 60 kg');
+    expect(formatTarget({ sets: 2, reps: 30, repsMax: 45, weight: null }, 'sec')).toBe('PLAN: 2 × 30–45 sec');
+  });
+});
+
+describe('suggestionOf', () => {
+  it('suggests from the plan, last session, the session before and the increment', () => {
+    const log = exerciseLog({
+      plannedSets: 3, plannedReps: 8, plannedRepsMax: 12, plannedWeight: 60, weightIncrement: 5,
+      previousSetLogs: [warmup(10, 20), set(12, 60), set(12, 60), set(12, 60)],
+    });
+    expect(suggestionOf(log)).toEqual({ weight: 65, reps: 8, reason: 'Hit 12 reps on all sets last time → +5 kg' });
+
+    const struggling = exerciseLog({
+      plannedReps: 8, plannedRepsMax: 12, previousSetLogs: [set(6, 60)], earlierSetLogs: [set(7, 60)],
+    });
+    expect(suggestionOf(struggling)?.reason).toBe('Below 8 reps two sessions in a row → stay at 60 kg');
+  });
+
+  it('adds seconds for timed exercises', () => {
+    const log = exerciseLog({ plannedReps: 30, repUnit: 'seconds', previousSetLogs: [set(30), set(32)] });
+    expect(suggestionOf(log)).toEqual({ weight: null, reps: 35, reason: 'Held 30 s on all sets last time → +5 s' });
+  });
+
+  it('is null without a log, without history and in a deload', () => {
+    const log = exerciseLog({ plannedReps: 8, plannedWeight: 60, previousSetLogs: [set(8, 60)] });
+    expect(suggestionOf(undefined)).toBeNull();
+    expect(suggestionOf(exerciseLog({ plannedReps: 8, plannedWeight: 60 }))).toBeNull();
+    expect(suggestionOf(log)).not.toBeNull();
+    expect(suggestionOf(log, { deload: true })).toBeNull();
   });
 });
 

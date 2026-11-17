@@ -26,7 +26,7 @@ import { usesPlates } from '@/constants/equipment';
 import { previousSetsOf } from '@/utils/sets';
 import {
   doneSetsOf, gainOf, isInvalidRow, loggedPatch, nextRow, prefillRows, previousLabel, rowDefaultsOf, setLabels,
-  steppedReps, steppedWeight, targetOf,
+  steppedReps, steppedWeight, suggestionOf, targetOf,
 } from '@/utils/logExercise';
 import { formatSupersetPlace, stepAfterSet, supersetProgress } from '@/utils/supersets';
 import { toast } from '@/utils/confirm';
@@ -43,11 +43,16 @@ export default function LogExerciseModal() {
     exerciseLogId: string; trainingLogId: string; exerciseName: string;
   }>();
   const queryClient = useQueryClient();
-  const [log] = useState(() => queryClient.getQueryData<TrainingLog>(QUERY_KEYS.training(trainingLogId))
-    ?.exercises.find((e) => e.id === Number(exerciseLogId)));
-  const defaults = rowDefaultsOf(log);
+  const [{ log, deload }] = useState(() => {
+    const training = queryClient.getQueryData<TrainingLog>(QUERY_KEYS.training(trainingLogId));
+    return { log: training?.exercises.find((e) => e.id === Number(exerciseLogId)), deload: training?.deload === true };
+  });
+  // The suggested next target after last session, which the rows not logged yet start from.
+  // A deload session runs its lowered plan as it is.
+  const suggestion = suggestionOf(log, { deload });
+  const defaults = rowDefaultsOf(log, suggestion);
   const draft = useRestoredDraft(exerciseLogId, log);
-  const [rows, setRows] = useState<SetRow[]>(() => draft?.rows ?? prefillRows(log));
+  const [rows, setRows] = useState<SetRow[]>(() => draft?.rows ?? prefillRows(log, suggestion));
   // The set being edited: the first one not done yet
   const [focused, setFocused] = useState(() => Math.max(0, rows.findIndex((r) => !r.done)));
   const { timing, elapsed, start: startTiming, stop: stopTiming } = useTimedSet(draft?.timing, rows, defaults);
@@ -190,6 +195,7 @@ export default function LogExerciseModal() {
         exerciseId: log.exerciseId?.toString() ?? '', exerciseName: log.exerciseName,
         libraryExerciseId: log.libraryExerciseId?.toString() ?? '', description: '', videoUrl: '',
         sets: log.plannedSets?.toString() || '', reps: log.plannedReps?.toString() || '',
+        repsMax: log.plannedRepsMax?.toString() || '',
         weight: log.plannedWeight?.toString() || '', workoutId: log.workoutId?.toString() ?? '',
       },
     });
@@ -234,7 +240,7 @@ export default function LogExerciseModal() {
         </View>
 
         <View className="flex-row flex-wrap gap-2 mb-6 px-1">
-          {target && <TargetLine target={target} unitShort={unitShort} />}
+          <TargetLine target={target} suggestion={suggestion} unitShort={unitShort} />
           <RestCountdown />
         </View>
 

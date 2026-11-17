@@ -3,7 +3,9 @@
 import { ExerciseLog, SetLog } from '@/types';
 import type { SetDraft, SetRow } from '@/store/setDraftStore';
 import { previousSetsOf, workingSets } from './sets';
+import { formatRepRange } from './plan';
 import { detectPersonalRecord, estimateOneRepMax, formatKg } from './strength';
+import { Suggestion, suggestTarget } from './progression';
 
 export const SAVE_DEBOUNCE_MS = 600;
 
@@ -30,28 +32,55 @@ export const formatNumber = (n: number) => String(Math.round(n * 100) / 100);
 /** A number as a row value, '' for none. */
 export const textOf = (n: number | null) => (n != null ? String(n) : '');
 
+/** Options for the suggested next target. */
+export interface SuggestionContext {
+  /** The session is a deload, which runs the plan as it is. */
+  deload?: boolean;
+}
+
 /**
- * What a row's empty weight and reps stand for: the plan's values. They show as placeholders,
- * a one-tap log takes them, the steppers start from them, and so does a new session's prefill
- * when there is no last session.
+ * The suggested next target (see `suggestTarget`) after the last session, null when the plan
+ * stands as it is (no history, no planned reps, or a deload).
+ */
+export function suggestionOf(log: ExerciseLog | undefined, context: SuggestionContext = {}): Suggestion | null {
+  if (!log) return null;
+  return suggestTarget(
+    { reps: log.plannedReps, repsMax: log.plannedRepsMax, weight: log.plannedWeight, timed: log.repUnit === 'seconds' },
+    previousSetsOf(log),
+    { increment: log.weightIncrement, earlierSessionSets: log.earlierSetLogs, deload: context.deload },
+  );
+}
+
+/**
+ * What a row's empty weight and reps stand for: the suggested next target, else the plan's
+ * values. They show as placeholders, a one-tap log takes them, the steppers start from them,
+ * and so does a new session's prefill when there is no last session.
  */
 export interface RowDefaults {
   weight: number | null;
   reps: number | null;
 }
 
-export const rowDefaultsOf = (log: ExerciseLog | undefined): RowDefaults => ({
-  weight: log?.plannedWeight ?? null,
-  reps: log?.plannedReps ?? null,
-});
+export const rowDefaultsOf = (log: ExerciseLog | undefined, suggestion: Suggestion | null = null): RowDefaults =>
+  suggestion
+    ? { weight: suggestion.weight, reps: suggestion.reps }
+    : { weight: log?.plannedWeight ?? null, reps: log?.plannedReps ?? null };
 
-/** The rows the screen opens with: what's already logged this session, else last session, else the plan. */
-export function prefillRows(log: ExerciseLog | undefined): SetRow[] {
+/**
+ * The rows the screen opens with: what's already logged this session (never replaced), else
+ * last session's rows, else the plan. With a suggestion, last session's working sets take its
+ * weight and reps instead of their own; its warm-ups stay as they were.
+ */
+export function prefillRows(log: ExerciseLog | undefined, suggestion: Suggestion | null = null): SetRow[] {
   if (!log) return [{ ...emptyRow }];
   if (log.sets?.length) return log.sets.map((s) => toRow(s, true));
   const previous = previousSetsOf(log);
-  if (previous.length) return previous.map((s) => toRow(s, false));
-  const defaults = rowDefaultsOf(log);
+  if (previous.length) {
+    return previous.map((s) => (suggestion && !s.warmup
+      ? { ...emptyRow, weight: textOf(suggestion.weight), reps: String(suggestion.reps) }
+      : toRow(s, false)));
+  }
+  const defaults = rowDefaultsOf(log, suggestion);
   const row: SetRow = { ...emptyRow, weight: textOf(defaults.weight), reps: textOf(defaults.reps) };
   return Array.from({ length: Math.max(log.plannedSets ?? 0, 1) }, () => ({ ...row }));
 }
@@ -168,22 +197,23 @@ export function previousLabel(previous: SetLog | undefined, timed: boolean): str
   return previous.weight != null && Number(previous.weight) > 0 ? `${formatKg(Number(previous.weight))}×${reps}` : reps;
 }
 
-/** What the target line shows. */
+/** The plan the target line shows. `repsMax` is the top of a rep range, null for a fixed count. */
 export interface Target {
   sets: number;
   reps: number;
+  repsMax: number | null;
   weight: number | null;
 }
 
 /** The plan's target, or null without planned sets and reps. */
 export function targetOf(log: ExerciseLog | undefined): Target | null {
   if (log?.plannedSets == null || log.plannedReps == null) return null;
-  return { sets: log.plannedSets, reps: log.plannedReps, weight: log.plannedWeight };
+  return { sets: log.plannedSets, reps: log.plannedReps, repsMax: log.plannedRepsMax ?? null, weight: log.plannedWeight };
 }
 
-/** E.g. "TARGET: 3 × 8 reps @ 60 kg"; a weight of 0 is left out. */
+/** E.g. "PLAN: 3 × 8–12 reps @ 60 kg"; a weight of 0 is left out. */
 export const formatTarget = (target: Target, unitShort: string) =>
-  `TARGET: ${target.sets} × ${target.reps} ${unitShort}${target.weight ? ` @ ${target.weight} kg` : ''}`;
+  `PLAN: ${target.sets} × ${formatRepRange(target.reps, target.repsMax)} ${unitShort}${target.weight ? ` @ ${target.weight} kg` : ''}`;
 
 export interface Gain {
   /** Beats the sessions before (and the sets before it in this one). */

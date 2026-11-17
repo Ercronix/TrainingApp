@@ -23,6 +23,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -69,6 +70,7 @@ public class LibraryExerciseService {
     applyEquipment(entry, request.getEquipment());
     applyMuscles(entry, request.getMuscles());
     applyCatalogExercise(entry, request.getCatalogExerciseId());
+    applyWeightIncrement(entry, request.getWeightIncrement());
     return toResponse(libraryExerciseRepository.save(entry), null);
   }
 
@@ -81,6 +83,7 @@ public class LibraryExerciseService {
     applyEquipment(entry, request.getEquipment());
     applyMuscles(entry, request.getMuscles());
     applyCatalogExercise(entry, request.getCatalogExerciseId());
+    applyWeightIncrement(entry, request.getWeightIncrement());
     entry = libraryExerciseRepository.save(entry);
     List<Object[]> usage = exerciseRepository.findUsageByLibraryExerciseId(entry.getId());
     return toResponse(entry, usage.isEmpty() ? null : usage.get(0));
@@ -146,6 +149,7 @@ public class LibraryExerciseService {
               .repUnit(current.getRepUnit())
               .equipment(current.getEquipment())
               .catalogExerciseId(current.getCatalogExerciseId())
+              .weightIncrement(current.getWeightIncrement())
               .muscles(new HashSet<>(current.getMuscles()))
               .build());
         });
@@ -212,6 +216,15 @@ public class LibraryExerciseService {
     entry.setCatalogExerciseId(catalogExerciseId);
   }
 
+  /** Sets the entry's weight increment unless {@code increment} is null; 0 goes back to the default. */
+  void applyWeightIncrement(LibraryExercise entry, BigDecimal increment) {
+    if (increment == null) return;
+    if (increment.signum() < 0) {
+      throw new BadRequestException("The weight increment can't be negative");
+    }
+    entry.setWeightIncrement(increment.signum() == 0 ? null : increment);
+  }
+
   ExerciseProgressResponse buildProgress(LibraryExercise entry, Long exerciseId) {
     List<ExerciseLog> logs = exerciseLogRepository.findCompletedByLibraryExerciseIdOrderByDate(entry.getId());
 
@@ -252,6 +265,7 @@ public class LibraryExerciseService {
         .repUnit(entry.getRepUnit())
         .equipment(entry.getEquipment())
         .catalogExerciseId(entry.getCatalogExerciseId())
+        .weightIncrement(entry.getWeightIncrement())
         .muscles(MuscleTargetDto.fromAll(entry.getMuscles()))
         .workoutCount(usage != null ? ((Number) usage[1]).longValue() : 0)
         .lastTrainedAt(usage != null ? (LocalDateTime) usage[2] : null)

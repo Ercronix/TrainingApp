@@ -14,6 +14,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
 import { combineMuscles, muscleNames } from '@/utils/muscles';
 import { supersetPositions } from '@/utils/supersets';
+import { formatPlan } from '@/utils/plan';
 import { BodyMap, targetFills } from '@/components/BodyMap';
 import { ExerciseThumb } from '@/components/ExerciseIllustration';
 
@@ -76,6 +77,7 @@ export default function WorkoutDetailScreen() {
                     libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
                     description: item.description || '', videoUrl: item.videoUrl || '',
                     sets: item.sets?.toString() || '', reps: item.reps?.toString() || '',
+                    repsMax: item.repsMax?.toString() || '',
                     weight: item.plannedWeight?.toString() || '', workoutId,
                   },
                 });
@@ -91,7 +93,10 @@ export default function WorkoutDetailScreen() {
                   <Text className="text-primary text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
                   {item.sets && item.reps && (
                     <Text className="text-muted text-xs">
-                      {item.sets} × {item.reps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+                      {formatPlan(
+                        { sets: item.sets, reps: item.reps, repsMax: item.repsMax, weight: item.plannedWeight },
+                        item.repUnit === 'seconds' ? 'sec' : 'reps',
+                      )}
                     </Text>
                   )}
                   {item.lastUsedWeight && (
@@ -118,7 +123,8 @@ export default function WorkoutDetailScreen() {
                                 params: {
                                   workoutId, exerciseId: item.id.toString(),
                                   currentName: item.name, currentSets: item.sets?.toString() || '',
-                                  currentReps: item.reps?.toString() || '', currentWeight: item.plannedWeight?.toString() || '',
+                                  currentReps: item.reps?.toString() || '', currentRepsMax: item.repsMax?.toString() || '',
+                                  currentWeight: item.plannedWeight?.toString() || '',
                                   currentRepUnit: item.repUnit || 'reps',
                                 },
                               }),

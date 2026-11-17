@@ -55,6 +55,7 @@ public class ExerciseService {
         .libraryExercise(libraryExercise)
         .sets(request.getSets())
         .reps(request.getReps())
+        .repsMax(RepRanges.topOf(request.getReps(), request.getRepsMax()))
         .plannedWeight(request.getPlannedWeight())
         .orderIndex(nextOrderIndex)
         .temporary(false)
@@ -80,7 +81,13 @@ public class ExerciseService {
     libraryExerciseService.applyDetails(exercise.getLibraryExercise(),
         request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
     if (request.getSets() != null) exercise.setSets(request.getSets());
-    if (request.getReps() != null) exercise.setReps(request.getReps());
+    if (request.getReps() != null || request.getRepsMax() != null) {
+      // A new bottom is checked against the current top, and the other way round
+      Integer reps = request.getReps() != null ? request.getReps() : exercise.getReps();
+      Integer repsMax = request.getRepsMax() != null ? request.getRepsMax() : exercise.getRepsMax();
+      exercise.setRepsMax(RepRanges.topOf(reps, repsMax));
+      exercise.setReps(reps);
+    }
     if (request.getPlannedWeight() != null) exercise.setPlannedWeight(request.getPlannedWeight());
     if (request.getOrderIndex() != null) exercise.setOrderIndex(request.getOrderIndex());
     exercise = exerciseRepository.save(exercise);
@@ -249,6 +256,7 @@ public class ExerciseService {
         .videoId(exercise.getLibraryExercise().getVideoId())
         .sets(exercise.getSets())
         .reps(exercise.getReps())
+        .repsMax(exercise.getRepsMax())
         .repUnit(exercise.getLibraryExercise().getRepUnit())
         .plannedWeight(exercise.getPlannedWeight())
         .lastUsedWeight(exercise.getLastUsedWeight())

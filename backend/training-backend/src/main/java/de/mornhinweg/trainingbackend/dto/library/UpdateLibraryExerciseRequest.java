@@ -1,9 +1,12 @@
 package de.mornhinweg.trainingbackend.dto.library;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
@@ -19,4 +22,6 @@ public class UpdateLibraryExerciseRequest {
   private List<@Valid MuscleTargetDto> muscles;
   // The catalog exercise picked for it; null leaves the link unchanged, 0 removes it
   private Long catalogExerciseId;
+  // Kg the suggested next target adds; null leaves it unchanged, 0 goes back to the default
+  @DecimalMin("0") @DecimalMax("100") private BigDecimal weightIncrement;
 }
