@@ -26,6 +26,18 @@ describe('prefillRows', () => {
     expect(prefillRows(log)).toEqual([done('60', '8')]);
   });
 
+  it('adds the sets still to do of an exercise not marked done, from last session', () => {
+    const log = exerciseLog({ sets: [set(8, 60)], previousSetLogs: [set(8, 57.5), set(8, 57.5), set(7, 57.5)], completed: false });
+    expect(prefillRows(log)).toEqual([done('60', '8'), setRow({ weight: '57.5', reps: '8' }), setRow({ weight: '57.5', reps: '7' })]);
+  });
+
+  it('adds the sets still to do from the plan, and nothing once the plan is met', () => {
+    const log = exerciseLog({ sets: [set(8, 60)], plannedSets: 3, plannedReps: 8, plannedWeight: 60, completed: false });
+    expect(prefillRows(log)).toEqual([done('60', '8'), setRow({ weight: '60', reps: '8' }), setRow({ weight: '60', reps: '8' })]);
+    const met = exerciseLog({ sets: [set(8, 60), set(8, 60)], plannedSets: 2, plannedReps: 8, completed: false });
+    expect(prefillRows(met)).toEqual([done('60', '8'), done('60', '8')]);
+  });
+
   it('then repeats last session, not done', () => {
     const log = exerciseLog({ previousSetLogs: [warmup(10, 20), set(5, 100)], plannedSets: 3, plannedReps: 8 });
     expect(prefillRows(log)).toEqual([setRow({ weight: '20', reps: '10', warmup: true }), setRow({ weight: '100', reps: '5' })]);
@@ -52,6 +64,11 @@ describe('prefillRows', () => {
     it('leaves the weight empty for a suggestion without weight', () => {
       const log = exerciseLog({ previousSetLogs: [set(10)], plannedReps: 8, plannedRepsMax: 12 });
       expect(prefillRows(log, { weight: null, reps: 11, reason: '' })).toEqual([setRow({ reps: '11' })]);
+    });
+
+    it('gives the sets still to do the suggested values', () => {
+      const log = exerciseLog({ sets: [set(8, 62.5)], previousSetLogs: [set(12, 60), set(12, 60)], completed: false });
+      expect(prefillRows(log, suggestion)).toEqual([done('62.5', '8'), setRow({ weight: '62.5', reps: '8' })]);
     });
 
     it('never replaces sets already logged this session', () => {

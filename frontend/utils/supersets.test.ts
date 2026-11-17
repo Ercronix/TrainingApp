@@ -116,9 +116,10 @@ describe('memberProgress', () => {
     expect(memberProgress(log, rows)).toEqual({ id: log.id, done: 1, total: 3 });
   });
 
-  it('counts what a closed exercise would open with: its logged sets, else last session, else the plan', () => {
+  it('counts what a closed exercise would open with: its logged sets and those still to do, else last session, else the plan', () => {
+    // Partly logged without a draft: the planned sets still to do count, so it isn't finished
     const logged = exerciseLog({ completed: false, plannedSets: 3, sets: [set(8, 60), set(8, 60)] });
-    expect(memberProgress(logged)).toEqual({ id: logged.id, done: 2, total: 2 });
+    expect(memberProgress(logged)).toEqual({ id: logged.id, done: 2, total: 3 });
     const fresh = exerciseLog({ completed: false, plannedSets: 3, sets: [], previousSetLogs: [warmup(10, 20), set(8, 60), set(8, 60), set(6, 60)] });
     expect(memberProgress(fresh)).toEqual({ id: fresh.id, done: 0, total: 3 });
     const planned = exerciseLog({ completed: false, plannedSets: 4, plannedReps: 10, sets: [] });
