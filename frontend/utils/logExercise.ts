@@ -67,13 +67,24 @@ export const rowDefaultsOf = (log: ExerciseLog | undefined, suggestion: Suggesti
     : { weight: log?.plannedWeight ?? null, reps: log?.plannedReps ?? null };
 
 /**
- * The rows the screen opens with: what's already logged this session (never replaced), else
- * last session's rows, else the plan. With a suggestion, last session's working sets take its
- * weight and reps instead of their own; its warm-ups stay as they were.
+ * The rows the screen opens with: what's already logged this session (never replaced), then the
+ * rows still to do from last session's layout, else from the plan. An exercise marked done opens
+ * with only its logged sets. With a suggestion, last session's working sets take its weight and
+ * reps instead of their own; its warm-ups stay as they were.
+ *
+ * The sets still to do are filled in again so that reopening a partly logged exercise without its
+ * draft (on another device, or once the draft is gone) doesn't drop them, which would also make a
+ * superset count the exercise as finished.
  */
 export function prefillRows(log: ExerciseLog | undefined, suggestion: Suggestion | null = null): SetRow[] {
   if (!log) return [{ ...emptyRow }];
-  if (log.sets?.length) return log.sets.map((s) => toRow(s, true));
+  const logged = (log.sets ?? []).map((s) => toRow(s, true));
+  if (logged.length && log.completed) return logged;
+  return [...logged, ...freshRows(log, suggestion).slice(logged.length)];
+}
+
+/** The rows of an exercise with nothing logged yet: last session's layout, else the plan. */
+function freshRows(log: ExerciseLog, suggestion: Suggestion | null): SetRow[] {
   const previous = previousSetsOf(log);
   if (previous.length) {
     return previous.map((s) => (suggestion && !s.warmup
