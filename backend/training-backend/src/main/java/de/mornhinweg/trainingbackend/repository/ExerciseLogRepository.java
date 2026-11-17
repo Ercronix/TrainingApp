@@ -1,6 +1,7 @@
 package de.mornhinweg.trainingbackend.repository;
 
 import de.mornhinweg.trainingbackend.model.ExerciseLog;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -9,7 +10,6 @@ import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> {
@@ -34,6 +34,7 @@ public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> 
       """)
   List<ExerciseLog> findCompletedByLibraryExerciseIdOrderByDate(@Param("libraryExerciseId") Long libraryExerciseId);
 
+  /** The latest completed sessions of a library entry, newest first, except the given one. */
   @Query("""
       SELECT el FROM ExerciseLog el
       JOIN el.trainingLog tl
@@ -42,11 +43,11 @@ public interface ExerciseLogRepository extends JpaRepository<ExerciseLog, Long> 
         AND tl.completedAt IS NOT NULL
         AND tl.deload = false
         AND tl.id <> :excludeTrainingLogId
-      ORDER BY tl.completedAt DESC
-      LIMIT 1
+      ORDER BY tl.completedAt DESC, el.id DESC
       """)
-  Optional<ExerciseLog> findPreviousCompleted(@Param("libraryExerciseId") Long libraryExerciseId,
-                                              @Param("excludeTrainingLogId") Long excludeTrainingLogId);
+  List<ExerciseLog> findRecentCompleted(@Param("libraryExerciseId") Long libraryExerciseId,
+                                        @Param("excludeTrainingLogId") Long excludeTrainingLogId,
+                                        Limit limit);
 
   /** Heaviest working set and best Epley estimated 1RM (as in the client). Both null without history. */
   interface Bests {

@@ -11,6 +11,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { formatSets, setsOf } from '@/utils/sets';
 import { SessionReview } from '@/components/SessionReview';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
+import { formatPlan } from '@/utils/plan';
 
 function formatDuration(seconds: number | null | undefined): string {
   if (!seconds) return '—';
@@ -60,6 +61,7 @@ export default function HistoryDetailScreen() {
               videoUrl: liveExercise?.videoUrl || '',
               sets: item.plannedSets?.toString() || '',
               reps: item.plannedReps?.toString() || '',
+              repsMax: item.plannedRepsMax?.toString() || '',
               weight: item.plannedWeight?.toString() || '',
               workoutId: item.workoutId.toString(),
             },
@@ -74,7 +76,10 @@ export default function HistoryDetailScreen() {
             <Text className="text-primary text-sm font-bold tracking-tight mb-1">{item.exerciseName}</Text>
             {item.plannedSets && item.plannedReps && (
               <Text className="text-muted text-[10px] tracking-widest">
-                PLANNED: {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+                PLANNED: {formatPlan(
+                  { sets: item.plannedSets, reps: item.plannedReps, repsMax: item.plannedRepsMax, weight: item.plannedWeight },
+                  '',
+                )}
               </Text>
             )}
             {item.completed && (

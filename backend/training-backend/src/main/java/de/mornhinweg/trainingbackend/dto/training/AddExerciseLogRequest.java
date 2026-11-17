@@ -2,6 +2,7 @@ package de.mornhinweg.trainingbackend.dto.training;
 
 import de.mornhinweg.trainingbackend.dto.library.MuscleTargetDto;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -25,6 +26,10 @@ public class AddExerciseLogRequest {
   private Integer sets;
 
   private Integer reps;
+
+  // The top of the rep range; null or 0 for a fixed rep count
+  @Min(0)
+  private Integer repsMax;
 
   private BigDecimal plannedWeight;
 

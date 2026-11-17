@@ -327,6 +327,8 @@ export const trainingLogsApi = {
       name?: string;
       sets?: number | null;
       reps?: number | null;
+      // The top of a rep range; null for a fixed rep count
+      repsMax?: number | null;
       plannedWeight?: number | null;
       equipment?: string;
       muscles?: MuscleTarget[];
@@ -358,6 +360,7 @@ export const trainingLogsApi = {
       name?: string;
       sets?: number | null;
       reps?: number | null;
+      repsMax?: number | null;
       plannedWeight?: number | null;
       equipment?: string;
       muscles?: MuscleTarget[];

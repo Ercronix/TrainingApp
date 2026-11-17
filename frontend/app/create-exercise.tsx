@@ -11,6 +11,7 @@ import { CatalogSuggestions } from '@/components/CatalogSuggestions';
 import { MusclePicker } from '@/components/MusclePicker';
 import { useCatalog } from '@/hooks/useCatalog';
 import { sameMuscles } from '@/utils/muscles';
+import { repRangeError, repsMaxOf } from '@/utils/plan';
 import { CatalogExercise, LibraryExercise, MuscleTarget } from '@/types';
 
 import { Tactile } from '@/components/Tactile';
@@ -18,7 +19,7 @@ export default function CreateExerciseModal() {
   const { workoutId } = useLocalSearchParams<{ workoutId: string }>();
   const router = useRouter();
   const { createExercise } = useExercises(workoutId);
-  const [form, setForm] = useState({ name: '', sets: '', reps: '', weight: '', videoUrl: '', description: '' });
+  const [form, setForm] = useState({ name: '', sets: '', reps: '', repsMax: '', weight: '', videoUrl: '', description: '' });
   const [repUnit, setRepUnit] = useState<'reps' | 'seconds'>('reps');
   // Only an explicit choice is sent, so the default never overwrites a shared library entry
   const [repUnitChosen, setRepUnitChosen] = useState(false);
@@ -80,10 +81,13 @@ export default function CreateExerciseModal() {
 
   const handleCreate = () => {
     if (!form.name.trim()) { alert('Error', 'Please enter an exercise name'); return; }
+    const rangeError = repRangeError(form.reps, form.repsMax);
+    if (rangeError) { alert('Error', rangeError); return; }
     createExercise.mutate({
       ...(libraryMatch ? { libraryExerciseId: libraryMatch.id } : { name: form.name.trim() }),
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
+      repsMax: repsMaxOf(form.repsMax, null),
       repUnit: repUnitChosen ? repUnit : undefined,
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       videoUrl: form.videoUrl.trim() || null,
@@ -159,6 +163,21 @@ export default function CreateExerciseModal() {
               keyboardType="numeric"
               keyboardAppearance={c.keyboardAppearance}
               editable={!isPending}
+            />
+          </View>
+          {/* Optional top of a rep range, e.g. 8 up to 12 */}
+          <View className="flex-1">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-2">UP TO</Text>
+            <TextInput
+              className="bg-surface rim-sm border-edge rounded px-4 py-4 text-primary text-lg font-bold tracking-tight"
+              placeholder={repUnit === 'seconds' ? '45' : '12'}
+              placeholderTextColor={c.elevated}
+              value={form.repsMax}
+              onChangeText={updateField('repsMax')}
+              keyboardType="numeric"
+              keyboardAppearance={c.keyboardAppearance}
+              editable={!isPending}
+              accessibilityLabel={`Up to ${repUnit === 'seconds' ? 'seconds' : 'reps'}, optional, for a range`}
             />
           </View>
         </View>

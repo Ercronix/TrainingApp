@@ -33,6 +33,7 @@ export function useReplaceExerciseLog(trainingLogId?: string) {
           exerciseName,
           plannedSets: data.sets ?? null,
           plannedReps: data.reps ?? null,
+          plannedRepsMax: data.repsMax ?? null,
           plannedWeight: data.plannedWeight ?? null,
           setsCompleted: 0,
           repsCompleted: 0,
@@ -46,6 +47,8 @@ export function useReplaceExerciseLog(trainingLogId?: string) {
           previousReps: null,
           previousWeight: null,
           previousSetLogs: null,
+          earlierSetLogs: null,
+          weightIncrement: null,
           bestWeight: null,
           bestOneRepMax: null,
         });

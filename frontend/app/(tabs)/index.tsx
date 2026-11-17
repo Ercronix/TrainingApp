@@ -17,6 +17,7 @@ import { useExercises } from '@/hooks/useExercises';
 import { MesocycleWeekLabel } from '@/components/DeloadBadge';
 import { formatDaysAgo } from '@/utils/dates';
 import { splitMesocycleWeek } from '@/utils/mesocycle';
+import { formatRepRange } from '@/utils/plan';
 import { TrainingLog, Workout } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -225,7 +226,7 @@ export default function HomeScreen() {
                   <Text className="text-primary text-sm flex-1" numberOfLines={1}>{e.name}</Text>
                   {e.sets != null && e.reps != null && (
                     <Text className="text-muted text-xs font-mono">
-                      {e.sets} × {e.reps}{e.repUnit === 'seconds' ? 's' : ''}{e.plannedWeight ? ` · ${e.plannedWeight}` : ''}
+                      {e.sets} × {formatRepRange(e.reps, e.repsMax)}{e.repUnit === 'seconds' ? 's' : ''}{e.plannedWeight ? ` · ${e.plannedWeight}` : ''}
                     </Text>
                   )}
                 </View>

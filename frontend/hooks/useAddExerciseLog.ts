@@ -11,6 +11,8 @@ export interface AddExerciseLogDto {
   name?: string;
   sets?: number | null;
   reps?: number | null;
+  // The top of a rep range; null for a fixed rep count
+  repsMax?: number | null;
   plannedWeight?: number | null;
   equipment?: string;
   muscles?: MuscleTarget[];
@@ -43,6 +45,7 @@ export function useAddExerciseLog(trainingLogId?: string) {
           workoutName: previous.workoutName,
           plannedSets: data.sets ?? null,
           plannedReps: data.reps ?? null,
+          plannedRepsMax: data.repsMax ?? null,
           plannedWeight: data.plannedWeight ?? null,
           setsCompleted: 0,
           repsCompleted: 0,

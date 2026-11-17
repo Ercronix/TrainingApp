@@ -16,6 +16,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { Tactile } from '@/components/Tactile';
 import { ActionCard, ActionMenu } from '@/components/ActionMenu';
 import { SupersetRail } from '@/components/SupersetRail';
+import { formatPlan } from '@/utils/plan';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
@@ -197,9 +198,10 @@ export default function TrainingScreen() {
                 </Text>
               ) : (
                 <Text className="text-muted text-xs" numberOfLines={1}>
-                  {item.plannedSets && item.plannedReps
-                    ? `${item.plannedSets} × ${item.plannedReps} ${unit}${item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}`
-                    : 'No plan'}
+                  {formatPlan(
+                    { sets: item.plannedSets, reps: item.plannedReps, repsMax: item.plannedRepsMax, weight: item.plannedWeight },
+                    unit,
+                  ) ?? 'No plan'}
                   {previous.length > 0 ? ` · last ${formatSets(previous, item.repUnit)}` : ''}
                 </Text>
               )}

@@ -91,7 +91,10 @@ export interface ExerciseLog {
   workoutId: number;
   workoutName: string;
   plannedSets: number | null;
+  // The bottom of the planned rep range, or the fixed rep count when plannedRepsMax is null
   plannedReps: number | null;
+  // Optional: missing in data cached before rep ranges existed
+  plannedRepsMax?: number | null;
   plannedWeight: number | null;
   // Summary of the working sets: their count, and the reps and weight of the heaviest
   setsCompleted: number;
@@ -104,11 +107,15 @@ export interface ExerciseLog {
   repUnit: 'reps' | 'seconds' | null;
   // Of the library entry, e.g. 'barbell'; missing in data cached before it existed
   equipment?: string | null;
+  // Of the library entry: kg a suggested next target adds, null for the default
+  weightIncrement?: number | null;
   // Most recent completed session for this exercise (null if never trained)
   previousSets: number | null;
   previousReps: number | null;
   previousWeight: number | null;
   previousSetLogs?: SetLog[] | null;
+  // The completed session before that one (null if none)
+  earlierSetLogs?: SetLog[] | null;
   // Best working set weight and estimated 1RM of sessions completed before this one (null if
   // none). Optional: sessions cached before records were added don't have them.
   bestWeight?: number | null;
@@ -140,7 +147,9 @@ export interface Exercise {
   videoUrl?: string | null;
   videoId?: string | null;
   sets?: number | null;
+  // The bottom of the rep range, or the fixed rep count when repsMax is null
   reps?: number | null;
+  repsMax?: number | null;
   repUnit?: 'reps' | 'seconds' | null;
   plannedWeight?: number | null;
   orderIndex: number;
@@ -201,6 +210,8 @@ export interface LibraryExercise {
   muscles?: MuscleTarget[];
   // The catalog exercise it was picked from, whose drawing shows how it's done
   catalogExerciseId?: number | null;
+  // Kg a suggested next target adds; null for the default (DEFAULT_WEIGHT_INCREMENT)
+  weightIncrement?: number | null;
   workoutCount: number;
   lastTrainedAt: string | null;
 }
@@ -216,6 +227,8 @@ export interface UpdateLibraryExerciseRequest {
   muscles?: MuscleTarget[];
   // Links a catalog exercise for its drawing; 0 removes the link
   catalogExerciseId?: number;
+  // 0 goes back to the default
+  weightIncrement?: number;
 }
 
 export interface CreateExerciseRequest {
@@ -228,6 +241,8 @@ export interface CreateExerciseRequest {
   videoId?: string | null;
   sets?: number | null;
   reps?: number | null;
+  // The top of the rep range; null or 0 for a fixed rep count (on update null leaves it, 0 clears it)
+  repsMax?: number | null;
   repUnit?: string;
   plannedWeight?: number | null;
   equipment?: string;

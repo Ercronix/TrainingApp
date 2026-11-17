@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.BatchSize;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -52,6 +53,10 @@ public class LibraryExercise {
   // The catalog exercise the entry was picked from, whose photos the client shows; null when none
   @Column(name = "catalog_exercise_id")
   private Long catalogExerciseId;
+
+  // Weight the suggested next target adds once a session hits the plan; null for the default
+  @Column(name = "weight_increment", precision = 5, scale = 2)
+  private BigDecimal weightIncrement;
 
   @ElementCollection
   @CollectionTable(name = "library_exercise_muscles", joinColumns = @JoinColumn(name = "library_exercise_id"))
