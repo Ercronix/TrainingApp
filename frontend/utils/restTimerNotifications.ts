@@ -8,6 +8,9 @@ const CHANNEL_ID = 'rest-timer';
 const SILENT_CHANNEL_ID = 'rest-timer-silent';
 // Marks the rest timer's notifications in their data
 const KIND = 'rest-timer';
+// eslint-plugin-import misses this enum behind expo-notifications' `export *`; it is exported
+// eslint-disable-next-line import/namespace
+const HIGH_IMPORTANCE = Notifications.AndroidImportance.HIGH;
 
 Notifications.setNotificationHandler({
   // Only asked while the app is in the foreground
@@ -34,12 +37,12 @@ async function ensurePermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
       name: 'Rest Timer',
-      importance: Notifications.AndroidImportance.HIGH,
+      importance: HIGH_IMPORTANCE,
       sound: 'default',
     });
     await Notifications.setNotificationChannelAsync(SILENT_CHANNEL_ID, {
       name: 'Rest Timer (no sound)',
-      importance: Notifications.AndroidImportance.HIGH,
+      importance: HIGH_IMPORTANCE,
       sound: null,
       enableVibrate: true,
     });

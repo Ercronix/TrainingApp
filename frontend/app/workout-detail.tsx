@@ -221,7 +221,7 @@ export default function WorkoutDetailScreen() {
           containerStyle={{ flex: 1 }}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 + insets.bottom }}
           refreshControl={
-            !reorderMode ? <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} /> : undefined
+            !reorderMode ? <RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={c.accent} /> : undefined
           }
           ListEmptyComponent={
             <View className="items-center mt-20 gap-3">

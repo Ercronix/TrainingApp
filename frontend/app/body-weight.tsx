@@ -1,4 +1,4 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView, RefreshControl, KeyboardAvoidingView, Keyboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, RefreshControl, KeyboardAvoidingView, Keyboard, type ScrollViewInstance } from 'react-native';
 import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,7 +45,7 @@ export default function BodyWeightScreen() {
   const router = useRouter();
   const c = useTheme();
   const insets = useSafeAreaInsets();
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ScrollViewInstance>(null);
   const { entries, isLoading, isRefetching, refetch, logWeight, deleteEntry } = useBodyWeight();
   const today = localDay();
 
@@ -132,7 +132,7 @@ export default function BodyWeightScreen() {
           className="flex-1"
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 + insets.bottom }}
           keyboardShouldPersistTaps="handled"
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={c.accent} />}
         >
           {/* Log */}
           <View className="bg-surface rim border-edge rounded-md p-5 mb-2">

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, RefreshControl, type HostInstance } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSplits } from '@/hooks/useSplits';
@@ -58,8 +58,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerAnchor, setPickerAnchor] = useState<PickerAnchor | null>(null);
-  const splitNameRef = useRef<View>(null);
-  const chooseButtonRef = useRef<View>(null);
+  const splitNameRef = useRef<HostInstance>(null);
+  const chooseButtonRef = useRef<HostInstance>(null);
   const { splits, isLoading, isRefetching, refetch, activateSplit } = useSplits();
   const active = splits?.find((s) => s.isActive);
   const splitId = active?.id.toString() ?? '';
@@ -80,7 +80,7 @@ export default function HomeScreen() {
   };
 
   // Open the picker right under (or above) the control that was tapped
-  const openPicker = (trigger: View | null) => {
+  const openPicker = (trigger: HostInstance | null) => {
     if (!trigger) return setPickerOpen(true);
     trigger.measureInWindow((_x, y, _width, height) => {
       setPickerAnchor({ y, height });
@@ -281,7 +281,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + TAB_BAR_OFFSET + 24 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refresh} tintColor={c.accent} />}
         ListEmptyComponent={
-          workoutsQuery.isLoading ? null : (
+          workoutsQuery.isLoading ? undefined : (
             <View className="items-center mt-10 gap-3 px-6">
               <Ionicons name="calendar-outline" size={48} color={c.subtle} />
               <Text className="text-subtle text-xl font-bold tracking-[2px]">NO WORKOUT DAYS</Text>

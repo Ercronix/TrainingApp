@@ -313,7 +313,7 @@ export default function TrainingScreen() {
               <Ionicons name="add" size={18} color={c.accent} />
               <Text className="text-primary text-sm font-bold tracking-[2px]">ADD EXERCISE</Text>
             </TouchableOpacity>
-          ) : null
+          ) : undefined
         }
       />
 

@@ -1,28 +1,14 @@
-import { withLayoutContext } from 'expo-router';
+import { TopTabs as SwipeTabs } from 'expo-router/js-top-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { ParamListBase, TabNavigationState } from '@react-navigation/native';
-import {
-    createMaterialTopTabNavigator,
-    MaterialTopTabNavigationEventMap,
-    MaterialTopTabNavigationOptions,
-} from '@react-navigation/material-top-tabs';
 import { View } from 'react-native';
 import { useTheme } from '@/hooks/useTheme';
 import { useTabBarStore } from '@/store/tabBarStore';
 import { FloatingTabBar } from '@/components/FloatingTabBar';
 import { TabScene } from '@/components/TabScene';
 
-// A pager of the main tabs: the neighbouring tab follows the finger while swiping
-const { Navigator } = createMaterialTopTabNavigator();
-const SwipeTabs = withLayoutContext<
-    MaterialTopTabNavigationOptions,
-    typeof Navigator,
-    TabNavigationState<ParamListBase>,
-    MaterialTopTabNavigationEventMap
->(Navigator);
-
 const ICON_SIZE = 24;
 
+// A pager of the main tabs: the neighbouring tab follows the finger while swiping
 export default function TabsLayout() {
     const c = useTheme();
     const setHidden = useTabBarStore((s) => s.setHidden);
@@ -54,28 +40,29 @@ export default function TabsLayout() {
                 name="index"
                 options={{
                     title: 'TRAIN',
-                    tabBarIcon: ({ color }) => <Ionicons name="barbell" size={ICON_SIZE} color={color} />,
+                    // FloatingTabBar passes plain color strings
+                    tabBarIcon: ({ color }) => <Ionicons name="barbell" size={ICON_SIZE} color={color as string} />,
                 }}
             />
             <SwipeTabs.Screen
                 name="dashboard"
                 options={{
                     title: 'STATS',
-                    tabBarIcon: ({ color }) => <Ionicons name="stats-chart" size={ICON_SIZE} color={color} />,
+                    tabBarIcon: ({ color }) => <Ionicons name="stats-chart" size={ICON_SIZE} color={color as string} />,
                 }}
             />
             <SwipeTabs.Screen
                 name="History"
                 options={{
                     title: 'HISTORY',
-                    tabBarIcon: ({ color }) => <Ionicons name="time" size={ICON_SIZE} color={color} />,
+                    tabBarIcon: ({ color }) => <Ionicons name="time" size={ICON_SIZE} color={color as string} />,
                 }}
             />
             <SwipeTabs.Screen
                 name="profile"
                 options={{
                     title: 'PROFILE',
-                    tabBarIcon: ({ color }) => <Ionicons name="person" size={ICON_SIZE} color={color} />,
+                    tabBarIcon: ({ color }) => <Ionicons name="person" size={ICON_SIZE} color={color as string} />,
                 }}
             />
         </SwipeTabs>
