@@ -4,8 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
 import { Platform } from 'react-native';
 import { isAxiosError } from 'axios';
-import { trainingLogsApi } from './api';
-import { UpdateExerciseLogRequest } from '@/types';
+import { bodyWeightApi, stretchApi, trainingLogsApi } from './api';
+import { TrainingReview, UpdateExerciseLogRequest } from '@/types';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 import type { AddExerciseLogDto } from '@/hooks/useAddExerciseLog';
 import type { ReplaceExerciseLogDto } from '@/hooks/useReplaceExerciseLog';
@@ -21,6 +21,11 @@ export const MUTATION_KEYS = {
   replaceExerciseLog: ['replaceExerciseLog'] as const,
   deleteExerciseLog: ['deleteExerciseLog'] as const,
   completeTraining: ['completeTraining'] as const,
+  updateTrainingReview: ['updateTrainingReview'] as const,
+  stretchCheckIn: ['stretchCheckIn'] as const,
+  stretchUndoCheckIn: ['stretchUndoCheckIn'] as const,
+  bodyWeightUpsert: ['bodyWeightUpsert'] as const,
+  bodyWeightDelete: ['bodyWeightDelete'] as const,
 };
 
 /**
@@ -50,10 +55,38 @@ export interface DeleteExerciseLogVariables {
   exerciseLogId: number;
 }
 
+// Check-ins and undos run one at a time, in order, so a quick check in and undo replay the same way offline
+export const STRETCH_SCOPE = { id: 'stretch-check-ins' };
+
+export interface StretchCheckInVariables {
+  // The device's local date, YYYY-MM-DD
+  day: string;
+}
+
+// Logging and deleting run one at a time, in order, so a day logged and then removed offline replays the same way
+export const BODY_WEIGHT_SCOPE = { id: 'body-weight' };
+
+export interface BodyWeightUpsertVariables {
+  // The device's local date, YYYY-MM-DD
+  date: string;
+  weight: number;
+  note?: string;
+}
+
+export interface BodyWeightDeleteVariables {
+  date: string;
+}
+
 export interface CompleteTrainingVariables {
   trainingLogId: number;
   // When the user finished (Date.now()), which can be well before the request is sent
   completedAtMs: number;
+}
+
+export interface UpdateTrainingReviewVariables {
+  trainingLogId: number;
+  // The whole review: each save replaces all of it, so replaying saves in order ends with the last
+  review: TrainingReview;
 }
 
 export const queryClient = new QueryClient({
@@ -118,6 +151,53 @@ queryClient.setMutationDefaults(MUTATION_KEYS.completeTraining, {
     void queryClient.invalidateQueries({ queryKey: ['history'] });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stats });
     void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeTraining });
+  },
+});
+
+// Runs in the session's scope, so a review given right after finishing offline is sent after the
+// completion. The request replaces the whole review, so a replay after a lost response is harmless.
+queryClient.setMutationDefaults(MUTATION_KEYS.updateTrainingReview, {
+  mutationFn: async ({ trainingLogId, review }: UpdateTrainingReviewVariables) => {
+    try {
+      await trainingLogsApi.updateReview(trainingLogId, review);
+    } catch (error) {
+      // The session was deleted meanwhile, so there's nothing left to rate
+      if (!isAxiosError(error) || error.response?.status !== 404) throw error;
+    }
+  },
+  onSettled: (_data, _error, { trainingLogId }: UpdateTrainingReviewVariables) => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.training(trainingLogId.toString()) });
+    void queryClient.invalidateQueries({ queryKey: ['history'] });
+  },
+});
+
+// Checking in (or undoing it) is idempotent on the server, so a replay after a lost response is harmless
+queryClient.setMutationDefaults(MUTATION_KEYS.stretchCheckIn, {
+  mutationFn: ({ day }: StretchCheckInVariables) => stretchApi.checkIn(day),
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stretchCheckIns });
+  },
+});
+
+queryClient.setMutationDefaults(MUTATION_KEYS.stretchUndoCheckIn, {
+  mutationFn: ({ day }: StretchCheckInVariables) => stretchApi.undoCheckIn(day),
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.stretchCheckIns });
+  },
+});
+
+// Both are idempotent on the server (an upsert by date, a delete that ignores a missing day)
+queryClient.setMutationDefaults(MUTATION_KEYS.bodyWeightUpsert, {
+  mutationFn: ({ date, weight, note }: BodyWeightUpsertVariables) => bodyWeightApi.upsert(date, { weight, note }),
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bodyWeight });
+  },
+});
+
+queryClient.setMutationDefaults(MUTATION_KEYS.bodyWeightDelete, {
+  mutationFn: ({ date }: BodyWeightDeleteVariables) => bodyWeightApi.delete(date),
+  onSettled: () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.bodyWeight });
   },
 });
 

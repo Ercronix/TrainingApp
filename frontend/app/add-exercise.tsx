@@ -6,6 +6,7 @@ import { useReplaceExerciseLog } from '@/hooks/useReplaceExerciseLog';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
 import { alert } from '@/utils/confirm';
+import { repRangeError, repsMaxOf } from '@/utils/plan';
 import { useLibrary } from '@/hooks/useLibrary';
 import { LibrarySuggestions, findLibraryMatch } from '@/components/LibrarySuggestions';
 import { CatalogSuggestions } from '@/components/CatalogSuggestions';
@@ -16,8 +17,9 @@ import { CatalogExercise } from '@/types';
 import { Tactile } from '@/components/Tactile';
 export default function AddExerciseScreen() {
   // With replaceExerciseLogId, the exercise takes that one's place for this session only
-  const { trainingLogId, replaceExerciseLogId, replaceName, plannedSets, plannedReps } = useLocalSearchParams<{
-    trainingLogId: string; replaceExerciseLogId?: string; replaceName?: string; plannedSets?: string; plannedReps?: string;
+  const { trainingLogId, replaceExerciseLogId, replaceName, plannedSets, plannedReps, plannedRepsMax } = useLocalSearchParams<{
+    trainingLogId: string; replaceExerciseLogId?: string; replaceName?: string;
+    plannedSets?: string; plannedReps?: string; plannedRepsMax?: string;
   }>();
   const replacing = !!replaceExerciseLogId;
   const router = useRouter();
@@ -31,6 +33,7 @@ export default function AddExerciseScreen() {
     name: '',
     sets: plannedSets ?? '',
     reps: plannedReps ?? '',
+    repsMax: plannedRepsMax ?? '',
     weight: '',
   });
 
@@ -63,11 +66,17 @@ export default function AddExerciseScreen() {
       alert('Error', 'Please enter an exercise name');
       return;
     }
+    const rangeError = repRangeError(form.reps, form.repsMax);
+    if (rangeError) {
+      alert('Error', rangeError);
+      return;
+    }
 
     const data = {
       ...(libraryMatch ? { libraryExerciseId: libraryMatch.id } : { name: form.name.trim() }),
       sets: form.sets ? parseInt(form.sets) : null,
       reps: form.reps ? parseInt(form.reps) : null,
+      repsMax: repsMaxOf(form.repsMax, null),
       plannedWeight: form.weight ? parseFloat(form.weight) : null,
       equipment: fromCatalog?.equipment ?? undefined,
       muscles: catalogMuscles,
@@ -189,18 +198,36 @@ export default function AddExerciseScreen() {
           editable={!isPending}
         />
 
-        {/* Reps */}
-        <Text className="text-muted text-[9px] tracking-[3px] mb-2">REPS</Text>
-        <TextInput
-          className="bg-surface rim-sm border-edge text-primary rounded-md px-4 py-3 text-base mb-4"
-          placeholder="e.g., 12"
-          placeholderTextColor={c.subtle}
-          value={form.reps}
-          onChangeText={updateField('reps')}
-          keyboardType="numeric"
-          keyboardAppearance={c.keyboardAppearance}
-          editable={!isPending}
-        />
+        {/* Reps, optionally a range up to a top */}
+        <View className="flex-row gap-3">
+          <View className="flex-1">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-2">REPS</Text>
+            <TextInput
+              className="bg-surface rim-sm border-edge text-primary rounded-md px-4 py-3 text-base mb-4"
+              placeholder="e.g., 8"
+              placeholderTextColor={c.subtle}
+              value={form.reps}
+              onChangeText={updateField('reps')}
+              keyboardType="numeric"
+              keyboardAppearance={c.keyboardAppearance}
+              editable={!isPending}
+            />
+          </View>
+          <View className="flex-1">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-2">UP TO (OPTIONAL)</Text>
+            <TextInput
+              className="bg-surface rim-sm border-edge text-primary rounded-md px-4 py-3 text-base mb-4"
+              placeholder="e.g., 12"
+              placeholderTextColor={c.subtle}
+              value={form.repsMax}
+              onChangeText={updateField('repsMax')}
+              keyboardType="numeric"
+              keyboardAppearance={c.keyboardAppearance}
+              editable={!isPending}
+              accessibilityLabel="Up to reps, optional, for a range"
+            />
+          </View>
+        </View>
 
         {/* Weight */}
         <Text className="text-muted text-[9px] tracking-[3px] mb-2">PLANNED WEIGHT (KG)</Text>

@@ -1,339 +1,142 @@
-import { View, Text, TextInput, TouchableOpacity, Animated, Platform } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useExerciseLog } from '@/hooks/useExerciseLog';
-import { useKeepScreenOn } from '@/hooks/useKeepScreenOn';
 import { Ionicons } from '@expo/vector-icons';
+import { useKeepScreenOn } from '@/hooks/useKeepScreenOn';
 import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
+import { useRestoredDraft, usePersistDraft } from '@/hooks/useSetDraft';
+import { useTimedSet } from '@/hooks/useTimedSet';
+import { useAutoSaveSets } from '@/hooks/useAutoSaveSets';
+import { useSuperset } from '@/hooks/useSuperset';
 import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
-import { PlateCalculator } from '@/components/PlateCalculator';
 import { RestCountdown } from '@/components/RestTimer';
-import { useRestTimerStore } from '@/store/restTimerStore';
-import { SetDraft, SetRow, useSetDraftStore } from '@/store/setDraftStore';
-import { STEP_INCREMENT_KG, useStepSize, useStepSizeStore } from '@/store/stepSizeStore';
-import { QUERY_KEYS } from '@/constants/queryKeys';
-import { previousSetsOf, workingSets } from '@/utils/sets';
-import { detectPersonalRecord, estimateOneRepMax, formatKg } from '@/utils/strength';
-import { toast } from '@/utils/confirm';
-import { useReduceMotion } from '@/hooks/useReduceMotion';
 import { ExerciseIllustration, useIllustrationCatalogId } from '@/components/ExerciseIllustration';
-import { spring } from '@/constants/motion';
-import { usesPlates } from '@/constants/equipment';
-import { ExerciseLog, SetLog, TrainingLog } from '@/types';
-import { haptics } from '@/utils/haptics';
-
 import { Tactile } from '@/components/Tactile';
-const emptyRow: SetRow = { weight: '', reps: '', rpe: '', warmup: false, done: false };
+import { TargetLine } from '@/components/logExercise/TargetLine';
+import { CompactSetRow, SetColumnHeader } from '@/components/logExercise/CompactSetRow';
+import { ExpandedSetRow } from '@/components/logExercise/ExpandedSetRow';
+import { SupersetBar } from '@/components/logExercise/SupersetBar';
+import { useRestTimerStore } from '@/store/restTimerStore';
+import { SetRow } from '@/store/setDraftStore';
+import { useStepSize } from '@/store/stepSizeStore';
+import { QUERY_KEYS } from '@/constants/queryKeys';
+import { usesPlates } from '@/constants/equipment';
+import { previousSetsOf } from '@/utils/sets';
+import {
+  doneSetsOf, gainOf, isInvalidRow, loggedPatch, nextRow, prefillRows, previousLabel, rowDefaultsOf, setLabels,
+  steppedReps, steppedWeight, suggestionOf, targetOf,
+} from '@/utils/logExercise';
+import { formatSupersetPlace, stepAfterSet, supersetProgress } from '@/utils/supersets';
+import { toast } from '@/utils/confirm';
+import { haptics } from '@/utils/haptics';
+import { TrainingLog } from '@/types';
 
-const toRow = (s: SetLog, logged: boolean): SetRow => ({
-  weight: s.weight != null ? String(s.weight) : '',
-  reps: String(s.reps),
-  rpe: logged && s.rpe != null ? String(s.rpe) : '',
-  warmup: s.warmup,
-  done: logged,
-});
-
-// Prefill: what's already logged this session, else last session, else the plan
-function initialRows(log: ExerciseLog | undefined): SetRow[] {
-  if (!log) return [{ ...emptyRow }];
-  if (log.sets?.length) return log.sets.map((s) => toRow(s, true));
-  const previous = previousSetsOf(log);
-  if (previous.length) return previous.map((s) => toRow(s, false));
-  const planned = log.plannedSets ?? 0;
-  const row: SetRow = {
-    weight: log.plannedWeight != null ? String(log.plannedWeight) : '',
-    reps: log.plannedReps != null ? String(log.plannedReps) : '',
-    rpe: '',
-    warmup: false,
-    done: false,
-  };
-  return Array.from({ length: Math.max(planned, 1) }, () => ({ ...row }));
-}
-
-const parseNumber = (value: string) => {
-  const n = parseFloat(value.replace(',', '.'));
-  return Number.isFinite(n) ? n : null;
-};
-
-const formatNumber = (n: number) => String(Math.round(n * 100) / 100);
-
-/** The set a row describes, or null when its values can't be saved. */
-function toSet(row: SetRow): SetLog | null {
-  const reps = parseInt(row.reps, 10);
-  if (!/^\d+$/.test(row.reps.trim()) || !Number.isFinite(reps)) return null;
-  const weight = row.weight.trim() ? parseNumber(row.weight) : null;
-  if (row.weight.trim() && (weight == null || weight < 0 || weight > 999.99)) return null;
-  const rpe = row.rpe.trim() ? parseNumber(row.rpe) : null;
-  if (row.rpe.trim() && (rpe == null || rpe < 1 || rpe > 10)) return null;
-  return { reps, weight, rpe, warmup: row.warmup };
-}
-
-/**
- * The update a set of rows saves: every done set, and `completed` once the working sets
- * reach the plan. Without a plan, completion stays manual (undefined leaves it unchanged).
- */
-function payloadOf(sets: SetLog[], log: ExerciseLog | undefined) {
-  const planned = log?.plannedSets;
-  return { sets, completed: planned ? workingSets(sets).length >= planned : undefined };
-}
-
-const SAVE_DEBOUNCE_MS = 600;
-
-// RPE below 7 is rarely worth logging; halves cover the common 8.5-style calls
-const RPE_OPTIONS = ['7', '7.5', '8', '8.5', '9', '9.5', '10'];
-
-const keyOf = (payload: ReturnType<typeof payloadOf>) => JSON.stringify(payload);
-
-/** Seconds a timed set aims for: its entered value, else the plan. NaN when neither is set. */
-const targetOf = (rows: SetRow[], index: number, log: ExerciseLog | undefined) =>
-  parseInt(rows[index]?.reps || String(log?.plannedReps ?? ''), 10);
-
-interface Gain {
-  /** Beats the sessions before (and the sets before it in this one). */
-  record: string | null;
-  label: string;
-}
-
-/**
- * What a logged working set improves on: a record, else the set at the same position last
- * session (more weight without losing strength, or more reps at the same weight). Null when it
- * improves on nothing; falling short isn't called out.
- */
-function gainOf(rows: SetRow[], index: number, log: ExerciseLog | undefined, previous: SetLog[]): Gain | null {
-  const row = rows[index];
-  const set = row?.done && !row.warmup ? toSet(row) : null;
-  if (!set || !log) return null;
-  const timed = log.repUnit === 'seconds';
-  const weight = Number(set.weight ?? 0);
-
-  const earlier = rows.slice(0, index)
-    .filter((r) => r.done && !r.warmup)
-    .map(toSet)
-    .filter((s): s is SetLog => s != null);
-  const record = log.bestWeight == null ? null : detectPersonalRecord({
-    bestWeight: Math.max(log.bestWeight, ...earlier.map((s) => Number(s.weight ?? 0))),
-    bestOneRepMax: timed || log.bestOneRepMax == null
-      ? null
-      : Math.max(log.bestOneRepMax, ...earlier.map((s) => estimateOneRepMax(Number(s.weight ?? 0), s.reps))),
-  }, weight, set.reps);
-  if (record) return { record, label: 'PR' };
-
-  const last = previous[index];
-  if (!last || last.warmup) return null;
-  const lastWeight = Number(last.weight ?? 0);
-  const stronger = set.reps >= last.reps
-    || (!timed && estimateOneRepMax(weight, set.reps) > estimateOneRepMax(lastWeight, last.reps));
-  if (weight > lastWeight && stronger) return { record: null, label: `+${formatKg(weight - lastWeight)} kg` };
-  const more = set.reps - last.reps;
-  if (weight === lastWeight && more > 0) {
-    return { record: null, label: `+${more}${timed ? 's' : more === 1 ? ' rep' : ' reps'}` };
-  }
-  return null;
-}
-
-/** A set's improvement over last session; pops in when the set was just logged. */
-function GainBadge({ gain, animate }: { gain: Gain; animate: boolean }) {
-  const c = useTheme();
-  const reduceMotion = useReduceMotion();
-  const scale = useRef(new Animated.Value(animate ? 0.3 : 1)).current;
-  useEffect(() => {
-    if (!animate || reduceMotion == null) return;
-    if (reduceMotion) {
-      scale.setValue(1);
-      return;
-    }
-    Animated.spring(scale, { toValue: 1, ...spring(0.4, 0.45), useNativeDriver: Platform.OS !== 'web' }).start();
-  }, [animate, reduceMotion, scale]);
-
-  return (
-    <Animated.View style={{ alignSelf: 'flex-start', transform: [{ scale }] }}>
-      <View
-        className={`flex-row items-center gap-1 rounded-sm px-1.5 py-0.5 ${gain.record ? 'bg-accent' : 'bg-accent-muted'}`}
-        accessibilityLabel={gain.record ?? `${gain.label} on last session`}
-      >
-        <Ionicons name={gain.record ? 'trophy' : 'trending-up'} size={10} color={gain.record ? c.accentFg : c.accentText} />
-        <Text className={`text-[9px] font-mono-bold ${gain.record ? 'text-accent-fg' : 'text-accent-text'}`}>{gain.label}</Text>
-      </View>
-    </Animated.View>
-  );
-}
+/** Starts (or restarts) the rest between sets; the timer lives outside the screen. */
+const startRest = () => useRestTimerStore.getState().restart();
+/** Within a superset's round there's no rest, so a rest still showing (or running) is cleared. */
+const skipRest = () => useRestTimerStore.getState().reset();
 
 export default function LogExerciseModal() {
   const { exerciseLogId, trainingLogId, exerciseName } = useLocalSearchParams<{
     exerciseLogId: string; trainingLogId: string; exerciseName: string;
   }>();
   const queryClient = useQueryClient();
-  const [log] = useState(() => queryClient.getQueryData<TrainingLog>(QUERY_KEYS.training(trainingLogId))
-    ?.exercises.find((e) => e.id === Number(exerciseLogId)));
-  // State left on an earlier visit wins over the prefill, unless the sets it logged no longer
-  // match the server's (e.g. the exercise was ticked off on the training screen since): it
-  // would otherwise be saved back over them
-  const [draft] = useState(() => {
-    const saved = useSetDraftStore.getState().drafts[exerciseLogId];
-    if (!saved) return undefined;
-    const draftSets = saved.rows.filter((r) => r.done).map(toSet);
-    // A done set with invalid values was never saved, so there is nothing to compare
-    if (draftSets.some((s) => s == null)) return saved;
-    const serverSets = (log?.sets ?? []).map((s) => toSet(toRow(s, true)));
-    return JSON.stringify(draftSets) === JSON.stringify(serverSets) ? saved : undefined;
+  const [{ log, deload }] = useState(() => {
+    const training = queryClient.getQueryData<TrainingLog>(QUERY_KEYS.training(trainingLogId));
+    return { log: training?.exercises.find((e) => e.id === Number(exerciseLogId)), deload: training?.deload === true };
   });
-  const [rows, setRows] = useState<SetRow[]>(() => draft?.rows ?? initialRows(log));
+  // The suggested next target after last session, which the rows not logged yet start from.
+  // A deload session runs its lowered plan as it is.
+  const suggestion = suggestionOf(log, { deload });
+  const defaults = rowDefaultsOf(log, suggestion);
+  const draft = useRestoredDraft(exerciseLogId, log);
+  const [rows, setRows] = useState<SetRow[]>(() => draft?.rows ?? prefillRows(log, suggestion));
   // The set being edited: the first one not done yet
   const [focused, setFocused] = useState(() => Math.max(0, rows.findIndex((r) => !r.done)));
-  // Stopwatch of the set being performed, for timed exercises
-  const [timing, setTiming] = useState<SetDraft['timing']>(draft?.timing ?? null);
-  const [nowMs, setNowMs] = useState(() => Date.now());
+  const { timing, elapsed, start: startTiming, stop: stopTiming } = useTimedSet(draft?.timing, rows, defaults);
   // The set logged last, whose gain badge pops in
   const [lastLogged, setLastLogged] = useState<number | null>(null);
-  // A stopwatch restored past its target already buzzed (or ran out while away)
-  const vibrated = useRef(draft?.timing != null && Date.now() - draft.timing.startedAt >= targetOf(draft.rows, draft.timing.index, log) * 1000);
-  // What the server already has, so only real changes are sent
-  // (through the same row conversion, so equal sets give equal keys)
-  const lastSaved = useRef(keyOf(payloadOf((log?.sets ?? []).map((s) => toSet(toRow(s, true)) as SetLog), log)));
   const router = useRouter();
   useKeepScreenOn();
-  const { saveSets } = useExerciseLog(exerciseLogId, trainingLogId);
   const c = useTheme();
   const libraryExerciseId = log?.libraryExerciseId?.toString();
   const step = useStepSize(libraryExerciseId);
-  const repUnit = log?.repUnit ?? 'reps';
-  const unitShort = repUnit === 'seconds' ? 'sec' : 'reps';
+  const isTimed = log?.repUnit === 'seconds';
+  const unitShort = isTimed ? 'sec' : 'reps';
   const previous = log ? previousSetsOf(log) : [];
-  const isTimed = repUnit === 'seconds';
   // From the library, so a change made on the details screen shows on return
   const { library } = useLibrary();
   const equipment = library.find((l) => l.id === log?.libraryExerciseId)?.equipment ?? log?.equipment;
   const showPlates = usesPlates(equipment) && !isTimed;
   const drawingId = useIllustrationCatalogId(log?.libraryExerciseId);
-  const elapsed = timing ? Math.max(0, Math.floor((nowMs - timing.startedAt) / 1000)) : 0;
+  const target = targetOf(log);
 
-  useEffect(() => {
-    if (!timing) return;
-    setNowMs(Date.now());
-    const timer = setInterval(() => setNowMs(Date.now()), 250);
-    return () => clearInterval(timer);
-  }, [timing]);
+  usePersistDraft(exerciseLogId, rows, timing);
 
-  // Buzz once when the timed set reaches its target (through haptics, so the Profile switch applies)
-  const target = timing ? targetOf(rows, timing.index, log) : NaN;
-  useEffect(() => {
-    if (timing && !vibrated.current && target > 0 && elapsed >= target) {
-      vibrated.current = true;
-      haptics.success();
-    }
-  }, [timing, elapsed, target]);
+  // In a superset: the members' progress, and the member to go to after the set just logged
+  const superset = useSuperset(trainingLogId, exerciseLogId);
+  const currentId = Number(exerciseLogId);
+  const progressWith = (withRows: SetRow[]) =>
+    superset ? supersetProgress(superset.members, currentId, withRows, superset.drafts) : null;
+  const groupProgress = progressWith(rows);
+  const [upNextId, setUpNextId] = useState<number | null>(null);
+  const upNext = superset?.members.find((m) => m.id === upNextId);
 
-  useEffect(() => {
-    useSetDraftStore.getState().setDraft(exerciseLogId, { rows, timing });
-  }, [exerciseLogId, rows, timing]);
-
-  // Every change to the done sets is saved. A done set with invalid values holds the
-  // save back (it's outlined), so it can't replace good sets on the server.
-  const doneRows = rows.filter((r) => r.done);
-  const doneSets = doneRows.map(toSet);
-  const hasInvalid = doneSets.some((s) => s == null);
-  const payloadKey = hasInvalid ? null : keyOf(payloadOf(doneSets as SetLog[], log));
-  // Set when a set is logged or undone, or a done one is removed or switched to/from
-  // warm-up: saved at once. Value edits wait for a pause, so a run of stepper taps
-  // becomes one request.
-  const saveNow = useRef(false);
-  // A debounced save not sent yet; flushed when the screen closes
-  const pending = useRef<string | null>(null);
-  const saveSetsRef = useRef(saveSets);
-  useEffect(() => { saveSetsRef.current = saveSets; }, [saveSets]);
-
-  useEffect(() => {
-    const immediate = saveNow.current;
-    saveNow.current = false;
-    const save = (key: string) => {
-      pending.current = null;
-      if (key === lastSaved.current) return;
-      lastSaved.current = key;
-      const { sets, completed } = JSON.parse(key) as ReturnType<typeof payloadOf>;
-      saveSetsRef.current(sets, completed);
-    };
-    if (payloadKey == null || payloadKey === lastSaved.current) {
-      pending.current = null;
-      return;
-    }
-    if (immediate) {
-      save(payloadKey);
-      return;
-    }
-    pending.current = payloadKey;
-    const timer = setTimeout(() => save(payloadKey), SAVE_DEBOUNCE_MS);
-    return () => clearTimeout(timer);
-  }, [payloadKey]);
-
-  useEffect(() => () => {
-    const key = pending.current;
-    if (key == null || key === lastSaved.current) return;
-    lastSaved.current = key;
-    const { sets, completed } = JSON.parse(key) as ReturnType<typeof payloadOf>;
-    saveSetsRef.current(sets, completed);
-  }, []);
+  const { doneRows, sets: doneSets } = doneSetsOf(rows);
+  const { saveNextChangeNow, saveCompleted } = useAutoSaveSets(exerciseLogId, trainingLogId, log, doneSets);
 
   // Closing with every set logged marks the exercise done, even short of or without a plan
-  const allDone = rows.length > 0 && rows.every((r) => r.done) && !hasInvalid;
+  const allDone = rows.length > 0 && rows.every((r) => r.done) && doneSets != null;
   const finish = () => {
-    if (allDone) {
-      const sets = doneSets as SetLog[];
-      const key = keyOf({ sets, completed: true });
-      pending.current = null;
-      if (key !== lastSaved.current) {
-        lastSaved.current = key;
-        saveSetsRef.current(sets, true);
-      }
-    }
+    if (allDone && doneSets != null) saveCompleted(doneSets);
     router.back();
+  };
+
+  /** Switches to another exercise of the superset; this one is left as by closing it. */
+  const goTo = (id: number) => {
+    const member = superset?.members.find((m) => m.id === id);
+    if (!member) return;
+    if (allDone && doneSets != null) saveCompleted(doneSets);
+    router.replace({
+      pathname: '/log-exercise' as any,
+      params: { exerciseLogId: String(id), exerciseName: member.exerciseName, trainingLogId },
+    });
   };
 
   const updateRow = (index: number, patch: Partial<SetRow>) =>
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
 
   const toggleWarmup = (index: number) => {
-    if (rows[index].done) saveNow.current = true;
+    if (rows[index].done) saveNextChangeNow();
     updateRow(index, { warmup: !rows[index].warmup });
   };
 
   const addSet = () => {
-    setRows((prev) => {
-      const last = prev[prev.length - 1];
-      return [...prev, last ? { ...last, rpe: '', warmup: false, done: false } : { ...emptyRow }];
-    });
+    setRows((prev) => [...prev, nextRow(prev)]);
     setFocused(rows.length);
   };
 
   const removeSet = (index: number) => {
-    if (rows[index].done) saveNow.current = true;
-    setTiming(null);
+    if (rows[index].done) saveNextChangeNow();
+    stopTiming();
     setRows((prev) => prev.filter((_, i) => i !== index));
     setFocused((f) => (f >= index && f > 0 ? f - 1 : f));
+    setUpNextId(null);
   };
 
-  const toggleDone = (index: number) => {
-    const row = rows[index];
-    saveNow.current = true;
-    if (row.done) {
-      haptics.uncheck();
-      updateRow(index, { done: false });
-      return;
-    }
-    // One tap logs the set as shown; empty values take the plan's
-    const patch = {
-      done: true,
-      reps: row.reps.trim() || (log?.plannedReps != null ? String(log.plannedReps) : ''),
-      weight: row.weight.trim() || (log?.plannedWeight != null ? String(log.plannedWeight) : ''),
-    };
-    updateRow(index, patch);
-    finishSet(index, { ...row, ...patch });
-  };
-
-  // Rest starts, editing moves on to the next set, and a record is celebrated
-  const finishSet = (index: number, logged: SetRow) => {
-    const gain = gainOf(rows.map((r, i) => (i === index ? logged : r)), index, log, previous);
+  /**
+   * Every set logged (by a tap, or by stopping its stopwatch) ends up here: a record is
+   * celebrated, the rest starts and editing moves on to the next set.
+   *
+   * In a superset, a working set is followed by the next exercise's set of the round without
+   * a rest: the main button turns into "Next: <exercise>" (see `stepAfterSet`). Only the last
+   * set of a round starts the rest, and the button then leads back to the round's first exercise.
+   */
+  const onSetLogged = (index: number, logged: SetRow) => {
+    const newRows = rows.map((r, i) => (i === index ? logged : r));
+    const gain = gainOf(newRows, index, log, previous);
     if (gain?.record) {
       haptics.record();
       toast('New record!', gain.record, 'trophy');
@@ -341,264 +144,48 @@ export default function LogExerciseModal() {
       haptics.check();
     }
     setLastLogged(index);
-    useRestTimerStore.getState().restart();
+    const members = logged.warmup ? null : progressWith(newRows);
+    const step = members ? stepAfterSet(members, currentId) : null;
+    if (step?.kind === 'next') {
+      skipRest();
+      setUpNextId(step.exerciseLogId);
+    } else {
+      startRest();
+      setUpNextId(step?.kind === 'rest' && step.exerciseLogId !== currentId ? step.exerciseLogId : null);
+    }
     if (index + 1 < rows.length) setFocused(index + 1);
+  };
+
+  const toggleDone = (index: number) => {
+    const row = rows[index];
+    saveNextChangeNow();
+    if (row.done) {
+      haptics.uncheck();
+      updateRow(index, { done: false });
+      setUpNextId(null);
+      return;
+    }
+    // One tap logs the set as shown; empty values take the defaults
+    const patch = loggedPatch(row, defaults);
+    updateRow(index, patch);
+    onSetLogged(index, { ...row, ...patch });
   };
 
   const toggleTiming = (index: number) => {
     if (timing?.index === index) {
       // Stopping records the time held as the set's seconds and finishes it
-      saveNow.current = true;
+      saveNextChangeNow();
       updateRow(index, { reps: String(elapsed), done: true });
-      setTiming(null);
-      finishSet(index, { ...rows[index], reps: String(elapsed), done: true });
+      stopTiming();
+      onSetLogged(index, { ...rows[index], reps: String(elapsed), done: true });
       return;
     }
-    haptics.tap();
-    vibrated.current = false;
-    setTiming({ index, startedAt: Date.now() });
+    startTiming(index);
     setFocused(index);
   };
 
-  const stepWeight = (index: number, direction: 1 | -1) => {
-    const base = parseNumber(rows[index].weight) ?? log?.plannedWeight ?? 0;
-    updateRow(index, { weight: formatNumber(Math.max(0, base + direction * step)) });
-  };
-
-  const stepReps = (index: number, direction: 1 | -1) => {
-    const base = parseInt(rows[index].reps, 10);
-    const current = Number.isFinite(base) ? base : (log?.plannedReps ?? 0);
-    updateRow(index, { reps: String(Math.max(0, current + direction)) });
-  };
-
-  // Set numbers count working sets only; warm-ups show as W
-  const labels: string[] = [];
-  let workingNumber = 0;
-  for (const r of rows) labels.push(r.warmup ? 'W' : String(++workingNumber));
-
-  const invalid = (row: SetRow) => row.done && toSet(row) == null;
-
-  const stepButton = (icon: 'remove' | 'add', onPress: () => void, label: string, disabled = false) => (
-    <Tactile
-      variant="elevated"
-      depth={3}
-      className="w-11 h-10 rounded-sm justify-center items-center"
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityLabel={label}
-    >
-      <Ionicons name={icon} size={20} color={disabled ? c.subtle : c.accent} />
-    </Tactile>
-  );
-
-  const valueInput = (value: string, onChange: (v: string) => void, placeholder: string, keyboardType: 'decimal-pad' | 'number-pad', editable = true) => (
-    // min-w-0: on web an <input> won't shrink below its default ~20ch width, overflowing the row
-    <TextInput
-      className="flex-1 min-w-0 h-11 px-1 text-primary text-xl font-mono-bold text-center"
-      placeholder={placeholder}
-      placeholderTextColor={c.elevated}
-      value={value}
-      editable={editable}
-      onChangeText={onChange}
-      keyboardType={keyboardType}
-      keyboardAppearance={c.keyboardAppearance}
-    />
-  );
-
-  // Set number in a circle: filled once done, grey for warm-ups
-  const badge = (row: SetRow, i: number) => (
-    <View className={`w-8 h-8 rounded-full justify-center items-center ${row.done ? 'bg-accent' : row.warmup ? 'bg-elevated' : 'bg-accent-muted'}`}>
-      <Text className={`text-sm font-bold ${row.done ? 'text-accent-fg' : row.warmup ? 'text-muted' : 'text-accent-text'}`}>
-        {labels[i]}
-      </Text>
-    </View>
-  );
-
+  const labels = setLabels(rows);
   const gains = rows.map((_, i) => gainOf(rows, i, log, previous));
-
-  // What the set at this position was last session, e.g. 80×8
-  const previousLabel = (i: number) => {
-    const p = previous[i];
-    if (!p) return '—';
-    const reps = `${p.reps}${isTimed ? 's' : ''}`;
-    return p.weight != null && Number(p.weight) > 0 ? `${formatKg(Number(p.weight))}×${reps}` : reps;
-  };
-
-  // A set not being edited: its values at a glance, tap to edit (and delete), check to log
-  const compactRow = (row: SetRow, i: number) => (
-    <View
-      className={`flex-row items-center h-16 rounded-md pl-3 rim ${row.done ? 'bg-surface-done' : 'bg-surface'} ${invalid(row) ? 'border-danger' : row.done ? 'border-edge-done' : 'border-edge'}`}
-    >
-      <TouchableOpacity
-        className="flex-1 h-full flex-row items-center"
-        onPress={() => setFocused(i)}
-        accessibilityLabel={`Edit set ${i + 1}`}
-      >
-        <View className="w-12">{badge(row, i)}</View>
-        <View className="flex-1 gap-1">
-          <Text className="text-muted text-xs font-mono">{previousLabel(i)}</Text>
-          {gains[i] && <GainBadge gain={gains[i]} animate={lastLogged === i} />}
-        </View>
-        <Text className={`flex-1 text-lg font-bold tracking-tight ${row.done ? 'text-primary' : 'text-muted'}`}>
-          {row.weight || log?.plannedWeight || 0}<Text className="text-muted text-xs font-normal"> kg</Text>
-        </Text>
-        <Text className={`flex-1 text-lg font-bold tracking-tight ${row.done ? 'text-primary' : 'text-muted'}`}>
-          {timing?.index === i ? elapsed : row.reps || log?.plannedReps || 0}
-          <Text className="text-muted text-xs font-normal"> {unitShort}</Text>
-          {row.rpe.trim() !== '' && <Text className="text-muted text-xs font-normal">  @{row.rpe}</Text>}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        className="w-14 h-14 justify-center items-center"
-        onPress={() => toggleDone(i)}
-        disabled={timing?.index === i}
-        accessibilityLabel={row.done ? `Mark set ${i + 1} as not done` : `Log set ${i + 1} as shown and start rest`}
-      >
-        <Ionicons
-          name={row.done ? 'checkmark-circle' : 'ellipse-outline'}
-          size={30}
-          color={row.done ? c.accent : c.muted}
-        />
-      </TouchableOpacity>
-    </View>
-  );
-
-  // The set being edited, opened up in place in the list
-  const expandedRow = (row: SetRow, i: number) => {
-    const rowTiming = timing?.index === i;
-    return (
-      <View className={`bg-surface rounded-md p-3 mb-2 gap-4 rim ${invalid(row) ? 'border-danger' : 'border-accent'}`}>
-        <View className="flex-row items-center gap-3">
-          {badge(row, i)}
-          <Text className="flex-1 text-primary text-base font-bold tracking-tight" numberOfLines={1}>
-            {row.warmup ? 'Warm-up' : `Set ${labels[i]}`}
-            {previous[i] && <Text className="text-muted text-xs font-normal">  last {previousLabel(i)}</Text>}
-          </Text>
-          {gains[i] && <GainBadge gain={gains[i]} animate={false} />}
-          <Tactile
-            variant={row.warmup ? 'accent' : 'elevated'}
-            depth={3}
-            className="rounded-sm px-3 py-1.5"
-            onPress={() => toggleWarmup(i)}
-            accessibilityLabel={row.warmup ? 'Warm-up set, tap to make it a working set' : 'Working set, tap to make it a warm-up'}
-          >
-            <Text className={`text-[10px] font-bold tracking-[2px] ${row.warmup ? 'text-accent-fg' : 'text-muted'}`}>WARM-UP</Text>
-          </Tactile>
-          <TouchableOpacity
-            className="w-9 h-9 rounded-full bg-danger-muted justify-center items-center"
-            style={rows.length === 1 ? { opacity: 0.4 } : undefined}
-            onPress={() => removeSet(i)}
-            disabled={rows.length === 1}
-            accessibilityLabel={`Remove set ${i + 1}`}
-          >
-            <Ionicons name="trash-outline" size={16} color={c.danger} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Weight and reps side by side */}
-        <View className="flex-row gap-2">
-          <View className="flex-[1.3] bg-inset rounded-sm p-1 gap-1">
-            <View className="flex-row items-center justify-center gap-1.5 pt-1">
-              <Text className="text-muted text-[9px] tracking-[2px]">KG · STEP</Text>
-              <TouchableOpacity
-                onPress={() => libraryExerciseId && useStepSizeStore.getState().adjustStep(libraryExerciseId, -STEP_INCREMENT_KG)}
-                disabled={!libraryExerciseId}
-                accessibilityLabel="Decrease weight step"
-                hitSlop={8}
-              >
-                <Ionicons name="remove-circle-outline" size={14} color={c.muted} />
-              </TouchableOpacity>
-              <Text className="text-primary text-[10px] font-bold">{formatNumber(step)}</Text>
-              <TouchableOpacity
-                onPress={() => libraryExerciseId && useStepSizeStore.getState().adjustStep(libraryExerciseId, STEP_INCREMENT_KG)}
-                disabled={!libraryExerciseId}
-                accessibilityLabel="Increase weight step"
-                hitSlop={8}
-              >
-                <Ionicons name="add-circle-outline" size={14} color={c.muted} />
-              </TouchableOpacity>
-            </View>
-            <View className="flex-row items-center">
-              {stepButton('remove', () => stepWeight(i, -1), `Decrease weight by ${formatNumber(step)} kg`)}
-              {valueInput(row.weight, (weight) => updateRow(i, { weight }), log?.plannedWeight != null ? String(log.plannedWeight) : '0', 'decimal-pad')}
-              {stepButton('add', () => stepWeight(i, 1), `Increase weight by ${formatNumber(step)} kg`)}
-            </View>
-          </View>
-          <View className="flex-1 bg-inset rounded-sm p-1 gap-1">
-            <Text className="text-muted text-[9px] tracking-[2px] text-center pt-1">{unitShort.toUpperCase()}</Text>
-            <View className="flex-row items-center">
-              {stepButton('remove', () => stepReps(i, -1), `Decrease ${unitShort}`, rowTiming)}
-              {valueInput(rowTiming ? String(elapsed) : row.reps, (reps) => updateRow(i, { reps }), log?.plannedReps != null ? String(log.plannedReps) : '0', 'number-pad', !rowTiming)}
-              {stepButton('add', () => stepReps(i, 1), `Increase ${unitShort}`, rowTiming)}
-            </View>
-          </View>
-        </View>
-
-        {/* RPE: tap the selected one again to clear it */}
-        <View className="flex-row items-center gap-1">
-          <Text className="text-muted text-[9px] tracking-[2px] w-9">RPE</Text>
-          {RPE_OPTIONS.map((value) => {
-            const selected = parseNumber(row.rpe) === Number(value);
-            return (
-              <Tactile
-                key={value}
-                variant={selected ? 'accent' : 'elevated'}
-                depth={3}
-                containerClassName="flex-1"
-                className="h-10 rounded-sm justify-center items-center"
-                onPress={() => updateRow(i, { rpe: selected ? '' : value })}
-                accessibilityLabel={selected ? `RPE ${value}, tap to clear` : `RPE ${value}`}
-              >
-                <Text className={`text-xs font-mono-bold ${selected ? 'text-accent-fg' : 'text-muted'}`}>{value}</Text>
-              </Tactile>
-            );
-          })}
-        </View>
-        {invalid(row) && (
-          <Text className="text-danger text-[11px]">Check the values; this set isn&apos;t saved yet.</Text>
-        )}
-
-        {showPlates && <PlateCalculator weight={row.weight || (log?.plannedWeight != null ? String(log.plannedWeight) : '')} />}
-
-        {isTimed && !row.done ? (
-          <Tactile
-            className="rounded-md py-4 flex-row items-center justify-center gap-2"
-            style={timing != null && !rowTiming ? { opacity: 0.5 } : undefined}
-            onPress={() => toggleTiming(i)}
-            haptic={false}
-            disabled={timing != null && !rowTiming}
-            accessibilityLabel={rowTiming ? `Stop timing set ${i + 1}` : `Start timing set ${i + 1}`}
-            activeOpacity={0.85}
-          >
-            <Ionicons name={rowTiming ? 'stop' : 'play'} size={18} color={c.accentFg} />
-            <Text className="text-accent-fg text-sm font-bold tracking-[2px]">
-              {rowTiming ? 'STOP & LOG SET' : 'START TIMER'}
-            </Text>
-          </Tactile>
-        ) : row.done ? (
-          <Tactile
-            variant="elevated"
-            className="rounded-md py-4 flex-row items-center justify-center gap-2"
-            onPress={() => toggleDone(i)}
-            haptic={false}
-          >
-            <Ionicons name="arrow-undo" size={18} color={c.muted} />
-            <Text className="text-muted text-sm font-bold tracking-[2px]">UNDO SET</Text>
-          </Tactile>
-        ) : (
-          <Tactile
-            className="rounded-md py-4 flex-row items-center justify-center gap-2"
-            onPress={() => toggleDone(i)}
-            haptic={false}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="checkmark" size={18} color={c.accentFg} />
-            <Text className="text-accent-fg text-sm font-bold tracking-[2px]">LOG SET</Text>
-          </Tactile>
-        )}
-      </View>
-    );
-  };
 
   // Notes, video, muscles, equipment and history
   const openDetails = () =>
@@ -608,6 +195,7 @@ export default function LogExerciseModal() {
         exerciseId: log.exerciseId?.toString() ?? '', exerciseName: log.exerciseName,
         libraryExerciseId: log.libraryExerciseId?.toString() ?? '', description: '', videoUrl: '',
         sets: log.plannedSets?.toString() || '', reps: log.plannedReps?.toString() || '',
+        repsMax: log.plannedRepsMax?.toString() || '',
         weight: log.plannedWeight?.toString() || '', workoutId: log.workoutId?.toString() ?? '',
       },
     });
@@ -631,6 +219,15 @@ export default function LogExerciseModal() {
       </View>
 
       <View className="flex-1 px-4 pb-10">
+        {superset && groupProgress && (
+          <SupersetBar
+            place={formatSupersetPlace(superset.position, groupProgress)}
+            members={superset.members.map((m, i) => ({ ...groupProgress[i], name: m.exerciseName }))}
+            currentId={currentId}
+            onSelect={goTo}
+          />
+        )}
+
         <View className="flex-row items-center gap-3 mb-4 px-1">
           <Text className="flex-1 text-primary text-[32px] font-bold tracking-tighter leading-9">
             {log?.exerciseName ?? exerciseName}
@@ -643,30 +240,58 @@ export default function LogExerciseModal() {
         </View>
 
         <View className="flex-row flex-wrap gap-2 mb-6 px-1">
-          {log?.plannedSets != null && log.plannedReps != null && (
-            <View className="bg-accent-muted rounded-sm px-3 py-2">
-              <Text className="text-accent-text text-[11px] tracking-widest">
-                TARGET: {log.plannedSets} × {log.plannedReps} {unitShort}{log.plannedWeight ? ` @ ${log.plannedWeight} kg` : ''}
-              </Text>
-            </View>
-          )}
+          <TargetLine target={target} suggestion={suggestion} unitShort={unitShort} />
           <RestCountdown />
         </View>
 
-        {/* Column labels for the compact rows */}
-        <View className="flex-row items-center pl-3 mb-2">
-          <Text className="w-12 text-muted text-[9px] tracking-[2px]">SET</Text>
-          <Text className="flex-1 text-muted text-[9px] tracking-[2px]">PREVIOUS</Text>
-          <Text className="flex-1 text-muted text-[9px] tracking-[2px]">KG</Text>
-          <Text className="flex-1 text-muted text-[9px] tracking-[2px]">{unitShort.toUpperCase()}</Text>
-          <View className="w-14" />
-        </View>
+        <SetColumnHeader unitShort={unitShort} />
 
         {rows.map((row, i) =>
           i === focused ? (
-            <View key={i}>{expandedRow(row, i)}</View>
+            <View key={i}>
+              <ExpandedSetRow
+                row={row}
+                index={i}
+                label={labels[i]}
+                previous={previousLabel(previous[i], isTimed)}
+                gain={gains[i]}
+                invalid={isInvalidRow(row)}
+                defaults={defaults}
+                unitShort={unitShort}
+                isTimed={isTimed}
+                showPlates={showPlates}
+                step={step}
+                libraryExerciseId={libraryExerciseId}
+                canRemove={rows.length > 1}
+                timing={timing == null ? null : timing.index === i ? 'this' : 'other'}
+                elapsed={elapsed}
+                onChange={(patch) => updateRow(i, patch)}
+                onStepWeight={(direction) => updateRow(i, { weight: steppedWeight(row.weight, defaults.weight, step, direction) })}
+                onStepReps={(direction) => updateRow(i, { reps: steppedReps(row.reps, defaults.reps, direction) })}
+                onToggleWarmup={() => toggleWarmup(i)}
+                onRemove={() => removeSet(i)}
+                onToggleTiming={() => toggleTiming(i)}
+                onToggleDone={() => toggleDone(i)}
+              />
+            </View>
           ) : (
-            <View key={i} className="mb-2">{compactRow(row, i)}</View>
+            <View key={i} className="mb-2">
+              <CompactSetRow
+                row={row}
+                index={i}
+                label={labels[i]}
+                previous={previousLabel(previous[i], isTimed)}
+                gain={gains[i]}
+                animateGain={lastLogged === i}
+                invalid={isInvalidRow(row)}
+                defaults={defaults}
+                unitShort={unitShort}
+                timing={timing?.index === i}
+                elapsed={elapsed}
+                onEdit={() => setFocused(i)}
+                onToggleDone={() => toggleDone(i)}
+              />
+            </View>
           ),
         )}
 
@@ -681,17 +306,32 @@ export default function LogExerciseModal() {
 
         <View className="flex-1" />
 
-        {/* Sets are saved as they're logged, so this only closes the screen (and completes the exercise once all are logged) */}
-        <Tactile
-          variant={allDone ? 'accent' : 'surface'}
-          className="rounded-md py-5 flex-row items-center justify-center gap-2"
-          onPress={finish}
-        >
-          <Ionicons name="checkmark-done" size={18} color={allDone ? c.accentFg : c.accent} />
-          <Text className={`text-sm font-bold tracking-[2px] ${allDone ? 'text-accent-fg' : 'text-primary'}`}>
-            DONE{doneRows.length > 0 ? ` · ${doneRows.length} ${doneRows.length === 1 ? 'SET' : 'SETS'} LOGGED` : ''}
-          </Text>
-        </Tactile>
+        {upNext ? (
+          // In a superset, straight on to the next exercise's set (the X still closes the screen)
+          <Tactile
+            variant="accent"
+            className="rounded-md py-5 flex-row items-center justify-center gap-2"
+            onPress={() => goTo(upNext.id)}
+            accessibilityLabel={`Next: ${upNext.exerciseName}`}
+          >
+            <Text className="text-accent-fg text-sm font-bold tracking-[2px] flex-shrink" numberOfLines={1}>
+              NEXT: {upNext.exerciseName.toUpperCase()}
+            </Text>
+            <Ionicons name="arrow-forward" size={18} color={c.accentFg} />
+          </Tactile>
+        ) : (
+          // Sets are saved as they're logged, so this only closes the screen (and completes the exercise once all are logged)
+          <Tactile
+            variant={allDone ? 'accent' : 'surface'}
+            className="rounded-md py-5 flex-row items-center justify-center gap-2"
+            onPress={finish}
+          >
+            <Ionicons name="checkmark-done" size={18} color={allDone ? c.accentFg : c.accent} />
+            <Text className={`text-sm font-bold tracking-[2px] ${allDone ? 'text-accent-fg' : 'text-primary'}`}>
+              DONE{doneRows.length > 0 ? ` · ${doneRows.length} ${doneRows.length === 1 ? 'SET' : 'SETS'} LOGGED` : ''}
+            </Text>
+          </Tactile>
+        )}
       </View>
       </KeyboardAvoidingWrapper>
     </View>

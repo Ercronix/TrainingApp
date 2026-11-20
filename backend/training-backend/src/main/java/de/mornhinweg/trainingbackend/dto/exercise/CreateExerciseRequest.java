@@ -2,6 +2,7 @@ package de.mornhinweg.trainingbackend.dto.exercise;
 
 import de.mornhinweg.trainingbackend.dto.library.MuscleTargetDto;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import java.math.BigDecimal;
@@ -17,7 +18,10 @@ public class CreateExerciseRequest {
   private String videoUrl;
   private String videoId;
   private Integer sets;
+  // The bottom of the rep range (or the fixed rep count)
   private Integer reps;
+  // The top of the rep range; null or 0 (or the same as reps) for a fixed rep count
+  @Min(0) private Integer repsMax;
   private String repUnit;
   // Catalog vocabulary (barbell, dumbbell, ...); null leaves it unchanged, an empty string clears it
   @Size(max = 30) private String equipment;

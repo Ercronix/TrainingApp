@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(adb exec-out screencap *)",
+      "Bash(npm run lint)",
+      "Bash(npx tsc --noEmit)"
+    ]
+  }
+}

@@ -5,9 +5,13 @@ import { useTraining } from '@/hooks/useTraining';
 import { useHistory } from '@/hooks/useHistory';
 import { useExercises } from '@/hooks/useExercises';
 import { confirm } from '@/utils/confirm';
+import { DeloadBadge } from '@/components/DeloadBadge';
 import { ExerciseLog } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { formatSets, setsOf } from '@/utils/sets';
+import { SessionReview } from '@/components/SessionReview';
+import KeyboardAvoidingWrapper from '@/components/KeyboardAvoidingWrapper';
+import { formatPlan } from '@/utils/plan';
 
 function formatDuration(seconds: number | null | undefined): string {
   if (!seconds) return '—';
@@ -57,6 +61,7 @@ export default function HistoryDetailScreen() {
               videoUrl: liveExercise?.videoUrl || '',
               sets: item.plannedSets?.toString() || '',
               reps: item.plannedReps?.toString() || '',
+              repsMax: item.plannedRepsMax?.toString() || '',
               weight: item.plannedWeight?.toString() || '',
               workoutId: item.workoutId.toString(),
             },
@@ -71,7 +76,10 @@ export default function HistoryDetailScreen() {
             <Text className="text-primary text-sm font-bold tracking-tight mb-1">{item.exerciseName}</Text>
             {item.plannedSets && item.plannedReps && (
               <Text className="text-muted text-[10px] tracking-widest">
-                PLANNED: {item.plannedSets} × {item.plannedReps}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
+                PLANNED: {formatPlan(
+                  { sets: item.plannedSets, reps: item.plannedReps, repsMax: item.plannedRepsMax, weight: item.plannedWeight },
+                  '',
+                )}
               </Text>
             )}
             {item.completed && (
@@ -105,72 +113,80 @@ export default function HistoryDetailScreen() {
   const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
   return (
-    <View className="flex-1 bg-base">
-      {/* Header */}
-      <View className="px-6 pt-14 pb-5">
-        <View className="flex-row justify-between items-center mb-4">
-          <TouchableOpacity onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={20} color={c.accent} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="trash-outline" size={20} color={c.danger} />
-          </TouchableOpacity>
-        </View>
-        <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">SESSION LOG</Text>
-        <Text className="text-primary text-[32px] font-bold tracking-tighter mb-1">
-          {training?.workoutName || training?.splitName}
-        </Text>
-        {training?.splitName && (
-          <Text className="text-muted text-sm mb-0.5">{training.splitName}</Text>
-        )}
-        {training?.startedAt && (
-          <Text className="text-subtle text-xs">
-            {formatDate(training.startedAt)} · {formatTime(training.startedAt)}
+    <KeyboardAvoidingWrapper scroll={false}>
+      <View className="flex-1 bg-base">
+        {/* Header */}
+        <View className="px-6 pt-14 pb-5">
+          <View className="flex-row justify-between items-center mb-4">
+            <TouchableOpacity onPress={() => router.back()}>
+              <Ionicons name="arrow-back" size={20} color={c.accent} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Ionicons name="trash-outline" size={20} color={c.danger} />
+            </TouchableOpacity>
+          </View>
+          <Text className="text-accent-text text-[10px] tracking-[4px] mb-1">SESSION LOG</Text>
+          <Text className="text-primary text-[32px] font-bold tracking-tighter mb-1">
+            {training?.workoutName || training?.splitName}
           </Text>
-        )}
+          {training?.splitName && (
+            <Text className="text-muted text-sm mb-0.5">{training.splitName}</Text>
+          )}
+          {training?.startedAt && (
+            <Text className="text-subtle text-xs">
+              {formatDate(training.startedAt)} · {formatTime(training.startedAt)}
+            </Text>
+          )}
+          {training?.deload && (
+            <View className="mt-2">
+              <DeloadBadge label="DELOAD WEEK" />
+            </View>
+          )}
+        </View>
+
+        {/* Stats row */}
+        <View className="flex-row mx-4 mb-3 bg-surface rim border-edge rounded-md py-4">
+          <View className="flex-1 items-center">
+            <Text className="text-primary text-[22px] font-mono-bold tracking-tight mb-0.5">
+              {formatDuration(training?.durationSeconds)}
+            </Text>
+            <Text className="text-muted text-[8px] tracking-[2px]">DURATION</Text>
+          </View>
+          <View className="w-px bg-elevated my-1" />
+          <View className="flex-1 items-center">
+            <Text className="text-primary text-[22px] font-mono-bold tracking-tight mb-0.5">
+              {completedCount}/{totalCount}
+            </Text>
+            <Text className="text-muted text-[8px] tracking-[2px]">COMPLETED</Text>
+          </View>
+          <View className="w-px bg-elevated my-1" />
+          <View className="flex-1 items-center">
+            <Text className={`text-[22px] font-mono-bold tracking-tight mb-0.5 ${completionRate === 100 ? 'text-accent-text' : 'text-primary'}`}>
+              {completionRate}%
+            </Text>
+            <Text className="text-muted text-[8px] tracking-[2px]">RATE</Text>
+          </View>
+        </View>
+
+        <FlatList
+          data={training?.exercises}
+          renderItem={renderExerciseItem}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
+          keyboardShouldPersistTaps="handled"
+          ListHeaderComponent={
+            <>
+              {/* Ratings and note, editable; saved as they change, also offline */}
+              {training && (
+                <View className="mb-4">
+                  <SessionReview training={training} title="RATINGS & NOTES" />
+                </View>
+              )}
+              <Text className="text-muted text-[9px] tracking-[3px] mb-3">EXERCISES</Text>
+            </>
+          }
+        />
       </View>
-
-      {/* Stats row */}
-      <View className="flex-row mx-4 mb-3 bg-surface rim border-edge rounded-md py-4">
-        <View className="flex-1 items-center">
-          <Text className="text-primary text-[22px] font-mono-bold tracking-tight mb-0.5">
-            {formatDuration(training?.durationSeconds)}
-          </Text>
-          <Text className="text-muted text-[8px] tracking-[2px]">DURATION</Text>
-        </View>
-        <View className="w-px bg-elevated my-1" />
-        <View className="flex-1 items-center">
-          <Text className="text-primary text-[22px] font-mono-bold tracking-tight mb-0.5">
-            {completedCount}/{totalCount}
-          </Text>
-          <Text className="text-muted text-[8px] tracking-[2px]">COMPLETED</Text>
-        </View>
-        <View className="w-px bg-elevated my-1" />
-        <View className="flex-1 items-center">
-          <Text className={`text-[22px] font-mono-bold tracking-tight mb-0.5 ${completionRate === 100 ? 'text-accent-text' : 'text-primary'}`}>
-            {completionRate}%
-          </Text>
-          <Text className="text-muted text-[8px] tracking-[2px]">RATE</Text>
-        </View>
-      </View>
-
-      {/* Session notes */}
-      {training?.notes && (
-        <View className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-4">
-          <Text className="text-muted text-[9px] tracking-[3px] mb-2">SESSION NOTES</Text>
-          <Text className="text-muted text-sm leading-5">{training.notes}</Text>
-        </View>
-      )}
-
-      <FlatList
-        data={training?.exercises}
-        renderItem={renderExerciseItem}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
-        ListHeaderComponent={
-          <Text className="text-muted text-[9px] tracking-[3px] mb-3">EXERCISES</Text>
-        }
-      />
-    </View>
+    </KeyboardAvoidingWrapper>
   );
 }

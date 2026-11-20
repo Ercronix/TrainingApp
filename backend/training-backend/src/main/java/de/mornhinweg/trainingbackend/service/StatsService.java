@@ -3,14 +3,12 @@ package de.mornhinweg.trainingbackend.service;
 import de.mornhinweg.trainingbackend.dto.stats.StatsResponse;
 import de.mornhinweg.trainingbackend.dto.stats.StatsResponse.RangeValues;
 import de.mornhinweg.trainingbackend.exception.BadRequestException;
-import de.mornhinweg.trainingbackend.exception.ResourceNotFoundException;
 import de.mornhinweg.trainingbackend.model.TrainingLog;
 import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.repository.ExerciseLogRepository;
 import de.mornhinweg.trainingbackend.repository.TrainingLogRepository;
 import de.mornhinweg.trainingbackend.repository.TrainingLogRepository.RangeTotals;
 import de.mornhinweg.trainingbackend.repository.TrainingLogRepository.WeekdayCount;
-import de.mornhinweg.trainingbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -33,8 +31,8 @@ import java.util.Set;
 public class StatsService {
 
   private final TrainingLogRepository trainingLogRepository;
+  private final CurrentUserService currentUser;
   private final ExerciseLogRepository exerciseLogRepository;
-  private final UserRepository userRepository;
 
   /**
    * @param timeZone the user's IANA time zone (e.g. "Europe/Berlin"), used to decide which
@@ -42,7 +40,7 @@ public class StatsService {
    */
   @Transactional(readOnly = true)
   public StatsResponse getStats(String timeZone, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     ZoneId serverZone = ZoneId.systemDefault();
     ZoneId zone = parseZone(timeZone, serverZone);
 
@@ -149,9 +147,4 @@ public class StatsService {
     return count > 0 ? Math.round((double) total / count) : 0;
   }
 
-  private User getCurrentUser(Authentication authentication) {
-    String username = authentication.getName();
-    return userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-  }
 }

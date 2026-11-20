@@ -10,7 +10,6 @@ import de.mornhinweg.trainingbackend.model.User;
 import de.mornhinweg.trainingbackend.model.Workout;
 import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.TrainingSplitRepository;
-import de.mornhinweg.trainingbackend.repository.UserRepository;
 import de.mornhinweg.trainingbackend.repository.WorkoutRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -25,12 +24,12 @@ import java.util.stream.Collectors;
 public class WorkoutService {
 
   private final WorkoutRepository workoutRepository;
+  private final CurrentUserService currentUser;
   private final TrainingSplitRepository trainingSplitRepository;
-  private final UserRepository userRepository;
   private final ExerciseRepository exerciseRepository;
 
   public List<WorkoutResponse> getWorkoutsBySplit(Long splitId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
     return workoutRepository.findBySplitIdOrderByOrderIndexAsc(splitId)
@@ -39,7 +38,7 @@ public class WorkoutService {
 
   @Transactional
   public WorkoutResponse createWorkout(Long splitId, CreateWorkoutRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     TrainingSplit split = trainingSplitRepository.findByIdAndUserId(splitId, user.getId())
         .orElseThrow(() -> new ResourceNotFoundException("Split not found"));
     int nextOrderIndex = split.getWorkouts().size();
@@ -52,7 +51,7 @@ public class WorkoutService {
   }
 
   public WorkoutResponse getWorkout(Long workoutId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Workout workout = workoutRepository.findById(workoutId)
         .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
     if (!workout.getSplit().getUser().getId().equals(user.getId())) {
@@ -63,7 +62,7 @@ public class WorkoutService {
 
   @Transactional
   public WorkoutResponse updateWorkout(Long workoutId, UpdateWorkoutRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Workout workout = workoutRepository.findById(workoutId)
         .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
     if (!workout.getSplit().getUser().getId().equals(user.getId())) {
@@ -75,19 +74,13 @@ public class WorkoutService {
 
   @Transactional
   public void deleteWorkout(Long workoutId, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Workout workout = workoutRepository.findById(workoutId)
         .orElseThrow(() -> new ResourceNotFoundException("Workout not found"));
     if (!workout.getSplit().getUser().getId().equals(user.getId())) {
       throw new UnauthorizedException("Access denied");
     }
     workoutRepository.delete(workout);
-  }
-
-  private User getCurrentUser(Authentication authentication) {
-    String username = authentication.getName();
-    return userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
   }
 
   private WorkoutResponse toResponse(Workout workout) {

@@ -7,11 +7,14 @@ import DraggableFlatList, { RenderItemParams, ScaleDecorator } from 'react-nativ
 import { useExercises } from '@/hooks/useExercises';
 import { useStartTraining } from '@/hooks/useStartTraining';
 import { confirm } from '@/utils/confirm';
-import { ActionCard, ActionMenu } from '@/components/ActionMenu';
+import { ActionCard, ActionMenu, MenuAction } from '@/components/ActionMenu';
+import { SupersetRail } from '@/components/SupersetRail';
 import { Exercise } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { useLibrary } from '@/hooks/useLibrary';
 import { combineMuscles, muscleNames } from '@/utils/muscles';
+import { supersetPositions } from '@/utils/supersets';
+import { formatPlan } from '@/utils/plan';
 import { BodyMap, targetFills } from '@/components/BodyMap';
 import { ExerciseThumb } from '@/components/ExerciseIllustration';
 
@@ -21,7 +24,9 @@ export default function WorkoutDetailScreen() {
     workoutId: string; workoutName: string; splitId: string;
   }>();
   const router = useRouter();
-  const { exercises, isLoading, isRefetching, refetch, deleteExercise, reorderExercises } = useExercises(workoutId);
+  const {
+    exercises, isLoading, isRefetching, refetch, deleteExercise, reorderExercises, supersetWithNext, removeFromSuperset,
+  } = useExercises(workoutId);
   const { startTraining, isPending: isStarting } = useStartTraining(workoutId, workoutName);
   const [reorderMode, setReorderMode] = useState(false);
   const insets = useSafeAreaInsets();
@@ -29,6 +34,7 @@ export default function WorkoutDetailScreen() {
   const { library } = useLibrary();
   const musclesById = new Map(library.map((e) => [e.id, e.muscles ?? []]));
   const workoutMuscles = combineMuscles(exercises.map((e) => musclesById.get(e.libraryExerciseId) ?? []));
+  const supersets = supersetPositions(exercises);
 
   const handleDelete = (id: number, name: string) => {
     confirm('Delete Exercise', `Delete "${name}"?`, () => deleteExercise.mutate(id), 'Delete');
@@ -38,77 +44,105 @@ export default function WorkoutDetailScreen() {
     reorderExercises.mutate(data.map((item, index) => ({ id: item.id, orderIndex: index })));
   };
 
-  const renderExerciseItem = ({ item, drag, isActive }: RenderItemParams<Exercise>) => (
-    <ScaleDecorator>
-      <ActionCard className={`rounded-md rim mb-2 ${isActive ? 'bg-elevated border-accent' : 'bg-surface border-edge'}`}>
-        <TouchableOpacity
-          onPress={() => {
-            if (reorderMode) return;
-            router.push({
-              pathname: '/exercise-detail' as any,
-              params: {
-                exerciseId: item.id.toString(), exerciseName: item.name,
-                libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
-                description: item.description || '', videoUrl: item.videoUrl || '',
-                sets: item.sets?.toString() || '', reps: item.reps?.toString() || '',
-                weight: item.plannedWeight?.toString() || '', workoutId,
-              },
-            });
-          }}
-          onLongPress={reorderMode ? drag : undefined}
-          delayLongPress={100}
-          disabled={isActive}
-          activeOpacity={0.85}
-        >
-          <View className="flex-row items-center pl-3 pr-3 py-3 gap-3">
-            <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
-            <View className="flex-1">
-              <Text className="text-primary text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
-              {item.sets && item.reps && (
-                <Text className="text-muted text-xs">
-                  {item.sets} × {item.reps} {item.repUnit === 'seconds' ? 'sec' : 'reps'}{item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}
-                </Text>
-              )}
-              {item.lastUsedWeight && (
-                <Text className="text-accent-text text-[9px] tracking-[2px] mt-1">LAST: {item.lastUsedWeight} kg</Text>
-              )}
-            </View>
-            <View className="flex-row items-center gap-3">
-              {reorderMode ? (
-                <TouchableOpacity onLongPress={drag} delayLongPress={100}>
-                  <Ionicons name="reorder-three-outline" size={24} color={c.muted} />
-                </TouchableOpacity>
-              ) : (
-                <>
-                  {item.videoUrl && <Ionicons name="play-circle" size={18} color={c.info} />}
-                  <ActionMenu
-                    accessibilityLabel={`Options for ${item.name}`}
-                    actions={[
-                      {
-                        icon: 'pencil-outline',
-                        label: 'Edit',
-                        onPress: () =>
-                          router.push({
-                            pathname: '/edit-exercise' as any,
-                            params: {
-                              workoutId, exerciseId: item.id.toString(),
-                              currentName: item.name, currentSets: item.sets?.toString() || '',
-                              currentReps: item.reps?.toString() || '', currentWeight: item.plannedWeight?.toString() || '',
-                              currentRepUnit: item.repUnit || 'reps',
-                            },
-                          }),
-                      },
-                      { icon: 'trash-outline', label: 'Delete', destructive: true, onPress: () => handleDelete(item.id, item.name) },
-                    ]}
-                  />
-                </>
-              )}
-            </View>
-          </View>
-        </TouchableOpacity>
-      </ActionCard>
-    </ScaleDecorator>
-  );
+  // Join the next exercise into this one's superset (or start one), or leave the superset
+  const supersetActions = (item: Exercise, index: number): MenuAction[] => {
+    const position = supersets[index];
+    const next = exercises[index + 1];
+    const linkedToNext = position != null && position.index < position.size - 1;
+    return [
+      ...(next && !linkedToNext ? [{
+        icon: 'link-outline' as const, label: 'Superset', accessibilityLabel: `Superset with ${next.name}`,
+        onPress: () => supersetWithNext.mutate(item.id),
+      }] : []),
+      ...(position ? [{
+        icon: 'unlink-outline' as const, label: 'Unlink', accessibilityLabel: 'Remove from superset',
+        onPress: () => removeFromSuperset.mutate(item.id),
+      }] : []),
+    ];
+  };
+
+  const renderExerciseItem = ({ item, drag, isActive, getIndex }: RenderItemParams<Exercise>) => {
+    const index = getIndex() ?? -1;
+    return (
+      <ScaleDecorator>
+        <SupersetRail position={supersets[index] ?? null}>
+          <ActionCard className={`rounded-md rim mb-2 ${isActive ? 'bg-elevated border-accent' : 'bg-surface border-edge'}`}>
+            <TouchableOpacity
+              onPress={() => {
+                if (reorderMode) return;
+                router.push({
+                  pathname: '/exercise-detail' as any,
+                  params: {
+                    exerciseId: item.id.toString(), exerciseName: item.name,
+                    libraryExerciseId: item.libraryExerciseId?.toString() ?? '',
+                    description: item.description || '', videoUrl: item.videoUrl || '',
+                    sets: item.sets?.toString() || '', reps: item.reps?.toString() || '',
+                    repsMax: item.repsMax?.toString() || '',
+                    weight: item.plannedWeight?.toString() || '', workoutId,
+                  },
+                });
+              }}
+              onLongPress={reorderMode ? drag : undefined}
+              delayLongPress={100}
+              disabled={isActive}
+              activeOpacity={0.85}
+            >
+              <View className="flex-row items-center pl-3 pr-3 py-3 gap-3">
+                <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
+                <View className="flex-1">
+                  <Text className="text-primary text-[17px] font-bold tracking-tight mb-1">{item.name}</Text>
+                  {item.sets && item.reps && (
+                    <Text className="text-muted text-xs">
+                      {formatPlan(
+                        { sets: item.sets, reps: item.reps, repsMax: item.repsMax, weight: item.plannedWeight },
+                        item.repUnit === 'seconds' ? 'sec' : 'reps',
+                      )}
+                    </Text>
+                  )}
+                  {item.lastUsedWeight && (
+                    <Text className="text-accent-text text-[9px] tracking-[2px] mt-1">LAST: {item.lastUsedWeight} kg</Text>
+                  )}
+                </View>
+                <View className="flex-row items-center gap-3">
+                  {reorderMode ? (
+                    <TouchableOpacity onLongPress={drag} delayLongPress={100}>
+                      <Ionicons name="reorder-three-outline" size={24} color={c.muted} />
+                    </TouchableOpacity>
+                  ) : (
+                    <>
+                      {item.videoUrl && <Ionicons name="play-circle" size={18} color={c.info} />}
+                      <ActionMenu
+                        accessibilityLabel={`Options for ${item.name}`}
+                        actions={[
+                          {
+                            icon: 'pencil-outline',
+                            label: 'Edit',
+                            onPress: () =>
+                              router.push({
+                                pathname: '/edit-exercise' as any,
+                                params: {
+                                  workoutId, exerciseId: item.id.toString(),
+                                  currentName: item.name, currentSets: item.sets?.toString() || '',
+                                  currentReps: item.reps?.toString() || '', currentRepsMax: item.repsMax?.toString() || '',
+                                  currentWeight: item.plannedWeight?.toString() || '',
+                                  currentRepUnit: item.repUnit || 'reps',
+                                },
+                              }),
+                          },
+                          ...supersetActions(item, index),
+                          { icon: 'trash-outline', label: 'Delete', destructive: true, onPress: () => handleDelete(item.id, item.name) },
+                        ]}
+                      />
+                    </>
+                  )}
+                </View>
+              </View>
+            </TouchableOpacity>
+          </ActionCard>
+        </SupersetRail>
+      </ScaleDecorator>
+    );
+  };
 
   return (
     <View className="flex-1 bg-base">

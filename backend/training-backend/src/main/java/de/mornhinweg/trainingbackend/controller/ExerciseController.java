@@ -2,6 +2,8 @@ package de.mornhinweg.trainingbackend.controller;
 
 import de.mornhinweg.trainingbackend.dto.exercise.*;
 import de.mornhinweg.trainingbackend.service.ExerciseService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Workout exercises", description = "A workout's planned exercises (sets, reps, weight) in order")
 @RestController
 @RequestMapping("/api/workouts/{workoutId}/exercises")
 @RequiredArgsConstructor
@@ -50,6 +53,28 @@ public class ExerciseController {
       Authentication authentication) {
     exerciseService.reorderExercises(workoutId, request, authentication);
     return ResponseEntity.noContent().build();
+  }
+
+  @Operation(summary = "Superset an exercise with the next one",
+      description = "The next exercise joins the exercise's superset (a circuit from three on), or both start one. "
+          + "Returns the workout's exercises, whose groups may have been renumbered.")
+  @PostMapping("/{exerciseId}/superset")
+  public ResponseEntity<List<ExerciseResponse>> supersetWithNext(
+      @PathVariable Long workoutId,
+      @PathVariable Long exerciseId,
+      Authentication authentication) {
+    return ResponseEntity.ok(exerciseService.supersetWithNext(workoutId, exerciseId, authentication));
+  }
+
+  @Operation(summary = "Take an exercise out of its superset",
+      description = "Exercises before and after it stay grouped only while two or more remain on a side. "
+          + "Returns the workout's exercises.")
+  @DeleteMapping("/{exerciseId}/superset")
+  public ResponseEntity<List<ExerciseResponse>> removeFromSuperset(
+      @PathVariable Long workoutId,
+      @PathVariable Long exerciseId,
+      Authentication authentication) {
+    return ResponseEntity.ok(exerciseService.removeFromSuperset(workoutId, exerciseId, authentication));
   }
 
   @DeleteMapping("/{exerciseId}")

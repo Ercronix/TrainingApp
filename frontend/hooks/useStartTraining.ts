@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { trainingLogsApi } from '@/services/api';
 import { alert } from '@/utils/confirm';
 import { getErrorMessage } from '@/utils/errorHandler';
+import { localDay } from '@/utils/stretch';
 import { QUERY_KEYS } from '@/constants/queryKeys';
 
 export function useStartTraining(workoutId: string, workoutName: string) {
@@ -10,7 +11,8 @@ export function useStartTraining(workoutId: string, workoutName: string) {
   const queryClient = useQueryClient();
 
   const mutation = useMutation({
-    mutationFn: () => trainingLogsApi.start(Number(workoutId)),
+    // The local date decides whether the session falls in a deload week
+    mutationFn: () => trainingLogsApi.start(Number(workoutId), localDay()),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.activeTraining });
       void queryClient.invalidateQueries({ queryKey: ['history'] });

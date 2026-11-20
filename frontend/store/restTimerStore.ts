@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { AppState } from 'react-native';
 import { toast } from '@/utils/confirm';
 import { haptics } from '@/utils/haptics';
+import { isRestRunning } from '@/utils/restTimer';
 import { cancelRestTimerNotification, scheduleRestTimerNotification } from '@/utils/restTimerNotifications';
 
 // A timer finishing later than this was suspended in the background, so the notification already told the user
@@ -14,10 +15,15 @@ const LATE_TICK_MS = 500;
 interface RestTimerState {
   /** Selected preset in seconds. */
   duration: number;
-  /** When the running timer ends (epoch ms), or null while paused/stopped. */
+  /**
+   * When the rest ends or ended (epoch ms), or null while paused/stopped. It stays set once the rest
+   * is over, so the time since can be shown, until the next rest starts or the timer is reset
+   * (see `restStatus` in utils/restTimer.ts).
+   */
   endTime: number | null;
   /** Seconds left while paused/stopped. */
   remaining: number;
+  /** Starts or resumes the rest; once it is over, starts a full rest from the preset. */
   start: () => void;
   /** Starts a full rest from the selected preset, even if a timer is already running. */
   restart: () => void;
@@ -48,13 +54,12 @@ function scheduleTicks(endTime: number) {
 export const useRestTimerStore = create<RestTimerState>((set, get) => {
   const complete = () => {
     completionTimeout = null;
-    const { endTime, duration } = get();
-    // Reset to the preset, ready for the next set
-    set({ endTime: null, remaining: duration });
-    // Only tell when the user is in the app to see it; otherwise the notification covers it.
+    const { endTime } = get();
+    // The end time stays, so the timer shows REST OVER and counts up from it. The sound comes from
+    // the scheduled notification (or the web beep), which keeps it to one even when the app is open.
+    // Only tell here when the user is in the app to see it; otherwise the notification covers it.
     // A toast, not a dialog: it shouldn't need dismissing before logging the next set.
     if (AppState.currentState === 'active' && endTime != null && Date.now() - endTime < LATE_COMPLETION_MS) {
-      void cancelRestTimerNotification();
       haptics.success();
       toast('Rest over', 'Time for the next set', 'timer-outline');
     }
@@ -72,12 +77,14 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => {
     remaining: 120,
 
     start: () => {
-      if (get().endTime != null) return;
-      const seconds = get().remaining > 0 ? get().remaining : get().duration;
+      const { endTime: current, remaining, duration } = get();
+      if (isRestRunning(current, Date.now())) return;
+      // Resume a paused rest, but start a full one after a rest that ran out
+      const seconds = current == null && remaining > 0 ? remaining : duration;
       clearTimers();
       const endTime = Date.now() + seconds * 1000;
       set({ endTime, remaining: seconds });
-      // Backstop for when the app is backgrounded or closed and JS isn't running
+      // The sound at the end, and the backstop for when the app is backgrounded or closed and JS isn't running
       void scheduleRestTimerNotification(seconds);
       completionTimeout = setTimeout(complete, seconds * 1000);
       scheduleTicks(endTime);
@@ -90,7 +97,8 @@ export const useRestTimerStore = create<RestTimerState>((set, get) => {
 
     pause: () => {
       const { endTime } = get();
-      if (endTime == null) return;
+      // Nothing to pause once the rest is over
+      if (endTime == null || !isRestRunning(endTime, Date.now())) return;
       stop(Math.max(0, Math.ceil((endTime - Date.now()) / 1000)));
     },
 

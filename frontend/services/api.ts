@@ -1,6 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import { storage } from "./storage";
-import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, Workout, Exercise, TrainingLog, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget } from "@/types";
+import { LoginRequest, RegisterRequest, AuthResponse, TrainingSplit, UpdateSplitRequest, Workout, Exercise, TrainingLog, TrainingReview, ExerciseLog, CreateExerciseRequest, UpdateExerciseLogRequest, ExerciseProgress, LibraryExercise, UpdateLibraryExerciseRequest, DashboardStats, CatalogExercise, MuscleTarget, StretchRoutine, StretchItem, StretchItemRequest, StretchReminder, StretchReminderRequest, BodyWeightEntry, BodyWeightRequest } from "@/types";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 // api.ts
@@ -183,8 +183,15 @@ export const splitsApi = {
     return response.data;
   },
 
-  update: async (id: number, data: { name: string; currentBlock?: number }): Promise<TrainingSplit> => {
+  /** `mesocycleWeeks` 0 turns the mesocycle off; fields left out stay unchanged. */
+  update: async (id: number, data: UpdateSplitRequest): Promise<TrainingSplit> => {
     const response = await api.put(`/splits/${id}`, data);
+    return response.data;
+  },
+
+  /** `startDate` (the device's local date) becomes the first day of week 1. */
+  restartMesocycle: async (id: number, startDate: string): Promise<TrainingSplit> => {
+    const response = await api.post(`/splits/${id}/mesocycle/restart`, { startDate });
     return response.data;
   },
 
@@ -253,6 +260,17 @@ export const exercisesApi = {
     await api.delete(`/workouts/${workoutId}/exercises/${exerciseId}`);
   },
 
+  // Both return the workout's exercises, as the groups may be renumbered
+  supersetWithNext: async (workoutId: number, exerciseId: number): Promise<Exercise[]> => {
+    const response = await api.post(`/workouts/${workoutId}/exercises/${exerciseId}/superset`);
+    return response.data;
+  },
+
+  removeFromSuperset: async (workoutId: number, exerciseId: number): Promise<Exercise[]> => {
+    const response = await api.delete(`/workouts/${workoutId}/exercises/${exerciseId}/superset`);
+    return response.data;
+  },
+
   getProgress: async (exerciseId: number): Promise<ExerciseProgress> => {
     const response = await api.get(`/exercises/${exerciseId}/progress`);
     return response.data;
@@ -296,8 +314,9 @@ export const catalogApi = {
 
 // Training Logs API
 export const trainingLogsApi = {
-  start: async (workoutId: number): Promise<TrainingLog> => {
-    const response = await api.post("/training-logs/start", { workoutId });
+  /** `localDate` (YYYY-MM-DD) decides whether the session falls in the split's deload week. */
+  start: async (workoutId: number, localDate: string): Promise<TrainingLog> => {
+    const response = await api.post("/training-logs/start", { workoutId, localDate });
     return response.data;
   },
 
@@ -308,6 +327,8 @@ export const trainingLogsApi = {
       name?: string;
       sets?: number | null;
       reps?: number | null;
+      // The top of a rep range; null for a fixed rep count
+      repsMax?: number | null;
       plannedWeight?: number | null;
       equipment?: string;
       muscles?: MuscleTarget[];
@@ -339,6 +360,7 @@ export const trainingLogsApi = {
       name?: string;
       sets?: number | null;
       reps?: number | null;
+      repsMax?: number | null;
       plannedWeight?: number | null;
       equipment?: string;
       muscles?: MuscleTarget[];
@@ -360,6 +382,12 @@ export const trainingLogsApi = {
   // completedSecondsAgo backdates the finish of a session completed while offline
   complete: async (id: number, notes?: string, completedSecondsAgo?: number): Promise<TrainingLog> => {
     const response = await api.put(`/training-logs/${id}/complete`, { notes, completedSecondsAgo });
+    return response.data;
+  },
+
+  // Replaces the session's ratings and note (null clears one); sending it again changes nothing
+  updateReview: async (id: number, review: TrainingReview): Promise<TrainingLog> => {
+    const response = await api.put(`/training-logs/${id}/review`, review);
     return response.data;
   },
 
@@ -393,3 +421,81 @@ export const statsApi = {
 };
 
 export default api;
+
+export const stretchApi = {
+  getRoutine: async (): Promise<StretchRoutine> => {
+    const response = await api.get("/stretch/routine");
+    return response.data;
+  },
+
+  renameRoutine: async (name: string): Promise<StretchRoutine> => {
+    const response = await api.put("/stretch/routine", { name });
+    return response.data;
+  },
+
+  addItem: async (data: StretchItemRequest): Promise<StretchItem> => {
+    const response = await api.post("/stretch/items", data);
+    return response.data;
+  },
+
+  updateItem: async (id: number, data: StretchItemRequest): Promise<StretchItem> => {
+    const response = await api.put(`/stretch/items/${id}`, data);
+    return response.data;
+  },
+
+  deleteItem: async (id: number): Promise<void> => {
+    await api.delete(`/stretch/items/${id}`);
+  },
+
+  reorderItems: async (items: { id: number; orderIndex: number }[]): Promise<void> => {
+    await api.patch("/stretch/items/reorder", { items });
+  },
+
+  // Every day the user stretched as YYYY-MM-DD, ascending
+  getCheckIns: async (): Promise<string[]> => {
+    const response = await api.get("/stretch/check-ins");
+    return response.data;
+  },
+
+  // day is the device's local date (YYYY-MM-DD); checking in twice is fine
+  checkIn: async (day: string): Promise<void> => {
+    await api.put(`/stretch/check-ins/${day}`);
+  },
+
+  undoCheckIn: async (day: string): Promise<void> => {
+    await api.delete(`/stretch/check-ins/${day}`);
+  },
+
+  getReminder: async (): Promise<StretchReminder> => {
+    const response = await api.get("/stretch/reminder");
+    return response.data;
+  },
+
+  updateReminder: async (data: StretchReminderRequest): Promise<StretchReminder> => {
+    const response = await api.put("/stretch/reminder", data);
+    return response.data;
+  },
+
+  sendTestReminder: async (): Promise<void> => {
+    await api.post("/stretch/reminder/test");
+  },
+};
+
+export const bodyWeightApi = {
+  // Ascending by date; from/to (YYYY-MM-DD, inclusive) optionally limit the range
+  getAll: async (range?: { from?: string; to?: string }): Promise<BodyWeightEntry[]> => {
+    const response = await api.get("/body-weight", { params: range });
+    return response.data;
+  },
+
+  // date is the device's local date (YYYY-MM-DD); replaces that day's entry
+  upsert: async (date: string, data: BodyWeightRequest): Promise<BodyWeightEntry> => {
+    const response = await api.put(`/body-weight/${date}`, data);
+    return response.data;
+  },
+
+  // Succeeds also when the day has no entry
+  delete: async (date: string): Promise<void> => {
+    await api.delete(`/body-weight/${date}`);
+  },
+};

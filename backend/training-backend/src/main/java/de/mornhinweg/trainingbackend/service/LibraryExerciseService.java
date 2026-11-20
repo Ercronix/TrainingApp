@@ -18,12 +18,12 @@ import de.mornhinweg.trainingbackend.repository.CatalogExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseLogRepository;
 import de.mornhinweg.trainingbackend.repository.ExerciseRepository;
 import de.mornhinweg.trainingbackend.repository.LibraryExerciseRepository;
-import de.mornhinweg.trainingbackend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -38,13 +38,13 @@ import java.util.stream.Collectors;
 public class LibraryExerciseService {
 
   private final LibraryExerciseRepository libraryExerciseRepository;
+  private final CurrentUserService currentUser;
   private final ExerciseRepository exerciseRepository;
   private final ExerciseLogRepository exerciseLogRepository;
-  private final UserRepository userRepository;
   private final CatalogExerciseRepository catalogExerciseRepository;
 
   public List<LibraryExerciseResponse> getLibrary(Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     Map<Long, Object[]> usage = exerciseRepository.findUsageByUserId(user.getId()).stream()
         .collect(Collectors.toMap(row -> (Long) row[0], row -> row));
     return libraryExerciseRepository.findByUserIdOrderByName(user.getId()).stream()
@@ -54,7 +54,7 @@ public class LibraryExerciseService {
 
   @Transactional
   public LibraryExerciseResponse createLibraryExercise(CreateLibraryExerciseRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     String name = request.getName().trim();
     if (libraryExerciseRepository.findByUserIdAndNameIgnoreCase(user.getId(), name).isPresent()) {
       throw new ConflictException("An exercise named \"" + name + "\" is already in your library");
@@ -70,18 +70,20 @@ public class LibraryExerciseService {
     applyEquipment(entry, request.getEquipment());
     applyMuscles(entry, request.getMuscles());
     applyCatalogExercise(entry, request.getCatalogExerciseId());
+    applyWeightIncrement(entry, request.getWeightIncrement());
     return toResponse(libraryExerciseRepository.save(entry), null);
   }
 
   @Transactional
   public LibraryExerciseResponse updateLibraryExercise(Long id, UpdateLibraryExerciseRequest request, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     LibraryExercise entry = getOwnedEntry(id, user);
     if (request.getName() != null) rename(entry, request.getName());
     applyDetails(entry, request.getDescription(), request.getVideoUrl(), request.getVideoId(), request.getRepUnit());
     applyEquipment(entry, request.getEquipment());
     applyMuscles(entry, request.getMuscles());
     applyCatalogExercise(entry, request.getCatalogExerciseId());
+    applyWeightIncrement(entry, request.getWeightIncrement());
     entry = libraryExerciseRepository.save(entry);
     List<Object[]> usage = exerciseRepository.findUsageByLibraryExerciseId(entry.getId());
     return toResponse(entry, usage.isEmpty() ? null : usage.get(0));
@@ -89,7 +91,7 @@ public class LibraryExerciseService {
 
   @Transactional
   public void deleteLibraryExercise(Long id, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     LibraryExercise entry = getOwnedEntry(id, user);
     if (exerciseRepository.countByLibraryExerciseId(entry.getId()) > 0) {
       throw new ConflictException("\"" + entry.getName() + "\" is still used by a workout or training history");
@@ -98,7 +100,7 @@ public class LibraryExerciseService {
   }
 
   public ExerciseProgressResponse getProgress(Long id, Authentication authentication) {
-    User user = getCurrentUser(authentication);
+    User user = currentUser.get(authentication);
     return buildProgress(getOwnedEntry(id, user), null);
   }
 
@@ -147,6 +149,7 @@ public class LibraryExerciseService {
               .repUnit(current.getRepUnit())
               .equipment(current.getEquipment())
               .catalogExerciseId(current.getCatalogExerciseId())
+              .weightIncrement(current.getWeightIncrement())
               .muscles(new HashSet<>(current.getMuscles()))
               .build());
         });
@@ -213,6 +216,15 @@ public class LibraryExerciseService {
     entry.setCatalogExerciseId(catalogExerciseId);
   }
 
+  /** Sets the entry's weight increment unless {@code increment} is null; 0 goes back to the default. */
+  void applyWeightIncrement(LibraryExercise entry, BigDecimal increment) {
+    if (increment == null) return;
+    if (increment.signum() < 0) {
+      throw new BadRequestException("The weight increment can't be negative");
+    }
+    entry.setWeightIncrement(increment.signum() == 0 ? null : increment);
+  }
+
   ExerciseProgressResponse buildProgress(LibraryExercise entry, Long exerciseId) {
     List<ExerciseLog> logs = exerciseLogRepository.findCompletedByLibraryExerciseIdOrderByDate(entry.getId());
 
@@ -225,6 +237,7 @@ public class LibraryExerciseService {
             .sets(SetLogResponse.fromAll(log.getSetLogs()))
             .trainingLogId(log.getTrainingLog().getId())
             .workoutName(log.getExercise().getWorkout().getName())
+            .deload(Boolean.TRUE.equals(log.getTrainingLog().getDeload()))
             .build())
         .collect(Collectors.toList());
 
@@ -241,12 +254,6 @@ public class LibraryExerciseService {
         .orElseThrow(() -> new ResourceNotFoundException("Library exercise not found"));
   }
 
-  private User getCurrentUser(Authentication authentication) {
-    String username = authentication.getName();
-    return userRepository.findByUsername(username)
-        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-  }
-
   /** {@code usage} is a row of {@link ExerciseRepository#findUsageByUserId}, or null when unused. */
   private LibraryExerciseResponse toResponse(LibraryExercise entry, Object[] usage) {
     return LibraryExerciseResponse.builder()
@@ -258,6 +265,7 @@ public class LibraryExerciseService {
         .repUnit(entry.getRepUnit())
         .equipment(entry.getEquipment())
         .catalogExerciseId(entry.getCatalogExerciseId())
+        .weightIncrement(entry.getWeightIncrement())
         .muscles(MuscleTargetDto.fromAll(entry.getMuscles()))
         .workoutCount(usage != null ? ((Number) usage[1]).longValue() : 0)
         .lastTrainedAt(usage != null ? (LocalDateTime) usage[2] : null)

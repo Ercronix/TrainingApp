@@ -1,0 +1,51 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /backend/training-backend
+    schedule:
+      interval: weekly
+    groups:
+      backend-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      frontend-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Expo pins these to the SDK version; upgrade them together with
+      # `npx expo install --fix` on an SDK bump, not one by one. That includes
+      # eslint-config-expo (its major tracks the SDK) and react-test-renderer
+      # (must match the react version the SDK pins).
+      - dependency-name: "expo"
+      - dependency-name: "expo-*"
+      - dependency-name: "@expo/*"
+      - dependency-name: "react"
+      - dependency-name: "react-dom"
+      - dependency-name: "react-native"
+      - dependency-name: "react-native-*"
+      - dependency-name: "@react-native/*"
+      - dependency-name: "@react-native-community/*"
+      - dependency-name: "@react-native-async-storage/*"
+      - dependency-name: "babel-preset-expo"
+      - dependency-name: "jest-expo"
+      - dependency-name: "eslint-config-expo"
+      - dependency-name: "react-test-renderer"
+      # eslint-config-expo's plugins (eslint-plugin-react) don't support
+      # ESLint 10 yet; take the major together with an SDK that does.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      # NativeWind 4 only supports Tailwind 3 (Tailwind 4 needs NativeWind 5),
+      # and the Expo SDK pins TypeScript (~6.0 on SDK 58); take these majors with an SDK bump.
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -10,6 +10,7 @@ import { useCompleteTraining } from '@/hooks/useTraining';
 import { useRestTimerStore } from '@/store/restTimerStore';
 import { useSetDraftStore } from '@/store/setDraftStore';
 import { toast } from '@/utils/confirm';
+import { isRestRunning } from '@/utils/restTimer';
 import { TrainingLog } from '@/types';
 
 // A session without any input for this long was left without finishing it
@@ -66,7 +67,8 @@ export function TrainingAutoEnd() {
 
     const isIdle = (training: TrainingLog) =>
       Date.now() - lastActivityMs(queryClient, training) >= IDLE_LIMIT_MS
-      && useRestTimerStore.getState().endTime == null
+      // A rest that ran out doesn't keep the session going; only one still counting down does
+      && !isRestRunning(useRestTimerStore.getState().endTime, Date.now())
       && !isTiming(training);
 
     const check = async () => {
@@ -100,6 +102,8 @@ export function TrainingAutoEnd() {
 
       complete.mutate({ trainingLogId: training.id, completedAtMs: lastActivityMs(queryClient, training) });
       useSetDraftStore.getState().clearDrafts(training.exercises.map((e) => String(e.id)));
+      // Like finishing by hand, don't leave the last rest counting up after the session
+      useRestTimerStore.getState().reset();
       toast('Session ended', 'No input for 30 minutes', 'stop-circle-outline');
       if (path === '/training' || SESSION_MODALS.has(path)) {
         if (SESSION_MODALS.has(path)) nav.dismiss();

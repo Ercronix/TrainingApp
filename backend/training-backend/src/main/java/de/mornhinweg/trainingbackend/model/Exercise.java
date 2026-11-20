@@ -30,8 +30,13 @@ public class Exercise {
   @Column
   private Integer sets;
 
+  // The bottom of the planned rep range, or the fixed rep count when repsMax is null
   @Column
   private Integer reps;
+
+  // The top of the planned rep range; null for a fixed rep count. Never below reps.
+  @Column(name = "reps_max")
+  private Integer repsMax;
 
   @Column(name = "planned_weight", precision = 5, scale = 2)
   private BigDecimal plannedWeight;
@@ -49,6 +54,10 @@ public class Exercise {
   @Column(nullable = false)
   @Builder.Default
   private Boolean temporary = false;
+
+  // Exercises of the workout with the same group form a superset or circuit; null when not grouped
+  @Column(name = "superset_group")
+  private Integer supersetGroup;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;

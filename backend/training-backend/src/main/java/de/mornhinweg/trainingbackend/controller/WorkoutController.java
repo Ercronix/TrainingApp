@@ -4,6 +4,7 @@ import de.mornhinweg.trainingbackend.dto.workout.CreateWorkoutRequest;
 import de.mornhinweg.trainingbackend.dto.workout.UpdateWorkoutRequest;
 import de.mornhinweg.trainingbackend.dto.workout.WorkoutResponse;
 import de.mornhinweg.trainingbackend.service.WorkoutService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Workouts", description = "The training days of a split")
 @RestController
 @RequestMapping("/api/workouts")
 @RequiredArgsConstructor

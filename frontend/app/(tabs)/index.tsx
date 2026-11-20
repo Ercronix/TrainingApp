@@ -12,8 +12,12 @@ import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { WorkoutRow } from '@/components/WorkoutRow';
 import { PickerAnchor, SplitPicker } from '@/components/SplitPicker';
 import { WeekStrip } from '@/components/WeekStrip';
+import { StretchCard } from '@/components/StretchCard';
 import { useExercises } from '@/hooks/useExercises';
+import { MesocycleWeekLabel } from '@/components/DeloadBadge';
 import { formatDaysAgo } from '@/utils/dates';
+import { splitMesocycleWeek } from '@/utils/mesocycle';
+import { formatRepRange } from '@/utils/plan';
 import { TrainingLog, Workout } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -67,6 +71,7 @@ export default function HomeScreen() {
   const { startTraining, isPending: isStarting } = useStartTraining(next?.id.toString() ?? '', next?.name ?? '');
   const { exercises: nextExercises } = useExercises(next?.id.toString() ?? '');
   const lastDone = lastDoneByWorkout(history);
+  const cycleWeek = splitMesocycleWeek(active);
 
   const refresh = () => {
     void refetch();
@@ -133,6 +138,10 @@ export default function HomeScreen() {
             {hasSplits ? 'CHOOSE A SPLIT' : 'CREATE A SPLIT'}
           </Text>
         </Tactile>
+        {/* Stretching doesn't need a split */}
+        <View className="mt-10">
+          <StretchCard />
+        </View>
         {picker}
       </View>
     );
@@ -165,8 +174,13 @@ export default function HomeScreen() {
             <Ionicons name="pencil-outline" size={18} color={c.muted} />
           </TouchableOpacity>
         </View>
-        {active.currentBlock ? (
-          <Text className="text-accent-text text-[10px] tracking-[2px] mt-1">BLOCK {active.currentBlock} OF 3</Text>
+        {active.currentBlock || cycleWeek ? (
+          <View className="flex-row items-center flex-wrap gap-x-3 gap-y-1 mt-1">
+            {active.currentBlock ? (
+              <Text className="text-accent-text text-[10px] tracking-[2px]">BLOCK {active.currentBlock} OF 3</Text>
+            ) : null}
+            {cycleWeek && <MesocycleWeekLabel week={cycleWeek} />}
+          </View>
         ) : null}
       </View>
 
@@ -212,7 +226,7 @@ export default function HomeScreen() {
                   <Text className="text-primary text-sm flex-1" numberOfLines={1}>{e.name}</Text>
                   {e.sets != null && e.reps != null && (
                     <Text className="text-muted text-xs font-mono">
-                      {e.sets} × {e.reps}{e.repUnit === 'seconds' ? 's' : ''}{e.plannedWeight ? ` · ${e.plannedWeight}` : ''}
+                      {e.sets} × {formatRepRange(e.reps, e.repsMax)}{e.repUnit === 'seconds' ? 's' : ''}{e.plannedWeight ? ` · ${e.plannedWeight}` : ''}
                     </Text>
                   )}
                 </View>
@@ -221,6 +235,9 @@ export default function HomeScreen() {
                 <Text className="text-muted text-xs">+ {nextExercises!.length - NEXT_UP_PREVIEW} more</Text>
               )}
             </View>
+          )}
+          {cycleWeek?.deload && (
+            <Text className="text-muted text-xs">Deload week: the session starts with fewer sets at a lighter weight.</Text>
           )}
           <Tactile
             className={`rounded-md py-4 flex-row items-center justify-center gap-2 ${isStarting ? 'opacity-50' : ''}`}
@@ -235,6 +252,8 @@ export default function HomeScreen() {
           </Tactile>
         </View>
       ) : null}
+
+      <StretchCard />
 
       {workouts.length > 0 && (
         <Text className="text-muted text-[10px] tracking-[4px] px-2 mb-3">ALL WORKOUTS</Text>

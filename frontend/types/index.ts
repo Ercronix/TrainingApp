@@ -31,6 +31,10 @@ export interface TrainingSplit {
     name: string;
     isActive: boolean;
     currentBlock: number;
+    /** Planned mesocycle (the last week a deload): both null when off, missing in older cached data. */
+    mesocycleWeeks?: number | null;
+    /** YYYY-MM-DD, the device's local date week 1 started on. */
+    mesocycleStartDate?: string | null;
     workoutCount: number;
     createdAt: string;
     updatedAt: string;
@@ -38,6 +42,15 @@ export interface TrainingSplit {
 
 export interface CreateSplitRequest {
     name: string;
+}
+
+export interface UpdateSplitRequest {
+    name: string;
+    currentBlock?: number;
+    /** 0 turns the mesocycle off; left out, it stays as it is. */
+    mesocycleWeeks?: number;
+    /** YYYY-MM-DD; left out, it stays as it is (today when a mesocycle is turned on). */
+    mesocycleStartDate?: string;
 }
 
 export interface TrainingLog {
@@ -52,8 +65,22 @@ export interface TrainingLog {
   lastActivityAt?: string;
   durationSeconds: number | null;
   notes: string | null;
+  /** Started in a deload week; the planned values come lowered from the server. Missing in older cached data. */
+  deload?: boolean;
+  /** The user's 1–5 ratings: how it felt, their energy, and their sleep the night before. Missing from data cached by older versions. */
+  rating?: number | null;
+  energy?: number | null;
+  sleep?: number | null;
   exercises: ExerciseLog[];
   isCompleted: boolean;
+}
+
+/** A session's ratings (1–5, null when not given) and note; saving one replaces all four. */
+export interface TrainingReview {
+  rating: number | null;
+  energy: number | null;
+  sleep: number | null;
+  notes: string | null;
 }
 
 export interface ExerciseLog {
@@ -64,7 +91,10 @@ export interface ExerciseLog {
   workoutId: number;
   workoutName: string;
   plannedSets: number | null;
+  // The bottom of the planned rep range, or the fixed rep count when plannedRepsMax is null
   plannedReps: number | null;
+  // Optional: missing in data cached before rep ranges existed
+  plannedRepsMax?: number | null;
   plannedWeight: number | null;
   // Summary of the working sets: their count, and the reps and weight of the heaviest
   setsCompleted: number;
@@ -77,15 +107,22 @@ export interface ExerciseLog {
   repUnit: 'reps' | 'seconds' | null;
   // Of the library entry, e.g. 'barbell'; missing in data cached before it existed
   equipment?: string | null;
+  // Of the library entry: kg a suggested next target adds, null for the default
+  weightIncrement?: number | null;
   // Most recent completed session for this exercise (null if never trained)
   previousSets: number | null;
   previousReps: number | null;
   previousWeight: number | null;
   previousSetLogs?: SetLog[] | null;
+  // The completed session before that one (null if none)
+  earlierSetLogs?: SetLog[] | null;
   // Best working set weight and estimated 1RM of sessions completed before this one (null if
   // none). Optional: sessions cached before records were added don't have them.
   bestWeight?: number | null;
   bestOneRepMax?: number | null;
+  // Adjacent logs with the same group form a superset or circuit; null (or missing in data cached
+  // before supersets) when not grouped
+  supersetGroup?: number | null;
 }
 
 // One performed set. `reps` holds seconds for exercises timed in seconds.
@@ -110,11 +147,15 @@ export interface Exercise {
   videoUrl?: string | null;
   videoId?: string | null;
   sets?: number | null;
+  // The bottom of the rep range, or the fixed rep count when repsMax is null
   reps?: number | null;
+  repsMax?: number | null;
   repUnit?: 'reps' | 'seconds' | null;
   plannedWeight?: number | null;
   orderIndex: number;
   lastUsedWeight?: number | null;
+  // Adjacent exercises with the same group form a superset or circuit; null when not grouped
+  supersetGroup?: number | null;
 }
 
 export interface UpdateExerciseLogRequest {
@@ -169,6 +210,8 @@ export interface LibraryExercise {
   muscles?: MuscleTarget[];
   // The catalog exercise it was picked from, whose drawing shows how it's done
   catalogExerciseId?: number | null;
+  // Kg a suggested next target adds; null for the default (DEFAULT_WEIGHT_INCREMENT)
+  weightIncrement?: number | null;
   workoutCount: number;
   lastTrainedAt: string | null;
 }
@@ -184,6 +227,8 @@ export interface UpdateLibraryExerciseRequest {
   muscles?: MuscleTarget[];
   // Links a catalog exercise for its drawing; 0 removes the link
   catalogExerciseId?: number;
+  // 0 goes back to the default
+  weightIncrement?: number;
 }
 
 export interface CreateExerciseRequest {
@@ -196,6 +241,8 @@ export interface CreateExerciseRequest {
   videoId?: string | null;
   sets?: number | null;
   reps?: number | null;
+  // The top of the rep range; null or 0 for a fixed rep count (on update null leaves it, 0 clears it)
+  repsMax?: number | null;
   repUnit?: string;
   plannedWeight?: number | null;
   equipment?: string;
@@ -213,6 +260,8 @@ export interface ExerciseProgressEntry {
   sets?: SetLog[];
   trainingLogId: number;
   workoutName: string;
+  /** From a deload session: left out of the progression trend. Missing in older cached data. */
+  deload?: boolean;
 }
 
 // Covers every workout that uses the same library exercise
@@ -256,3 +305,65 @@ export interface DashboardStats {
 }
 
 
+
+// A stretch of the daily stretch routine, kept apart from the training data
+export type StretchKind = 'hold' | 'reps';
+
+export interface StretchItem {
+  id: number;
+  name: string;
+  // 'hold': amount is seconds; 'reps': amount is repetitions
+  kind: StretchKind;
+  amount: number;
+  // Done once on each side, left then right
+  perSide: boolean;
+  note: string | null;
+  orderIndex: number;
+}
+
+export interface StretchRoutine {
+  id: number;
+  name: string;
+  items: StretchItem[];
+}
+
+// On update, missing fields stay unchanged and an empty note clears it
+export interface StretchItemRequest {
+  name?: string;
+  kind?: StretchKind;
+  amount?: number;
+  perSide?: boolean;
+  note?: string;
+}
+
+/** The daily ntfy push, skipped on days already stretched. */
+export interface StretchReminder {
+  enabled: boolean;
+  time: string; // HH:mm in timeZone
+  timeZone: string;
+  available: boolean; // false when the server has no ntfy server set up
+  topic: string;
+  topicUrl: string | null;
+  doneButton: boolean;
+}
+
+export interface StretchReminderRequest {
+  enabled: boolean;
+  time: string;
+  timeZone: string;
+}
+
+/** The body weight logged for a day (the device's local date), at most one per day. */
+export interface BodyWeightEntry {
+  // Missing on an entry logged offline that hasn't reached the server yet
+  id?: number;
+  date: string; // YYYY-MM-DD
+  weight: number; // kg
+  note: string | null;
+}
+
+// Replaces the day's entry; a missing or empty note clears it
+export interface BodyWeightRequest {
+  weight: number;
+  note?: string;
+}

@@ -15,10 +15,17 @@ import { ExerciseLog, UpdateExerciseLogRequest } from '@/types';
 import { useTheme } from '@/hooks/useTheme';
 import { Tactile } from '@/components/Tactile';
 import { ActionCard, ActionMenu } from '@/components/ActionMenu';
+import { SupersetRail } from '@/components/SupersetRail';
+import { formatPlan } from '@/utils/plan';
 import { useIsOnline } from '@/hooks/useIsOnline';
 import { formatSets, previousSetsOf, setsOf } from '@/utils/sets';
 import { personalRecordOf } from '@/utils/strength';
+import { supersetPositions } from '@/utils/supersets';
 import { haptics } from '@/utils/haptics';
+import { useSplits } from '@/hooks/useSplits';
+import { DeloadBadge, MesocycleWeekLabel } from '@/components/DeloadBadge';
+import { splitMesocycleWeek } from '@/utils/mesocycle';
+import { localDay } from '@/utils/stretch';
 
 function formatElapsed(seconds: number | null): string {
   if (seconds == null) return '--:--:--';
@@ -37,6 +44,11 @@ export default function TrainingScreen() {
   const [dockHeight, setDockHeight] = useState(0);
   const c = useTheme();
   const isOnline = useIsOnline();
+  const { splits } = useSplits();
+  // The week the session was started in (whether it's a deload is decided by the server)
+  const cycleWeek = training
+    ? splitMesocycleWeek(splits?.find((s) => s.id === training.splitId), localDay(new Date(training.startedAt)))
+    : null;
   // The phone stays ready between sets instead of locking
   useKeepScreenOn(!training?.isCompleted);
   const elapsedSeconds = useElapsedSeconds({
@@ -139,8 +151,9 @@ export default function TrainingScreen() {
 
   // The exercise to do now: the first one not done yet
   const currentId = orderedExercises.find((e) => !e.completed && e.id >= 0)?.id;
+  const supersets = supersetPositions(orderedExercises);
 
-  const renderExerciseItem = ({ item }: { item: ExerciseLog }) => {
+  const renderExerciseItem = ({ item, index }: { item: ExerciseLog; index: number }) => {
     // Added while offline (or still being saved): no server id yet, so it can't be opened or logged
     const syncing = item.id < 0;
     const isRecord = item.completed && personalRecordOf(item) != null;
@@ -152,78 +165,81 @@ export default function TrainingScreen() {
     // Swap or remove it for this session only
     const editable = !syncing && !training?.isCompleted;
     return (
-      <ActionCard
-        className={`rounded-md mb-2 rim ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
-        contentClassName="flex-row items-center"
-      >
-        {/* The whole row opens the log screen */}
-        <TouchableOpacity
-          className="flex-1 flex-row items-center gap-3 pl-3 pr-2 py-3"
-          onPress={() => openLog(item)}
-          activeOpacity={0.85}
-          disabled={syncing}
-          accessibilityLabel={`Log ${item.exerciseName}`}
+      <SupersetRail position={supersets[index] ?? null}>
+        <ActionCard
+          className={`rounded-md mb-2 rim ${item.completed ? 'bg-surface-done' : 'bg-surface'} ${isCurrent ? 'border-accent' : item.completed ? 'border-edge-done' : 'border-edge'} ${syncing ? 'opacity-50' : ''}`}
+          contentClassName="flex-row items-center"
         >
-          <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
-          <View className="flex-1 gap-1">
-            {isCurrent && <Text className="text-accent-text text-[9px] tracking-[3px]">NOW</Text>}
-            <View className="flex-row items-center gap-2">
-              <Text className="text-primary text-base font-bold tracking-tight flex-shrink" numberOfLines={1}>
-                {item.exerciseName}
-              </Text>
-              {isRecord && (
-                <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
-                  <Ionicons name="trophy" size={10} color={c.accentFg} />
-                  <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
+          {/* The whole row opens the log screen */}
+          <TouchableOpacity
+            className="flex-1 flex-row items-center gap-3 pl-3 pr-2 py-3"
+            onPress={() => openLog(item)}
+            activeOpacity={0.85}
+            disabled={syncing}
+            accessibilityLabel={`Log ${item.exerciseName}`}
+          >
+            <ExerciseThumb libraryExerciseId={item.libraryExerciseId} />
+            <View className="flex-1 gap-1">
+              {isCurrent && <Text className="text-accent-text text-[9px] tracking-[3px]">NOW</Text>}
+              <View className="flex-row items-center gap-2">
+                <Text className="text-primary text-base font-bold tracking-tight flex-shrink" numberOfLines={1}>
+                  {item.exerciseName}
+                </Text>
+                {isRecord && (
+                  <View className="flex-row items-center gap-1 bg-accent rounded-sm px-1.5 py-0.5" accessibilityLabel="Personal record">
+                    <Ionicons name="trophy" size={10} color={c.accentFg} />
+                    <Text className="text-accent-fg text-[9px] font-bold tracking-[1px]">PR</Text>
+                  </View>
+                )}
+              </View>
+              {item.completed || logged > 0 ? (
+                <Text className={`text-xs font-mono ${item.completed ? 'text-accent-text' : 'text-primary'}`} numberOfLines={1}>
+                  {formatSets(setsOf(item), item.repUnit)}
+                </Text>
+              ) : (
+                <Text className="text-muted text-xs" numberOfLines={1}>
+                  {formatPlan(
+                    { sets: item.plannedSets, reps: item.plannedReps, repsMax: item.plannedRepsMax, weight: item.plannedWeight },
+                    unit,
+                  ) ?? 'No plan'}
+                  {previous.length > 0 ? ` · last ${formatSets(previous, item.repUnit)}` : ''}
+                </Text>
+              )}
+              {/* Sets logged so far against the plan */}
+              {!item.completed && planned > 0 && (
+                <View className="flex-row gap-1 mt-1">
+                  {Array.from({ length: Math.max(planned, logged) }, (_, i) => (
+                    <View key={i} className={`w-2 h-2 rounded-full ${i < logged ? 'bg-accent' : 'bg-elevated'}`} />
+                  ))}
                 </View>
               )}
+              {syncing && <Text className="text-muted text-[10px] tracking-[2px]">SYNCING…</Text>}
             </View>
-            {item.completed || logged > 0 ? (
-              <Text className={`text-xs font-mono ${item.completed ? 'text-accent-text' : 'text-primary'}`} numberOfLines={1}>
-                {formatSets(setsOf(item), item.repUnit)}
-              </Text>
-            ) : (
-              <Text className="text-muted text-xs" numberOfLines={1}>
-                {item.plannedSets && item.plannedReps
-                  ? `${item.plannedSets} × ${item.plannedReps} ${unit}${item.plannedWeight ? ` @ ${item.plannedWeight} kg` : ''}`
-                  : 'No plan'}
-                {previous.length > 0 ? ` · last ${formatSets(previous, item.repUnit)}` : ''}
-              </Text>
-            )}
-            {/* Sets logged so far against the plan */}
-            {!item.completed && planned > 0 && (
-              <View className="flex-row gap-1 mt-1">
-                {Array.from({ length: Math.max(planned, logged) }, (_, i) => (
-                  <View key={i} className={`w-2 h-2 rounded-full ${i < logged ? 'bg-accent' : 'bg-elevated'}`} />
-                ))}
-              </View>
-            )}
-            {syncing && <Text className="text-muted text-[10px] tracking-[2px]">SYNCING…</Text>}
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
 
-        {editable && (
-          <ActionMenu
-            accessibilityLabel={`Options for ${item.exerciseName}`}
-            actions={[
-              { icon: 'swap-horizontal', label: 'Replace', onPress: () => openReplace(item) },
-              { icon: 'trash-outline', label: 'Remove', destructive: true, onPress: () => handleDelete(item) },
-            ]}
-          />
-        )}
+          {editable && (
+            <ActionMenu
+              accessibilityLabel={`Options for ${item.exerciseName}`}
+              actions={[
+                { icon: 'swap-horizontal', label: 'Replace', onPress: () => openReplace(item) },
+                { icon: 'trash-outline', label: 'Remove', destructive: true, onPress: () => handleDelete(item) },
+              ]}
+            />
+          )}
 
-        {/* Tick off without opening it (records the plan when nothing is logged) */}
-        <TouchableOpacity
-          className="w-14 self-stretch justify-center items-center"
-          onPress={() => toggleExercise(item)}
-          disabled={syncing}
-          accessibilityLabel={item.completed ? `Mark ${item.exerciseName} as not done` : `Mark ${item.exerciseName} as done`}
-        >
-          <View className={`w-7 h-7 rounded-full justify-center items-center ${item.completed ? 'bg-accent' : 'border-2 border-elevated'}`}>
-            {item.completed && <Ionicons name="checkmark" size={16} color={c.accentFg} />}
-          </View>
-        </TouchableOpacity>
-      </ActionCard>
+          {/* Tick off without opening it (records the plan when nothing is logged) */}
+          <TouchableOpacity
+            className="w-14 self-stretch justify-center items-center"
+            onPress={() => toggleExercise(item)}
+            disabled={syncing}
+            accessibilityLabel={item.completed ? `Mark ${item.exerciseName} as not done` : `Mark ${item.exerciseName} as done`}
+          >
+            <View className={`w-7 h-7 rounded-full justify-center items-center ${item.completed ? 'bg-accent' : 'border-2 border-elevated'}`}>
+              {item.completed && <Ionicons name="checkmark" size={16} color={c.accentFg} />}
+            </View>
+          </TouchableOpacity>
+        </ActionCard>
+      </SupersetRail>
     );
   };
 
@@ -252,6 +268,14 @@ export default function TrainingScreen() {
         <Text className="text-accent-text text-[10px] tracking-[4px]" numberOfLines={1}>
           {[training?.workoutName, training?.splitName].filter(Boolean).join(' · ').toUpperCase()}
         </Text>
+        {training?.deload ? (
+          <View className="flex-row items-center gap-2">
+            <DeloadBadge label="DELOAD WEEK" />
+            <Text className="text-muted text-[11px] flex-shrink">Lighter targets: fewer sets at a lower weight</Text>
+          </View>
+        ) : cycleWeek && !cycleWeek.deload ? (
+          <MesocycleWeekLabel week={cycleWeek} />
+        ) : null}
         <Text className="text-primary text-[28px] font-bold tracking-tighter">
           {allDone ? 'All done' : `${completedCount} of ${totalCount} done`}
         </Text>

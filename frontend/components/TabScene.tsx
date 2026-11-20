@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, Platform } from 'react-native';
+import { useIsFocused } from 'expo-router';
 import type { ParamListBase, RouteProp } from 'expo-router/react-navigation';
 import type { MaterialTopTabNavigationProp } from 'expo-router/js-top-tabs';
 import { EASE_OUT } from '@/constants/motion';
@@ -21,14 +22,17 @@ interface TabSceneProps {
  * tab that wasn't preloaded) fades in without the shift.
  */
 export function TabScene({ route, navigation, children }: TabSceneProps) {
+  // Read through the hook: navigation.isFocused() during render can be stale. Only the value at
+  // mount matters below.
+  const focused = useIsFocused();
   // A tab that mounts focused fades in right away; start it hidden so it doesn't flash first
-  const opacity = useRef(new Animated.Value(navigation.isFocused() ? 0 : 1)).current;
+  const opacity = useRef(new Animated.Value(focused ? 0 : 1)).current;
   const shift = useRef(new Animated.Value(0)).current;
   // Each entrance gets a number. While one runs the scene is bound to the animated values, and
   // after it the scene renders plainly at full opacity. On Android a scene that mounted or was
   // re-laid out by the pager mid-fade could otherwise keep the opacity of 0 it started from and
   // stay blank, since nothing re-renders it once the native animation is over.
-  const [entrance, setEntrance] = useState<number | null>(() => (navigation.isFocused() ? 0 : null));
+  const [entrance, setEntrance] = useState<number | null>(() => (focused ? 0 : null));
 
   useEffect(() => {
     if (entrance == null) return;

@@ -5,13 +5,17 @@ import YoutubePlayer from 'react-native-youtube-iframe';
 import { Ionicons } from '@expo/vector-icons';
 import { useExerciseDetail } from '@/hooks/useExerciseDetail';
 import { useExerciseProgress } from '@/hooks/useExerciseProgress';
+import { useBodyWeightEntries } from '@/hooks/useBodyWeight';
 import { ExerciseAnalytics } from '@/components/ExerciseAnalytics';
 import { OneRepMaxCalculator } from '@/components/OneRepMaxCalculator';
 import { useTheme } from '@/hooks/useTheme';
 import { estimateOneRepMax } from '@/utils/strength';
 import { setsOf, workingSets } from '@/utils/sets';
 import { useLibrary } from '@/hooks/useLibrary';
-import { confirm } from '@/utils/confirm';
+import { alert, confirm } from '@/utils/confirm';
+import { parseNumber } from '@/utils/logExercise';
+import { formatRepRange } from '@/utils/plan';
+import { DEFAULT_WEIGHT_INCREMENT } from '@/utils/progression';
 import { MusclePicker, MuscleSummary } from '@/components/MusclePicker';
 import { BodyMap, targetFills } from '@/components/BodyMap';
 import { CatalogSuggestions } from '@/components/CatalogSuggestions';
@@ -25,10 +29,10 @@ import { Tactile } from '@/components/Tactile';
 export default function ExerciseDetailScreen() {
   const {
     exerciseId, exerciseName, description: initialDescription,
-    videoUrl: initialVideoUrl, sets, reps, weight, workoutId, libraryExerciseId, fromLibrary,
+    videoUrl: initialVideoUrl, sets, reps, repsMax, weight, workoutId, libraryExerciseId, fromLibrary,
   } = useLocalSearchParams<{
     exerciseId: string; exerciseName: string; description: string;
-    videoUrl: string; sets: string; reps: string; weight: string; workoutId: string;
+    videoUrl: string; sets: string; reps: string; repsMax?: string; weight: string; workoutId: string;
     libraryExerciseId: string; fromLibrary: string;
   }>();
   // Opened from the library: there is no workout exercise, and the entry can be renamed or deleted
@@ -47,6 +51,7 @@ export default function ExerciseDetailScreen() {
   const [editingVideo, setEditingVideo] = useState(false);
   const [editingDescription, setEditingDescription] = useState(false);
   const { progress, isLoading: progressLoading } = useExerciseProgress(exerciseId, libraryExerciseId);
+  const { entries: bodyWeights } = useBodyWeightEntries();
   const c = useTheme();
   const libraryId = progress?.libraryExerciseId ?? (libraryExerciseId ? Number(libraryExerciseId) : null);
   const entry = library.find((l) => l.id === libraryId);
@@ -75,6 +80,18 @@ export default function ExerciseDetailScreen() {
   const pickEquipment = (option: string) => {
     if (libraryId == null) return;
     updateEntry.mutate({ id: libraryId, data: { equipment: entry?.equipment === option ? '' : option } });
+  };
+  // The weight the suggested next target adds; null while not being edited
+  const [increment, setIncrement] = useState<string | null>(null);
+  const saveIncrement = () => {
+    if (libraryId == null || increment == null) return;
+    // Emptied, it goes back to the default (0)
+    const value = increment.trim() ? parseNumber(increment) : 0;
+    if (value == null || value < 0 || value > 100) {
+      alert('Error', 'Enter a weight step between 0 and 100 kg');
+      return;
+    }
+    updateEntry.mutate({ id: libraryId, data: { weightIncrement: value } }, { onSuccess: () => setIncrement(null) });
   };
   // Seed the calculator with the set behind the best estimated 1RM
   let bestSet: { weight: number; reps: number } | undefined;
@@ -146,7 +163,9 @@ export default function ExerciseDetailScreen() {
             <View className="flex-row gap-6">
               {!!sets && !!reps && (
                 <View>
-                  <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">{sets}×{reps}</Text>
+                  <Text className="text-accent-text text-[28px] font-bold tracking-tighter leading-8">
+                    {sets}×{formatRepRange(Number(reps), repsMax ? Number(repsMax) : null)}
+                  </Text>
                   <Text className="text-muted text-[9px] tracking-[2px] mt-1">SETS × REPS</Text>
                 </View>
               )}
@@ -242,6 +261,36 @@ export default function ExerciseDetailScreen() {
           </View>
         )}
 
+        {/* Weight step of the suggested next target; timed exercises add seconds instead */}
+        {entry && !timed && (
+          <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
+            <Text className="text-muted text-[9px] tracking-[3px] mb-3">WEIGHT STEP</Text>
+            <View className="flex-row items-center gap-3">
+              <TextInput
+                className="w-24 bg-inset rounded px-3 py-2 text-primary text-lg font-bold tracking-tight"
+                value={increment ?? (entry.weightIncrement != null ? String(entry.weightIncrement) : '')}
+                onChangeText={setIncrement}
+                placeholder={String(DEFAULT_WEIGHT_INCREMENT)}
+                placeholderTextColor={c.elevated}
+                keyboardType="decimal-pad"
+                keyboardAppearance={c.keyboardAppearance}
+                editable={!updateEntry.isPending}
+                onSubmitEditing={saveIncrement}
+                accessibilityLabel="Weight step in kg"
+              />
+              <Text className="text-muted text-sm flex-1">kg</Text>
+              {increment != null && (
+                <TouchableOpacity onPress={saveIncrement} disabled={updateEntry.isPending} accessibilityLabel="Save weight step">
+                  <Ionicons name="checkmark" size={22} color={c.accent} />
+                </TouchableOpacity>
+              )}
+            </View>
+            <Text className="text-muted text-[11px] mt-3">
+              Added to the suggested weight once every set reaches the top of the planned reps. Empty uses {DEFAULT_WEIGHT_INCREMENT} kg.
+            </Text>
+          </View>
+        )}
+
         {/* Video */}
         <View className="bg-surface rim border-edge rounded-md p-5 mb-2">
           <View className="flex-row justify-between items-center mb-3">
@@ -295,7 +344,7 @@ export default function ExerciseDetailScreen() {
             <Text className="text-muted text-[10px] tracking-[3px]">LOADING...</Text>
           </View>
         ) : (
-          <ExerciseAnalytics entries={progress?.entries ?? []} timed={timed} />
+          <ExerciseAnalytics entries={progress?.entries ?? []} timed={timed} bodyWeights={bodyWeights} />
         )}
 
         {/* Description */}

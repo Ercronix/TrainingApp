@@ -23,11 +23,13 @@ interface Props {
   height?: number;
   /** Ring the highest point. */
   markBest?: boolean;
+  /** A second, solid series drawn over the points (e.g. a moving average). */
+  overlay?: TrendPoint[];
 }
 
 const PAD = { top: 10, right: 14, bottom: 22, left: 40 };
 
-export function TrendChart({ points, projection = [], formatValue, formatX, describe, height = 180, markBest = true }: Props) {
+export function TrendChart({ points, projection = [], formatValue, formatX, describe, height = 180, markBest = true, overlay = [] }: Props) {
   const c = useTheme();
   const { lockProps, unlock } = useTabSwipeLock();
   const [width, setWidth] = useState(0);
@@ -35,7 +37,7 @@ export function TrendChart({ points, projection = [], formatValue, formatX, desc
 
   const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width);
 
-  const all = [...points, ...projection];
+  const all = [...points, ...projection, ...overlay];
   const xs = all.map((p) => p.x);
   const ys = all.map((p) => p.y);
   const ticks = niceTicks(Math.min(...ys), Math.max(...ys));
@@ -99,7 +101,18 @@ export function TrendChart({ points, projection = [], formatValue, formatX, desc
                 <Path d={path(projection)} stroke={c.accentText} strokeOpacity={0.55} strokeWidth={2} strokeDasharray="4 4" fill="none" />
               )}
               {points.length > 1 && (
-                <Path d={path(points)} stroke={c.accentText} strokeWidth={2} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+                <Path
+                  d={path(points)}
+                  stroke={c.accentText}
+                  strokeOpacity={overlay.length > 1 ? 0.35 : 1}
+                  strokeWidth={2}
+                  fill="none"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                />
+              )}
+              {overlay.length > 1 && (
+                <Path d={path(overlay)} stroke={c.accentText} strokeWidth={2.5} fill="none" strokeLinejoin="round" strokeLinecap="round" />
               )}
 
               {selected != null && (

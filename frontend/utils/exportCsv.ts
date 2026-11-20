@@ -5,6 +5,7 @@ import { setsOf } from './sets';
 const HEADER = [
   'date', 'split', 'workout', 'exercise', 'completed',
   'set', 'warmup', 'reps', 'unit', 'weight_kg', 'rpe', 'notes', 'session_duration_min',
+  'session_rating', 'session_energy', 'session_sleep', 'session_notes',
 ];
 
 function escapeCsv(value: unknown): string {
@@ -35,6 +36,10 @@ export function trainingLogsToCsv(logs: TrainingLog[]): string {
           set?.rpe,
           e.notes,
           log.durationSeconds != null ? Math.round(log.durationSeconds / 60) : '',
+          log.rating,
+          log.energy,
+          log.sleep,
+          log.notes,
         ];
         return sets.length > 0 ? sets.map(row) : [row(null, 0)];
       }),

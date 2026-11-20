@@ -2,8 +2,9 @@ import { View, Text } from 'react-native';
 import { useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/hooks/useTheme';
-import { ExerciseProgressEntry } from '@/types';
+import { BodyWeightEntry, ExerciseProgressEntry } from '@/types';
 import { formatKg } from '@/utils/strength';
+import { formatWeight, relativeStrength } from '@/utils/bodyWeight';
 import { formatSets } from '@/utils/sets';
 import {
   ExerciseStats, SessionPoint, computeExerciseStats, formatNumber, formatSigned, formatWeeks,
@@ -14,6 +15,8 @@ import { Tactile } from '@/components/Tactile';
 interface Props {
   entries: ExerciseProgressEntry[];
   timed: boolean;
+  /** Body-weight log; when it has entries, the best e1RM is also shown relative to body weight. */
+  bodyWeights?: BodyWeightEntry[];
 }
 
 type Metric = 'e1rm' | 'weight' | 'volume' | 'reps' | 'totalReps';
@@ -57,7 +60,7 @@ function metricValue(p: SessionPoint, m: Metric): number {
 const shortDate = (t: number) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 const longDate = (t: number) => new Date(t).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 
-export function ExerciseAnalytics({ entries, timed }: Props) {
+export function ExerciseAnalytics({ entries, timed, bodyWeights = [] }: Props) {
   const c = useTheme();
   const stats = useMemo(() => computeExerciseStats(entries, timed), [entries, timed]);
   const [metric, setMetric] = useState<Metric | null>(null);
@@ -97,6 +100,8 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
   const describe = (i: number) => formatSets(visible[i].workingSets, kind === 'timed' ? 'seconds' : 'reps');
 
   const sincePr = stats.sincePr;
+  // Against the body weight nearest to the session it was set in
+  const relative = stats.bestE1rm ? relativeStrength(stats.bestE1rm.e1rm, stats.bestE1rm.date, bodyWeights) : null;
 
   return (
     <>
@@ -134,6 +139,12 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
             ))}
           </View>
         </View>
+        {stats.deloadSessions > 0 && stats.points.length < stats.sessions && (
+          <Text className="text-muted text-[10px] mt-2">
+            {stats.deloadSessions === 1 ? '1 deload session is' : `${stats.deloadSessions} deload sessions are`} left
+            out of the chart, records and trend. They still count toward the totals.
+          </Text>
+        )}
       </View>
 
       {/* Numbers */}
@@ -152,6 +163,13 @@ export function ExerciseAnalytics({ entries, timed }: Props) {
           <Stat value={stats.latestIntensity != null ? `${Math.round(stats.latestIntensity)}%` : '—'} label="LATEST / BEST" />
           <Stat value={String(stats.sessions)} label="SESSIONS" />
           <Stat value={stats.sessionsPerWeek ? stats.sessionsPerWeek.toFixed(1) : '—'} label="SESSIONS / WEEK" />
+          {relative && (
+            <Stat
+              value={`${relative.ratio.toFixed(2)}× BW`}
+              label={`BEST E1RM / BW · ${formatWeight(relative.bodyWeight.weight)} KG`}
+              accent
+            />
+          )}
           {kind === 'weighted' && <Stat value={`${formatNumber(stats.totalVolume)} kg`} label="TOTAL VOLUME" />}
           <Stat value={formatNumber(stats.totalReps)} label={kind === 'timed' ? 'TOTAL SECONDS' : 'TOTAL REPS'} />
           <Stat value={formatNumber(stats.totalSets)} label="TOTAL SETS" />

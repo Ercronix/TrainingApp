@@ -7,9 +7,12 @@ import { useTheme } from '@/hooks/useTheme';
 import { useHideTabBarOnScroll } from '@/hooks/useHideTabBarOnScroll';
 import { Tactile } from '@/components/Tactile';
 import { useLibrary } from '@/hooks/useLibrary';
+import { useBodyWeightEntries } from '@/hooks/useBodyWeight';
+import { formatWeight } from '@/utils/bodyWeight';
 import { BarChart } from '@/components/charts/BarChart';
 import { MuscleVolumeCard } from '@/components/MuscleVolumeCard';
 import { ConsistencyCalendar } from '@/components/ConsistencyCalendar';
+import { RatingInsightCard } from '@/components/RatingInsightCard';
 import { formatKg } from '@/utils/strength';
 import {
   ExerciseTrend, PeriodTotals, RecentRecord, StatsRange, formatDuration, formatNumber, formatSigned, summarizePeriods,
@@ -59,6 +62,8 @@ export default function DashboardScreen() {
   const router = useRouter();
   const { stats, analytics, history, isLoading, isRefetching, refetch } = useDashboard();
   const { library } = useLibrary();
+  const { entries: bodyWeights } = useBodyWeightEntries();
+  const latestBodyWeight = bodyWeights[bodyWeights.length - 1];
   const [timeRange, setTimeRange] = useState<StatsRange>('week');
   const [weeklyMetric, setWeeklyMetric] = useState<WeeklyMetric>('volume');
   const [showAllTrends, setShowAllTrends] = useState(false);
@@ -273,6 +278,7 @@ export default function DashboardScreen() {
 
       {lifetime.sessions > 0 && <ConsistencyCalendar logs={history} />}
       {lifetime.sessions > 0 && <MuscleVolumeCard logs={history} library={library} />}
+      <RatingInsightCard logs={history} />
 
       {/* Lifetime numbers */}
       {lifetime.sessions > 0 && (
@@ -361,6 +367,22 @@ export default function DashboardScreen() {
       )}
 
       {/* Tools */}
+      <TouchableOpacity
+        className="mx-4 mb-3 bg-surface rim border-edge rounded-md p-5 flex-row items-center gap-3"
+        onPress={() => router.push('/body-weight' as any)}
+        activeOpacity={0.85}
+      >
+        <Ionicons name="scale-outline" size={22} color={c.accent} />
+        <View className="flex-1">
+          <Text className="text-primary text-sm font-bold">Body Weight</Text>
+          <Text className="text-muted text-[11px]">
+            {latestBodyWeight
+              ? `Latest ${formatWeight(latestBodyWeight.weight)} kg · ${formatDaysAgo(parseLocalDate(latestBodyWeight.date).getTime())}`
+              : 'Log your weight and see its trend'}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={c.muted} />
+      </TouchableOpacity>
       <TouchableOpacity
         className="mx-4 mb-10 bg-surface rim border-edge rounded-md p-5 flex-row items-center gap-3"
         onPress={() => router.push('/one-rep-max' as any)}

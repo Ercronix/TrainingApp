@@ -15,6 +15,8 @@ public class ExerciseResponse {
   private String videoId;
   private Integer sets;
   private Integer reps;
+  // Top of the rep range (reps is its bottom); null for a fixed rep count
+  private Integer repsMax;
   private String repUnit;
   private BigDecimal plannedWeight;
   private BigDecimal lastUsedWeight;
@@ -22,4 +24,6 @@ public class ExerciseResponse {
   private Integer orderIndex;
   private LocalDateTime createdAt;
   private LocalDateTime updatedAt;
+  // Exercises with the same group (adjacent in order) form a superset or circuit; null when not grouped
+  private Integer supersetGroup;
 }

@@ -1,6 +1,7 @@
 package de.mornhinweg.trainingbackend.dto.library;
 
 import lombok.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -14,6 +15,8 @@ public class LibraryExerciseResponse {
   private String repUnit;
   private String equipment;
   private Long catalogExerciseId;
+  // Kg the suggested next target adds; null for the client's default (2.5 kg)
+  private BigDecimal weightIncrement;
   private List<MuscleTargetDto> muscles;
   // Number of workouts (templates, not one-off session exercises) that use this entry
   private long workoutCount;
