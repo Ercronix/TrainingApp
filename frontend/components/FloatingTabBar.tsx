@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
+import type { MaterialTopTabBarProps } from 'expo-router/js-top-tabs';
 import { useColorScheme } from 'nativewind';
 import { useTheme } from '@/hooks/useTheme';
 import { useTabBarStore } from '@/store/tabBarStore';
@@ -24,7 +24,7 @@ const useNativeDriver = Platform.OS !== 'web';
  * the swipe will land. On a tap the pager jumps (see TabScene) and the pill springs over instead.
  * It slides out of view while a tab's list scrolls down (see tabBarStore).
  */
-export function FloatingTabBar({ state, descriptors, navigation, position }: MaterialTopTabBarProps) {
+export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, position }: MaterialTopTabBarProps) {
   const insets = useSafeAreaInsets();
   const c = useTheme();
   const isLight = useColorScheme().colorScheme === 'light';
@@ -114,10 +114,10 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
           const inactiveness = Animated.subtract(1, activeness);
 
           const onPress = () => {
-            const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+            const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!focused && !event.defaultPrevented) {
               tappedFrom.current = state.index;
-              navigation.navigate(route.name, route.params);
+              navigateToTab(route.key);
             }
           };
 
@@ -134,7 +134,7 @@ export function FloatingTabBar({ state, descriptors, navigation, position }: Mat
             <Pressable
               key={route.key}
               onPress={onPress}
-              onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
+              onLongPress={() => emitter.emit({ type: 'tabLongPress', target: route.key })}
               pressRetentionOffset={pressRetentionOffset}
               accessibilityRole="tab"
               accessibilityState={{ selected: focused }}

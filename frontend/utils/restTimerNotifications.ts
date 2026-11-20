@@ -21,6 +21,8 @@ async function ensurePermission(): Promise<boolean> {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
       name: 'Rest Timer',
+      // eslint-plugin-import misses this enum behind expo-notifications' `export *`; it is exported
+      // eslint-disable-next-line import/namespace
       importance: Notifications.AndroidImportance.HIGH,
       sound: 'default',
     });

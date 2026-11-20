@@ -116,7 +116,7 @@ export default function DashboardScreen() {
       className="flex-1 bg-base"
       {...scrollProps}
       contentContainerStyle={{ paddingBottom: 140 }}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={c.accent} />}
     >
       {/* Header, with the range switch beside it */}
       <View className="flex-row items-end justify-between px-5 pt-16 pb-4">

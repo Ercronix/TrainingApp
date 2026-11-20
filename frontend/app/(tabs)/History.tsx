@@ -248,7 +248,7 @@ export default function HistoryScreen() {
         renderItem={renderLogItem}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={c.accent} />}
         ListEmptyComponent={
           <View className="items-center mt-20 gap-3">
             <Ionicons name={searchQuery || dateFilter !== 'all' ? 'search-outline' : 'barbell-outline'} size={48} color={c.subtle} />

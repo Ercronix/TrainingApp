@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Animated, Platform } from 'react-native';
-import type { ParamListBase, RouteProp } from '@react-navigation/native';
-import type { MaterialTopTabNavigationProp } from '@react-navigation/material-top-tabs';
+import type { ParamListBase, RouteProp } from 'expo-router/react-navigation';
+import type { MaterialTopTabNavigationProp } from 'expo-router/js-top-tabs';
 import { EASE_OUT } from '@/constants/motion';
 
 // How far a tapped tab slides in from the side of the tab it replaces

@@ -1,4 +1,4 @@
-import { Pressable, PressableProps, StyleProp, View, ViewStyle } from 'react-native';
+import { HostInstance, Pressable, PressableProps, StyleProp, View, ViewStyle } from 'react-native';
 import type { ReactNode, Ref } from 'react';
 import { haptics } from '@/utils/haptics';
 import { useTheme } from '@/hooks/useTheme';
@@ -27,7 +27,7 @@ interface Props extends Omit<PressableProps, 'children' | 'style'> {
   activeOpacity?: number;
   /** Taps when pressed. Off for buttons whose action gives its own feedback. */
   haptic?: boolean;
-  ref?: Ref<View>;
+  ref?: Ref<HostInstance>;
 }
 
 /**
