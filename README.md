@@ -122,6 +122,15 @@ All EAS build profiles in `frontend/eas.json` (`development`, `preview`, `produc
 
 Run the **Android Build** workflow from the Actions tab and pick a profile. It builds on the Actions runner with `eas build --local` (signing credentials come from EAS through the `EXPO_TOKEN` repository secret) and attaches the `.apk` to a new GitHub release. Non-production builds are marked as pre-releases.
 
+To publish a release, bump `expo.version` in `frontend/app.json`, merge it, then push a matching tag:
+
+```bash
+git tag v1.1.0     # must equal "v" + expo.version, or the build stops
+git push origin v1.1.0
+```
+
+The tag push runs the same workflow with the `production` profile and attaches the `.apk` to the release for that tag (with generated notes). Re-running it replaces the APK on that release.
+
 ### Option B: EAS Build (cloud)
 
 ```bash

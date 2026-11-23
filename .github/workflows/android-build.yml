@@ -1,6 +1,11 @@
 name: Android Build
 
 on:
+  # Pushing a version tag (e.g. v1.2.0) builds the production APK and publishes it
+  # as that tag's release, like JollyApp's release workflow.
+  push:
+    tags:
+      - 'v*'
   workflow_dispatch:
     inputs:
       profile:
@@ -18,13 +23,25 @@ permissions:
 
 jobs:
   build:
-    name: EAS build (${{ inputs.profile }})
+    name: EAS build (${{ inputs.profile || 'production' }})
     runs-on: ubuntu-latest
+    env:
+      # Tag pushes have no inputs, so they fall back to the production profile
+      PROFILE: ${{ inputs.profile || 'production' }}
     defaults:
       run:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v7
+
+      - name: Check tag matches app version
+        if: github.ref_type == 'tag'
+        run: |
+          version=$(jq -r '.expo.version' app.json)
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match expo.version ${version} in frontend/app.json (expected v${version})"
+            exit 1
+          fi
 
       - uses: actions/setup-node@v7
         with:
@@ -60,8 +77,8 @@ jobs:
         id: build
         run: |
           version=$(jq -r '.expo.version' app.json)
-          file="trainingapp-${{ inputs.profile }}-${version}-${{ github.run_number }}.apk"
-          eas build --platform android --profile ${{ inputs.profile }} --local --non-interactive --output "$file"
+          file="trainingapp-${PROFILE}-${version}-${{ github.run_number }}.apk"
+          eas build --platform android --profile "$PROFILE" --local --non-interactive --output "$file"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "file=frontend/$file" >> "$GITHUB_OUTPUT"
 
@@ -69,9 +86,25 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          tag="android-${{ inputs.profile }}-v${{ steps.build.outputs.version }}-${{ github.run_number }}"
-          gh release create "$tag" "${GITHUB_WORKSPACE}/${{ steps.build.outputs.file }}" \
-            --target "${{ github.sha }}" \
-            --title "Android ${{ inputs.profile }} ${{ steps.build.outputs.version }} (build ${{ github.run_number }})" \
-            --notes "Built from ${{ github.sha }} with the \`${{ inputs.profile }}\` EAS profile." \
-            ${{ inputs.profile != 'production' && '--prerelease' || '' }}
+          version="${{ steps.build.outputs.version }}"
+          apk="${GITHUB_WORKSPACE}/${{ steps.build.outputs.file }}"
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            # Release for the pushed tag; re-running the workflow replaces the APK
+            if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+              gh release upload "$GITHUB_REF_NAME" "$apk" --clobber
+            else
+              gh release create "$GITHUB_REF_NAME" "$apk" \
+                --verify-tag \
+                --title "TrainingApp ${version}" \
+                --generate-notes
+            fi
+          else
+            tag="android-${PROFILE}-v${version}-${{ github.run_number }}"
+            prerelease=""
+            [ "$PROFILE" != "production" ] && prerelease="--prerelease"
+            gh release create "$tag" "$apk" \
+              --target "${{ github.sha }}" \
+              --title "Android ${PROFILE} ${version} (build ${{ github.run_number }})" \
+              --notes "Built from ${{ github.sha }} with the \`${PROFILE}\` EAS profile." \
+              $prerelease
+          fi

@@ -24,7 +24,7 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 - The `run-app` skill (`.claude/skills/run-app/`) starts db/backend/web, seeds a user with history and drives the web build in headless Chrome (screenshots, taps, swipes, page text, console errors). Use it to check UI changes.
 
 ### Android builds
-- `.github/workflows/android-build.yml` (manual `workflow_dispatch` with a profile input) runs `eas build --local` on the Actions runner and attaches the `.apk` to a GitHub release. Signing credentials come from EAS (`EXPO_TOKEN` secret). Build profiles live in `frontend/eas.json`.
+- `.github/workflows/android-build.yml` runs `eas build --local` on the Actions runner and attaches the `.apk` to a GitHub release. It runs on a pushed `v*` tag (production profile, release for that tag; the tag must equal `v` + `expo.version` in `frontend/app.json`) or manually (`workflow_dispatch` with a profile input; non-production builds are pre-releases). Signing credentials come from EAS (`EXPO_TOKEN` secret). Build profiles live in `frontend/eas.json`.
 
 ### Deployment
 - Root `docker-compose.yml` + `.env` (see `.env.example`) runs Postgres, the backend with the `prod` profile, and an Expo web export served by Nginx on port 8082. Nginx proxies `/api` to the backend. The backend has a Docker healthcheck on `/actuator/health/readiness` (Actuator exposes only health, without details, and it is not proxied), and the frontend waits for it via `condition: service_healthy`.
