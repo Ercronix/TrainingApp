@@ -39,7 +39,7 @@ updates:
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
       # NativeWind 4 only supports Tailwind 3 (Tailwind 4 needs NativeWind 5),
-      # and Expo SDK 54 pins TypeScript ~5.9; take these majors with an SDK bump.
+      # and the Expo SDK pins TypeScript (~6.0 on SDK 58); take these majors with an SDK bump.
       - dependency-name: "tailwindcss"
         update-types: ["version-update:semver-major"]
       - dependency-name: "typescript"

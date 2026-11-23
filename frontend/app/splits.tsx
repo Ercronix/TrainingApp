@@ -98,7 +98,7 @@ export default function SplitsScreen() {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100 + insets.bottom }}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />
+          <RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={c.accent} />
         }
         ListEmptyComponent={
           <View className="items-center mt-20 gap-3">

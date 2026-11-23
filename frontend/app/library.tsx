@@ -116,7 +116,7 @@ export default function LibraryScreen() {
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 + insets.bottom }}
           keyboardShouldPersistTaps="handled"
-          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={c.accent} />}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => void refetch()} tintColor={c.accent} />}
           ListEmptyComponent={
             <View className="items-center mt-20 gap-3">
               <Ionicons name={searchQuery ? 'search-outline' : 'library-outline'} size={48} color={c.subtle} />

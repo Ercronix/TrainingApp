@@ -12,6 +12,11 @@ module.exports = defineConfig([
       'react/no-unescaped-entities': 'off',
       // axios.create() / axios.isAxiosError() are the documented API.
       'import/no-named-as-default-member': 'off',
+      // React Compiler diagnostics added in eslint-plugin-react-hooks 7. The app doesn't use the
+      // compiler, and the RN idiom `useRef(new Animated.Value(0)).current` trips `refs` throughout.
+      'react-hooks/refs': 'off',
+      'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ]);

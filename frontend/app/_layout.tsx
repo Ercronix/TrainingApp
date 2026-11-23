@@ -76,7 +76,7 @@ function AppLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: bgColor }} onLayout={onLayoutRootView}>
-      <StatusBar style={isLight ? 'dark' : 'light'} backgroundColor={bgColor} />
+      <StatusBar style={isLight ? 'dark' : 'light'} />
       <View style={[{ flex: 1 }, getThemeVars(themeId, isLight ? 'light' : 'dark', customAccent, glassOpacity)]}>
         <PersistQueryClientProvider
           client={queryClient}
