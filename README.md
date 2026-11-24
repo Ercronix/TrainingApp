@@ -166,7 +166,7 @@ cd backend/training-backend
 
 The backend tests start their own throwaway PostgreSQL through Testcontainers, so they only need Docker running. They don't touch the dev database and don't need `application-local.properties`.
 
-The CI workflow (`.github/workflows/ci.yml`) runs all of these on every push and pull request to `main`. Dependabot (`.github/dependabot.yml`) opens weekly dependency update PRs; Expo-pinned packages are left out and upgraded together with `npx expo install --fix` on an SDK bump.
+The CI workflow (`.github/workflows/ci.yml`) runs all of these on every push and pull request to `main`. On pushes to `main`, a `deploy` job then deploys to the production server through a self-hosted runner there (setup in `docs/deployment.md`). Dependabot (`.github/dependabot.yml`) opens weekly dependency update PRs; Expo-pinned packages are left out and upgraded together with `npx expo install --fix` on an SDK bump.
 
 ## API Docs
 
