@@ -16,5 +16,7 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
-  ]
+  ],
+  // Node code with its own tsconfig (e2e/tsconfig.json)
+  "exclude": ["node_modules", "e2e", "playwright.config.ts"]
 }
