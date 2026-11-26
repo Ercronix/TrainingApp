@@ -177,7 +177,7 @@ The backend tests start their own throwaway PostgreSQL through Testcontainers, s
 
 Both use other ports than the dev stack. PostgreSQL must already run: locally the dev database from step 2 (the password is read from `backend/.env`; or set `E2E_DB_URL`, `E2E_DB_USER`, `E2E_DB_PASSWORD`). Each test registers its own `e2e_...` user, so the tests run in parallel and leave those users behind in the dev database. Outside CI, servers already listening on 8090/8093 are reused; stop them after backend or frontend changes. The first run needs Playwright's Chromium: `npx playwright install chromium`. `npm run e2e:ui` opens Playwright's UI mode; failures keep a trace and a screenshot in `frontend/e2e/.results/`.
 
-The CI workflow (`.github/workflows/ci.yml`) runs all of these on every push and pull request to `main`. Dependabot (`.github/dependabot.yml`) opens weekly dependency update PRs; Expo-pinned packages are left out and upgraded together with `npx expo install --fix` on an SDK bump.
+The CI workflow (`.github/workflows/ci.yml`) runs all of these on every push and pull request to `main`. On pushes to `main`, a `deploy` job then deploys to the production server through a self-hosted runner there (setup in `docs/deployment.md`). Dependabot (`.github/dependabot.yml`) opens weekly dependency update PRs; Expo-pinned packages are left out and upgraded together with `npx expo install --fix` on an SDK bump.
 
 ## API Docs
 
