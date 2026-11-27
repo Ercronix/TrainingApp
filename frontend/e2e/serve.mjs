@@ -3,9 +3,10 @@
 //
 //   node e2e/serve.mjs <dir> <port>
 //
-// Expo's "static" output writes one HTML file per route (/training -> training.html), so a
-// path is tried as a file, then with ".html", then as a directory index; anything else gets
-// index.html and Expo Router resolves the route on the client.
+// Resolves paths like `try_files $uri $uri/ /index.html` in nginx.conf: a file, then a
+// directory's index.html, else the root index.html, and Expo Router resolves the route on
+// the client. Expo also writes one HTML file per route (/training -> training.html), but
+// Nginx never serves those for a route path, so neither does this; keep the two in step.
 
 import { createReadStream, statSync } from "node:fs";
 import { createServer } from "node:http";
@@ -43,7 +44,7 @@ function resolveFile(urlPath) {
   // normalize() collapses "..", and the prefix check keeps requests inside root
   const base = join(root, normalize(decodeURIComponent(urlPath)));
   if (!base.startsWith(root)) return null;
-  for (const candidate of [base, `${base}.html`, join(base, "index.html")]) {
+  for (const candidate of [base, join(base, "index.html")]) {
     if (isFile(candidate)) return candidate;
   }
   return join(root, "index.html");

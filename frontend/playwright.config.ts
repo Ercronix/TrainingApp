@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { parseDotenv } from './e2e/dotenv';
 import { E2E_API_PORT, E2E_API_URL, E2E_WEB_PORT, E2E_WEB_URL as webUrl } from './e2e/env';
 
 // End-to-end tests: the web export and the real backend against a real Postgres.
@@ -9,10 +10,12 @@ import { E2E_API_PORT, E2E_API_URL, E2E_WEB_PORT, E2E_WEB_URL as webUrl } from '
 // backend/.env; CI starts a Postgres service and passes E2E_DB_* instead.
 // Ports: e2e/env.ts.
 
+// Resolved like Compose resolves `${POSTGRES_PASSWORD}` in backend/docker-compose.yml:
+// the shell environment wins over backend/.env
 function devDbPassword(): string | undefined {
+  if (process.env.POSTGRES_PASSWORD !== undefined) return process.env.POSTGRES_PASSWORD;
   try {
-    const env = readFileSync(join(__dirname, '../backend/.env'), 'utf8');
-    return env.match(/^POSTGRES_PASSWORD=(.*)$/m)?.[1]?.trim();
+    return parseDotenv(readFileSync(join(__dirname, '../backend/.env'), 'utf8')).POSTGRES_PASSWORD;
   } catch {
     return undefined;
   }
@@ -57,6 +60,9 @@ export default defineConfig({
       env: {
         SPRING_PROFILES_ACTIVE: 'e2e',
         SERVER_PORT: String(E2E_API_PORT),
+        // Loopback only: this backend signs tokens with the public secret below, has the rate
+        // limits off and, locally, holds the dev database
+        SERVER_ADDRESS: '127.0.0.1',
         SPRING_DATASOURCE_URL: process.env.E2E_DB_URL ?? 'jdbc:postgresql://localhost:5432/training_db',
         SPRING_DATASOURCE_USERNAME: process.env.E2E_DB_USER ?? 'training_user',
         SPRING_DATASOURCE_PASSWORD: process.env.E2E_DB_PASSWORD ?? devDbPassword() ?? '',
@@ -71,7 +77,7 @@ export default defineConfig({
       },
     },
     {
-      // A production web export (no Metro), served the way Nginx serves it in deployment
+      // A production web export (no Metro), served the way Nginx serves it in deployment (e2e/serve.mjs)
       command: `npx expo export --platform web --output-dir e2e/.dist && node e2e/serve.mjs e2e/.dist ${E2E_WEB_PORT}`,
       url: webUrl,
       timeout: 600_000,
