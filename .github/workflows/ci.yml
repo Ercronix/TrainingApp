@@ -94,6 +94,8 @@ jobs:
           path: |
             frontend/e2e/.report
             frontend/e2e/.results
+          # Both folders start with a dot, which the action skips by default
+          include-hidden-files: true
           retention-days: 7
 
   # Deploys main to the server through a self-hosted runner there (setup: docs/deployment.md).
