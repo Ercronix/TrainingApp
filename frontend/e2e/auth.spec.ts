@@ -7,6 +7,11 @@ test('registers, signs out and signs back in', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveURL(/\/login$/);
   await visibleText(page, 'NO ACCOUNT? REGISTER').click();
+  // Both screens have an "Enter username" field, and the login screen stays visible while the
+  // register screen comes in. A fill that picks the login one waits on it forever once it hides,
+  // so wait until it is gone.
+  await expect(page).toHaveURL(/\/register$/);
+  await expect(visiblePlaceholder(page, 'Enter password')).toBeHidden();
 
   await visiblePlaceholder(page, 'Enter username').fill(username);
   await visiblePlaceholder(page, 'Enter email').fill(`${username}@example.com`);
