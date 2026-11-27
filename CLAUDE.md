@@ -8,11 +8,19 @@ Full-stack fitness tracker: Expo/React Native client (`frontend/`, mobile + web)
 
 ### Frontend (`frontend/`)
 - `npm ci` then `npm run start` (Expo dev server; `w` for web). `npm run web` for web only.
-- Checks CI runs: `npx tsc --noEmit`, `npm run lint` (ESLint, `eslint-config-expo` flat config)
-  and `npm test` (Jest with the `jest-expo` preset). Lint runs with `--max-warnings 0`, so warnings fail CI.
+- Checks CI runs: `npx tsc --noEmit`, `npm run lint` (ESLint, `eslint-config-expo` flat config),
+  `npm test` (Jest with the `jest-expo` preset) and the end-to-end tests below. Lint runs with `--max-warnings 0`, so warnings fail CI.
 - Unit tests cover the pure logic in `utils/` and sit next to each module as `*.test.ts`; shared
   data builders are in `test/factories.ts`. Single file: `npm test -- utils/muscles.test.ts`.
 - Imports use the `@/` alias for the `frontend/` root.
+- End-to-end tests (Playwright, `e2e/*.spec.ts`, own `e2e/tsconfig.json` checked with `npx tsc --noEmit -p e2e`):
+  `npm run e2e` starts the backend (`bootRun`, `e2e` profile, port 8090) and a web export (port 8093) itself and
+  needs Postgres running (the dev DB locally, a service container in CI). Single file: `npm run e2e -- e2e/session.spec.ts`.
+  Each test gets a fresh user from the fixtures in `e2e/fixtures.ts` (`user`, `api` for setup through the REST API,
+  `signedInPage`); drive the UI for what a test is about and set the rest up through `api`. Screens stay mounted under
+  the one on top, so match with `visibleText`/`visiblePlaceholder`/`button` (by role; `Tactile` is a button), and wait
+  for a screen's content before tapping on it. Outside CI, servers already on 8090/8093 are reused: stop them after
+  backend or frontend changes, or the tests run against the old build.
 
 ### Backend (`backend/training-backend/`, Java 21, Gradle wrapper)
 - Local DB: `cd backend && docker compose up -d` (needs `backend/.env`, copied from `backend/.env.example`).

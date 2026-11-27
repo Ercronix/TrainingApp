@@ -27,6 +27,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npx tsc --noEmit
+      - run: npx tsc --noEmit -p e2e
       - run: npm run lint
       - run: npm test -- --ci
 
@@ -47,11 +48,59 @@ jobs:
       # on ubuntu-latest) and use the test defaults in src/test/resources/config.
       - run: ./gradlew test --no-daemon
 
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: training_db
+          POSTGRES_USER: training_user
+          POSTGRES_PASSWORD: e2e_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U training_user -d training_db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Playwright starts the backend (bootRun, `e2e` profile) and serves a web export
+      # (playwright.config.ts); both talk to the Postgres service above.
+      - run: npm run e2e
+        env:
+          E2E_DB_PASSWORD: e2e_password
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            frontend/e2e/.report
+            frontend/e2e/.results
+          retention-days: 7
+
   # Deploys main to the server through a self-hosted runner there (setup: docs/deployment.md).
   # Never runs for pull requests, so code from forks can't reach the server through this job.
   deploy:
     name: Deploy to production
-    needs: [frontend-checks, backend-test]
+    needs: [frontend-checks, backend-test, e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: [self-hosted, training-deploy]
     environment: production

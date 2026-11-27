@@ -156,15 +156,26 @@ Output APK: `frontend/android/app/build/outputs/apk/release/app-release.apk` (or
 
 ```bash
 cd frontend
-npx tsc --noEmit     # typecheck
+npx tsc --noEmit     # typecheck (app)
+npx tsc --noEmit -p e2e  # typecheck (end-to-end tests)
 npm run lint         # ESLint; warnings fail CI
 npm test             # Jest unit tests for utils/ (*.test.ts next to each module)
+npm run e2e          # Playwright end-to-end tests (needs PostgreSQL running, see below)
 
 cd backend/training-backend
 ./gradlew test       # Spring Boot tests
 ```
 
 The backend tests start their own throwaway PostgreSQL through Testcontainers, so they only need Docker running. They don't touch the dev database and don't need `application-local.properties`.
+
+### End-to-end tests
+
+`frontend/e2e/` holds Playwright tests that drive the web app in Chromium (phone viewport with touch) against the real backend: sign-up and sign-in, building a split, a full session up to the history, and sets logged offline that sync once the network is back. `npm run e2e` starts what it needs itself (`frontend/playwright.config.ts`):
+
+- the backend with `./gradlew bootRun` on port 8090, in its own `e2e` profile with test secrets and high rate limits, so `application-local.properties` is not read;
+- a production web export (`expo export`) pointed at that backend and served on port 8093.
+
+Both use other ports than the dev stack. PostgreSQL must already run: locally the dev database from step 2 (the password is read from `backend/.env`; or set `E2E_DB_URL`, `E2E_DB_USER`, `E2E_DB_PASSWORD`). Each test registers its own `e2e_...` user, so the tests run in parallel and leave those users behind in the dev database. Outside CI, servers already listening on 8090/8093 are reused; stop them after backend or frontend changes. The first run needs Playwright's Chromium: `npx playwright install chromium`. `npm run e2e:ui` opens Playwright's UI mode; failures keep a trace and a screenshot in `frontend/e2e/.results/`.
 
 The CI workflow (`.github/workflows/ci.yml`) runs all of these on every push and pull request to `main`. On pushes to `main`, a `deploy` job then deploys to the production server through a self-hosted runner there (setup in `docs/deployment.md`). Dependabot (`.github/dependabot.yml`) opens weekly dependency update PRs; Expo-pinned packages are left out and upgraded together with `npx expo install --fix` on an SDK bump.
 

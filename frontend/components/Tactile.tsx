@@ -41,6 +41,8 @@ export function Tactile({
   const { glass } = useTheme();
   return (
     <Pressable
+      // Announced as a button by screen readers (and found by role in the e2e tests)
+      accessibilityRole="button"
       {...rest}
       ref={ref}
       disabled={disabled}

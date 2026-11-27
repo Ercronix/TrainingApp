@@ -1,0 +1,10 @@
+{
+  // The end-to-end tests run in Node (Playwright), not in the app: Node types, no Jest or RN.
+  // Checked by `npx tsc --noEmit -p e2e`; the root tsconfig leaves these files out.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["./**/*.ts", "../playwright.config.ts"],
+  "exclude": [".dist", ".results", ".report"]
+}
