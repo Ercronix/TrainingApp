@@ -87,7 +87,7 @@ jobs:
       - run: npm run e2e
         env:
           E2E_DB_PASSWORD: e2e_password
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: e2e-report
