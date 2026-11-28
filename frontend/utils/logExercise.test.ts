@@ -1,5 +1,5 @@
 import {
-  doneSetsOf, elapsedSeconds, formatNumber, formatTarget, gainOf, isInvalidRow, keyOf, loggedPatch, nextRow, payloadFromKey,
+  completesOnDone, doneSetsOf, elapsedSeconds, formatNumber, formatTarget, gainOf, isInvalidRow, keyOf, loggedPatch, nextRow, payloadFromKey,
   parseNumber, payloadOf, prefillRows, previousLabel, reachedTarget, restorableDraft, rowDefaultsOf, savedKeyOf, setLabels,
   steppedReps, steppedWeight, suggestionOf, targetOf, timedTargetSeconds, toRow, toSet,
 } from '@/utils/logExercise';
@@ -169,6 +169,28 @@ describe('payloadOf', () => {
     const log = exerciseLog({ sets: [{ reps: 8, weight: 60, rpe: 8, warmup: false }] });
     expect(savedKeyOf(log)).toBe(keyOf(payloadOf(doneSetsOf(prefillRows(log)).sets!, log)));
     expect(savedKeyOf(undefined)).toBe(keyOf({ sets: [], completed: undefined }));
+  });
+});
+
+describe('completesOnDone', () => {
+  const rowsOf = (rows: ReturnType<typeof setRow>[]) => [rows, doneSetsOf(rows).sets] as const;
+
+  it('completes with only some of the planned sets logged', () => {
+    expect(completesOnDone(...rowsOf([done('60', '8'), done('60', '8'), setRow(), setRow()]))).toBe(true);
+  });
+
+  it('completes once every row is logged', () => {
+    expect(completesOnDone(...rowsOf([done('20', '10', { warmup: true })]))).toBe(true);
+  });
+
+  it('does not complete with nothing or only warm-ups logged short of the rows', () => {
+    expect(completesOnDone(...rowsOf([setRow(), setRow()]))).toBe(false);
+    expect(completesOnDone(...rowsOf([done('20', '10', { warmup: true }), setRow()]))).toBe(false);
+    expect(completesOnDone([], [])).toBe(false);
+  });
+
+  it('does not complete while a done row is invalid', () => {
+    expect(completesOnDone(...rowsOf([done('60', '8'), done('60', '')]))).toBe(false);
   });
 });
 

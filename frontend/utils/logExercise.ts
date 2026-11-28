@@ -144,6 +144,17 @@ export function payloadOf(sets: SetLog[], log: ExerciseLog | undefined): SavePay
   return { sets, completed: planned ? workingSets(sets).length >= planned : undefined };
 }
 
+/**
+ * Whether closing the screen with DONE marks the exercise done: once every row is logged, or
+ * once any working set is, even short of the plan (sets left out count as not done, the
+ * exercise as done). Not while a done row is invalid, nor with only warm-ups logged short of
+ * the rows.
+ */
+export function completesOnDone(rows: SetRow[], sets: SetLog[] | null): sets is SetLog[] {
+  if (sets == null || rows.length === 0) return false;
+  return rows.every((r) => r.done) || workingSets(sets).length > 0;
+}
+
 export const keyOf = (payload: SavePayload) => JSON.stringify(payload);
 
 export const payloadFromKey = (key: string) => JSON.parse(key) as SavePayload;

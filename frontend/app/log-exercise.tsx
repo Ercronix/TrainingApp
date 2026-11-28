@@ -25,7 +25,7 @@ import { QUERY_KEYS } from '@/constants/queryKeys';
 import { usesPlates } from '@/constants/equipment';
 import { previousSetsOf } from '@/utils/sets';
 import {
-  doneSetsOf, gainOf, isInvalidRow, loggedPatch, nextRow, prefillRows, previousLabel, rowDefaultsOf, setLabels,
+  completesOnDone, doneSetsOf, gainOf, isInvalidRow, loggedPatch, nextRow, prefillRows, previousLabel, rowDefaultsOf, setLabels,
   steppedReps, steppedWeight, suggestionOf, targetOf,
 } from '@/utils/logExercise';
 import { formatSupersetPlace, stepAfterSet, supersetProgress } from '@/utils/supersets';
@@ -87,10 +87,11 @@ export default function LogExerciseModal() {
   const { doneRows, sets: doneSets } = doneSetsOf(rows);
   const { saveNextChangeNow, saveCompleted } = useAutoSaveSets(exerciseLogId, trainingLogId, log, doneSets);
 
-  // Closing with every set logged marks the exercise done, even short of or without a plan
   const allDone = rows.length > 0 && rows.every((r) => r.done) && doneSets != null;
+  // DONE marks the exercise done once a working set is logged, even short of or without a plan,
+  // so stopping early (2 of 4 sets) isn't counted as skipped. The X closes without that.
   const finish = () => {
-    if (allDone && doneSets != null) saveCompleted(doneSets);
+    if (completesOnDone(rows, doneSets)) saveCompleted(doneSets);
     router.back();
   };
 
@@ -320,7 +321,7 @@ export default function LogExerciseModal() {
             <Ionicons name="arrow-forward" size={18} color={c.accentFg} />
           </Tactile>
         ) : (
-          // Sets are saved as they're logged, so this only closes the screen (and completes the exercise once all are logged)
+          // Sets are saved as they're logged, so this only closes the screen (and completes the exercise once a working set is logged)
           <Tactile
             variant={allDone ? 'accent' : 'surface'}
             className="rounded-md py-5 flex-row items-center justify-center gap-2"

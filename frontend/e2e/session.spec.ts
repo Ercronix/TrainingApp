@@ -38,6 +38,30 @@ test('trains a session from start to history', async ({ signedInPage: page, api 
   await expect(visibleText(page, /^E2E Split · /)).toBeVisible();
 });
 
+test('counts an exercise stopped short of the plan as done, not skipped', async ({ signedInPage: page, api }) => {
+  await api.createActiveSplit('E2E Split', 'Push', [
+    { name: 'Bench Press', sets: 4, reps: 8, plannedWeight: 60 },
+  ]);
+
+  await page.goto('/');
+  await visibleText(page, 'START PUSH').click();
+  await expect(visibleText(page, '0 of 1 done')).toBeVisible();
+  await visibleText(page, 'Bench Press').click();
+
+  await expect(visibleText(page, 'PLAN: 4 × 8 reps @ 60 kg')).toBeVisible();
+  await visibleText(page, 'LOG SET').click();
+  await expect(visibleText(page, /1 SET LOGGED/)).toBeVisible();
+  await visibleText(page, 'LOG SET').click();
+  await expect(visibleText(page, /2 SETS LOGGED/)).toBeVisible();
+  await visibleText(page, /^DONE/).click();
+
+  await expect(visibleText(page, 'All done')).toBeVisible();
+  await visibleText(page, 'COMPLETE SESSION').click();
+  await expect(visibleText(page, 'SESSION COMPLETE')).toBeVisible();
+  await expect(visibleText(page, '2×8 @ 60 kg')).toBeVisible();
+  await expect(visibleText(page, 'Skipped')).toHaveCount(0);
+});
+
 test('keeps sets logged offline and syncs them when back online', async ({ signedInPage: page, api, context }) => {
   await api.createActiveSplit('E2E Split', 'Push', [
     { name: 'Bench Press', sets: 1, reps: 5, plannedWeight: 100 },
